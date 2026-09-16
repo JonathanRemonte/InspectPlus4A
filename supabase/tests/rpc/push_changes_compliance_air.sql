@@ -1,6 +1,6 @@
 begin;
 
-select plan(6);
+select plan(8);
 
 insert into public.user_accounts (
   uid, first_name, last_name, username, password_hash, role, region, province,
@@ -79,7 +79,13 @@ select is(
             "compliance_id": "air-push-001",
             "report_id": "rep-air-001",
             "other_observations": "Air observation",
-            "remarks_recommendations": "Air recommendation"
+            "remarks_recommendations": "Air recommendation",
+            "checklist_appendix_f": [
+              {"key": "appendix-f-s6-8-cems-installation-change-notified", "legal_ref": "Appendix F (Quality Assurance Procedures) Section 6 (8)", "requirement": "Notification has been sent to EMB for any changes made in the CEMS installation", "compliant": "Y", "remarks": ""}
+            ],
+            "checklist_consent_agreement": [
+              {"key": "consent-dao2000-81-p7-r25-s9a-ems-18-months", "legal_ref": "For Facilities Engaged with Consent Agreement DAO 2000-81 Part 7 Rule 25 Section 9 (a)", "requirement": "EMS established within 18 months upon entering Consent Agreement with EMB", "compliant": "NA", "remarks": ""}
+            ]
           }
         ],
         "updated": [],
@@ -99,6 +105,16 @@ select is(
   ),
   1,
   'push_changes inserts one compliance_air row'
+);
+
+select is(
+  (
+    select checklist_appendix_f->0->>'compliant'
+    from public.compliance_air
+    where compliance_id = 'air-push-001'
+  ),
+  'Y',
+  'push_changes stores checklist_appendix_f on create'
 );
 
 -- Compliance air: update
@@ -132,7 +148,11 @@ select is(
             "compliance_id": "air-push-001",
             "report_id": "rep-air-001",
             "other_observations": "Updated air observation",
-            "remarks_recommendations": "Updated air recommendation"
+            "remarks_recommendations": "Updated air recommendation",
+            "checklist_appendix_f": [],
+            "checklist_consent_agreement": [
+              {"key": "consent-dao2000-81-p7-r25-s9a-ems-18-months", "legal_ref": "For Facilities Engaged with Consent Agreement DAO 2000-81 Part 7 Rule 25 Section 9 (a)", "requirement": "EMS established within 18 months upon entering Consent Agreement with EMB", "compliant": "N", "remarks": "No EMS yet"}
+            ]
           }
         ],
         "deleted": []
@@ -151,6 +171,16 @@ select is(
   ),
   'Updated air recommendation',
   'push_changes updates an existing compliance_air row'
+);
+
+select is(
+  (
+    select checklist_consent_agreement->0->>'remarks'
+    from public.compliance_air
+    where compliance_id = 'air-push-001'
+  ),
+  'No EMS yet',
+  'push_changes updates checklist_consent_agreement on upsert'
 );
 
 -- Compliance air: delete
