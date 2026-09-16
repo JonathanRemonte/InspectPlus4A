@@ -37,7 +37,7 @@ describe('every device on a covered version migrates forward instead of resettin
   it('is what database.ts checks before it lets the adapter open the store', () => {
     expect(() => assertMigrationsCoverSchema(schema, migrations)).not.toThrow();
     expect(() => assertMigrationsCoverSchema({ ...schema, version: schema.version + 1 }, migrations)).toThrow(
-      /schema version 16 .* migrations only reach 15/,
+      /schema version 17 .* migrations only reach 16/,
     );
   });
 });

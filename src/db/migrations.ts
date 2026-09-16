@@ -206,5 +206,17 @@ export const migrations = schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 16,
+      steps: [
+        addColumns({
+          table: 'compliance_air',
+          columns: [
+            { name: 'checklistAppendixF', type: 'string', isOptional: true },
+            { name: 'checklistConsentAgreement', type: 'string', isOptional: true },
+          ],
+        }),
+      ],
+    },
   ],
 });

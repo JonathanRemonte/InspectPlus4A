@@ -192,6 +192,8 @@ export const syncSchema: Record<SyncEntityName, SyncEntitySchema> = {
       checklist_dao_2004_26:   'checklistDao200426',
       checklist_dao_2000_81:   'checklistDao200081',
       checklist_emb_mc:        'checklistEmbMc',
+      checklist_appendix_f:    'checklistAppendixF',
+      checklist_consent_agreement: 'checklistConsentAgreement',
       pto_conditions:          'ptoConditions',
       other_observations:      'otherObservations',
       remarks_recommendations: 'remarksRecommendations',

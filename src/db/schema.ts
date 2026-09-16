@@ -25,7 +25,7 @@ import { appSchema, tableSchema } from '@nozbe/watermelondb';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const schema = appSchema({
-  version: 15,
+  version: 16,
   tables: [
 
     // ── ESTABLISHMENTS ───────────────────────────────────────────────────────
@@ -183,6 +183,11 @@ export const schema = appSchema({
         { name: 'checklistDao200426',     type: 'string', isOptional: true },
         { name: 'checklistDao200081',     type: 'string', isOptional: true },
         { name: 'checklistEmbMc',         type: 'string', isOptional: true },
+        // Table 7's fourth and fifth groups - the CEMS quality-assurance
+        // questions and the two Consent Agreement ones. Added after the
+        // table; NULL on rows written before, read as [] by the model.
+        { name: 'checklistAppendixF',     type: 'string', isOptional: true },
+        { name: 'checklistConsentAgreement', type: 'string', isOptional: true },
         { name: 'ptoConditions',          type: 'string', isOptional: true },
         { name: 'otherObservations',      type: 'string', isOptional: true },
         { name: 'remarksRecommendations', type: 'string', isOptional: true },
