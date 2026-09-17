@@ -212,7 +212,7 @@ export function WaterFormShell({ start }: { start: ShellStart }) {
           onScroll={onScroll}
           scrollEventThrottle={16}>
           {activeMainTab.key === 'geninfo' && (
-            <GeneralInformationTab value={generalInfo} onChange={setGeneralInfo} />
+            <GeneralInformationTab value={generalInfo} onChange={setGeneralInfo} estabId={start.estabId} />
           )}
           {activeMainTab.key === 'purpose' && (
             <PurposeOfInspectionTab value={purpose} onChange={setPurpose} />

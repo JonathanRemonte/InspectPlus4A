@@ -11,6 +11,7 @@ import {
 } from '../../../components/form';
 import { PROVINCE_OPTIONS, getCityOptions, getBarangayOptions } from '../../../constants/provinces';
 import { maskFlexibleDate, isValidFlexibleDate, FLEXIBLE_DATE_HINT, FLEXIBLE_DATE_INVALID_HINT } from '../../../utils/flexibleDate';
+import { CoordinateFields } from '../../location/components/CoordinateFields';
 import type { GeneralInfoFormState } from '../types';
 
 const OPERATING_STATUS_OPTIONS = ['Operational', 'Temporarily Close', 'Non-Operational'];
@@ -18,11 +19,15 @@ const OPERATING_STATUS_OPTIONS = ['Operational', 'Temporarily Close', 'Non-Opera
 interface GeneralInformationTabProps {
   value: GeneralInfoFormState;
   onChange: (value: GeneralInfoFormState) => void;
+  // Names the offline tile pack the map picker caches — the establishment
+  // this report is for, or null while it's still being created.
+  estabId: string | null;
 }
 
 export const GeneralInformationTab: React.FC<GeneralInformationTabProps> = ({
   value,
   onChange,
+  estabId,
 }) => {
   // Establishment Details → Key Personnel → PCO, in visual order. The
   // Establishment Name field is read-only (pre-filled) so it's skipped —
@@ -60,7 +65,7 @@ export const GeneralInformationTab: React.FC<GeneralInformationTabProps> = ({
             onChangeText={name => onChange({ ...value, name })}
             textCase="upper"
             required
-            readOnly
+            readOnly
             hint="Pre-filled from the establishment master record"
           />
         </View>
@@ -153,32 +158,15 @@ export const GeneralInformationTab: React.FC<GeneralInformationTabProps> = ({
 
           />
         </View>
-        <View style={styles.row}>
-          <TextField
-            ref={latRef}
-            label="Latitude"
-            value={value.geoLat}
-            onChangeText={geoLat => onChange({ ...value, geoLat })}
-            keyboardType="numeric"
-            placeholder="e.g. 11.144"
-            returnKeyType="next"
-            blurOnSubmit={false}
-            onSubmitEditing={() => focusInput(lngRef.current)}
-
-          />
-          <TextField
-            ref={lngRef}
-            label="Longitude"
-            value={value.geoLng}
-            onChangeText={geoLng => onChange({ ...value, geoLng })}
-            keyboardType="numeric"
-            placeholder="e.g. 119.395"
-            returnKeyType="next"
-            blurOnSubmit={false}
-            onSubmitEditing={() => focusInput(isNonOperational ? sinceRef.current : hoursRef.current)}
-
-          />
-        </View>
+        <CoordinateFields
+          lat={value.geoLat}
+          lng={value.geoLng}
+          onChange={({ lat, lng }) => onChange({ ...value, geoLat: lat, geoLng: lng })}
+          packName={estabId ? `estab:${estabId}` : 'estab:pending'}
+          latRef={latRef}
+          lngRef={lngRef}
+          onLngSubmitEditing={() => focusInput(isNonOperational ? sinceRef.current : hoursRef.current)}
+        />
         <View style={styles.row}>
           <SelectField
             label="Status of Operation"
