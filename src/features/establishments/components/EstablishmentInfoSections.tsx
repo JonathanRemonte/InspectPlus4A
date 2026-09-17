@@ -12,6 +12,7 @@ import { Button } from '../../../components/Button';
 import { PROVINCE_OPTIONS, getCityOptions, getBarangayOptions } from '../../../constants/provinces';
 import { maskFlexibleDate, isValidFlexibleDate, FLEXIBLE_DATE_HINT, FLEXIBLE_DATE_INVALID_HINT } from '../../../utils/flexibleDate';
 import { useEditableSection } from '../../inspections/hooks/useEditableSection';
+import { CoordinateFields } from '../../location/components/CoordinateFields';
 import { SectionEditActions } from '../../inspections/components/SectionEditActions';
 import { patchEstablishmentRecord } from '../../inspections/establishmentPersistence';
 import type { EstablishmentContentField } from '../../inspections/establishmentPersistence';
@@ -52,6 +53,8 @@ interface DetailsFields {
   barangay: string;
   city: string;
   province: string;
+  geoLat: string;
+  geoLng: string;
   natureOfBusiness: string;
   psicCode: string;
   product: string;
@@ -72,6 +75,8 @@ function toDetailsFields(e: EstablishmentDTO): DetailsFields {
     barangay: e.barangay,
     city: e.city,
     province: e.province,
+    geoLat: e.geoLat != null ? String(e.geoLat) : '',
+    geoLng: e.geoLng != null ? String(e.geoLng) : '',
     natureOfBusiness: e.natureOfBusiness,
     psicCode: e.psicCode ?? '',
     product: e.product ?? '',
@@ -92,6 +97,8 @@ function fromDetailsFields(f: DetailsFields): Partial<Record<EstablishmentConten
     barangay: f.barangay,
     city: f.city,
     province: f.province,
+    geoLat: f.geoLat.trim() ? Number(f.geoLat) : null,
+    geoLng: f.geoLng.trim() ? Number(f.geoLng) : null,
     natureOfBusiness: f.natureOfBusiness,
     psicCode: f.psicCode || null,
     product: f.product || null,
@@ -228,6 +235,8 @@ const DetailsSection = React.memo(function DetailsSection({ establishment, canEd
   const addressRef = useRef<TextInput>(null);
   const natureRef = useRef<TextInput>(null);
   const psicRef = useRef<TextInput>(null);
+  const latRef = useRef<TextInput>(null);
+  const lngRef = useRef<TextInput>(null);
   const productRef = useRef<TextInput>(null);
   const yearRef = useRef<TextInput>(null);
   const hoursRef = useRef<TextInput>(null);
@@ -326,16 +335,19 @@ const DetailsSection = React.memo(function DetailsSection({ establishment, canEd
         )}
       </View>
       <View style={styles.row}>
-        {/* Latitude/Longitude are never part of this draft — no section
-            currently edits them (see patchEstablishmentRecord), so they
-            stay read-only regardless of details.editing. */}
-        <TextField label="Latitude" value={establishment.geoLat != null ? String(establishment.geoLat) : '—'} readOnly />
-        <TextField label="Longitude" value={establishment.geoLng != null ? String(establishment.geoLng) : '—'} readOnly />
-      </View>
-      <View style={styles.row}>
         <TextField ref={natureRef} label="Nature of Business" value={details.draft.natureOfBusiness} readOnly={!details.editing} onChangeText={v => details.setDraft(d => ({ ...d, natureOfBusiness: v }))} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => focusInput(psicRef.current)} />
-        <TextField ref={psicRef} label="PSIC Code" value={details.draft.psicCode} readOnly={!details.editing} onChangeText={v => details.setDraft(d => ({ ...d, psicCode: v }))} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => focusInput(productRef.current)} />
+        <TextField ref={psicRef} label="PSIC Code" value={details.draft.psicCode} readOnly={!details.editing} onChangeText={v => details.setDraft(d => ({ ...d, psicCode: v }))} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => focusInput(latRef.current)} />
       </View>
+      <CoordinateFields
+        lat={details.draft.geoLat}
+        lng={details.draft.geoLng}
+        onChange={({ lat, lng }) => details.setDraft(d => ({ ...d, geoLat: lat, geoLng: lng }))}
+        readOnly={!details.editing}
+        packName={`estab:${establishment.estabId}`}
+        latRef={latRef}
+        lngRef={lngRef}
+        onLngSubmitEditing={() => focusInput(productRef.current)}
+      />
       <View style={styles.row}>
         <TextField ref={productRef} label="Product" value={details.draft.product} readOnly={!details.editing} onChangeText={v => details.setDraft(d => ({ ...d, product: v }))} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => focusInput(yearRef.current)} />
         <TextField ref={yearRef} label="Year Established" value={details.draft.yearEstablished} readOnly={!details.editing} onChangeText={v => details.setDraft(d => ({ ...d, yearEstablished: v }))} keyboardType="numeric" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => focusInput(isNonOperational ? sinceRef.current : hoursRef.current)} />

@@ -258,4 +258,36 @@ describe('EstablishmentInfoSections Establishment Details validation', () => {
     expect(callArgs.fields).not.toHaveProperty('productLines');
     expect(onSaved).toHaveBeenCalledTimes(1);
   });
+
+  it('shows the coordinates read-only with no Pin on map button until editing starts', () => {
+    const r = render(
+      <EstablishmentInfoSections establishment={{ ...baseEstablishment, geoLat: 11.144, geoLng: 119.395 }} canEdit onSaved={jest.fn()} />,
+    );
+    const section = findSection(r, DETAILS_TITLE);
+    const values = section.findAll((n) => n.type === Text).map((n) => n.props.children);
+    expect(values).toEqual(expect.arrayContaining(['11.144', '119.395']));
+    expect(section.findAll((n) => n.type === TouchableOpacity && n.props?.accessibilityLabel === 'Pin on map')).toHaveLength(0);
+  });
+
+  it('patches edited coordinates as numbers, and empty ones as null', async () => {
+    const onSaved = jest.fn();
+    const r = render(<EstablishmentInfoSections establishment={baseEstablishment} canEdit onSaved={onSaved} />);
+    let section = startEditingDetails(r);
+    expect(section.findAll((n) => n.type === TouchableOpacity && n.props?.accessibilityLabel === 'Pin on map')).toHaveLength(1);
+
+    const latInput = section.findAll((n) => n.type === TextInput && n.props.placeholder === 'e.g. 11.144')[0];
+    TestRenderer.act(() => {
+      latInput.props.onChangeText('11.144988');
+    });
+    section = findSection(r, DETAILS_TITLE);
+    await TestRenderer.act(async () => {
+      findButtonByLabelWithin(section, 'Save').props.onPress();
+    });
+
+    expect(patchEstablishmentRecord).toHaveBeenCalledWith({
+      estabId: 'estab-1',
+      fields: expect.objectContaining({ geoLat: 11.144988, geoLng: null }),
+    });
+    expect(onSaved).toHaveBeenCalledTimes(1);
+  });
 });
