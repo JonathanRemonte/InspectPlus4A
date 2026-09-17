@@ -18,6 +18,7 @@ import { PROVINCE_OPTIONS, getCityOptions, getBarangayOptions } from '../../../c
 import { maskFlexibleDate, isValidFlexibleDate, FLEXIBLE_DATE_HINT, FLEXIBLE_DATE_INVALID_HINT } from '../../../utils/flexibleDate';
 import { TextField, SelectField, DateField, RadioGroup, useScrollToInput, focusInput } from '../../../components/form';
 import { emptyGeneralInfoForm, GeneralInfoFormState } from '../types';
+import { CoordinateFields } from '../../location/components/CoordinateFields';
 
 // Card shrinks to leave room for the keyboard, capped so it never grows
 // past 85% of the window when the keyboard is hidden.
@@ -171,7 +172,7 @@ export const NewEstablishmentModal: React.FC<NewEstablishmentModalProps> = ({
                 placeholder="Street / building / lot no. (if known)"
                 returnKeyType="next"
                 blurOnSubmit={false}
-                onSubmitEditing={() => focusInput(latRef.current)}
+                onSubmitEditing={() => focusInput(natureRef.current)}
                 onFocus={() => scrollToInput(addressRef)}
               />
             </View>
@@ -204,32 +205,6 @@ export const NewEstablishmentModal: React.FC<NewEstablishmentModalProps> = ({
                 required
               />
             </View>
-            <View style={styles.row}>
-              <TextField
-                ref={latRef}
-                label="Latitude"
-                value={form.geoLat}
-                onChangeText={geoLat => setForm({ ...form, geoLat })}
-                keyboardType="numeric"
-                placeholder="e.g. 11.144"
-                returnKeyType="next"
-                blurOnSubmit={false}
-                onSubmitEditing={() => focusInput(lngRef.current)}
-                onFocus={() => scrollToInput(latRef)}
-              />
-              <TextField
-                ref={lngRef}
-                label="Longitude"
-                value={form.geoLng}
-                onChangeText={geoLng => setForm({ ...form, geoLng })}
-                keyboardType="numeric"
-                placeholder="e.g. 119.395"
-                returnKeyType="next"
-                blurOnSubmit={false}
-                onSubmitEditing={() => focusInput(natureRef.current)}
-                onFocus={() => scrollToInput(lngRef)}
-              />
-            </View>
             <TextField
               ref={natureRef}
               label="Nature of Business"
@@ -248,8 +223,19 @@ export const NewEstablishmentModal: React.FC<NewEstablishmentModalProps> = ({
               onChangeText={psicCode => setForm({ ...form, psicCode })}
               returnKeyType="next"
               blurOnSubmit={false}
-              onSubmitEditing={() => focusInput(inspectionDateRef.current)}
+              onSubmitEditing={() => focusInput(latRef.current)}
               onFocus={() => scrollToInput(psicRef)}
+            />
+            <CoordinateFields
+              lat={form.geoLat}
+              lng={form.geoLng}
+              onChange={({ lat, lng }) => setForm({ ...form, geoLat: lat, geoLng: lng })}
+              packName="estab:pending"
+              latRef={latRef}
+              lngRef={lngRef}
+              onLngSubmitEditing={() => focusInput(inspectionDateRef.current)}
+              onLatFocus={() => scrollToInput(latRef)}
+              onLngFocus={() => scrollToInput(lngRef)}
             />
             <DateField
               ref={inspectionDateRef}
