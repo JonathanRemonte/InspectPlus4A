@@ -1,7 +1,7 @@
 # Map Location Picker — Design
 
 **Date:** 2026-09-17
-**Status:** Approved, awaiting implementation plan
+**Status:** Implemented — see docs/superpowers/plans/2026-09-17-map-location-picker.md
 
 ## Goal
 
