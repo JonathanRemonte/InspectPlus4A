@@ -109,4 +109,37 @@ describe('useDeviceLocation', () => {
     });
     expect(fix).toBeNull();
   });
+
+  it('reset() clears status and message back to idle but keeps fix and permissionGranted', async () => {
+    mockLocation.requestForegroundPermissionsAsync.mockResolvedValue({ status: 'denied' });
+    renderHook();
+    await TestRenderer.act(async () => {
+      await latest.locate();
+    });
+    expect(latest.status).toBe('denied');
+    expect(latest.message).toBe('Location permission was denied.');
+
+    TestRenderer.act(() => {
+      latest.reset();
+    });
+    expect(latest.status).toBe('idle');
+    expect(latest.message).toBeNull();
+  });
+
+  it('reset() after a successful fix keeps the fix and permissionGranted intact', async () => {
+    renderHook();
+    await TestRenderer.act(async () => {
+      await latest.locate();
+    });
+    expect(latest.status).toBe('located');
+    expect(latest.fix).toEqual({ lat: 11.144, lng: 119.395 });
+    expect(latest.permissionGranted).toBe(true);
+
+    TestRenderer.act(() => {
+      latest.reset();
+    });
+    expect(latest.status).toBe('idle');
+    expect(latest.fix).toEqual({ lat: 11.144, lng: 119.395 });
+    expect(latest.permissionGranted).toBe(true);
+  });
 });

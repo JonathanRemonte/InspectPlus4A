@@ -121,6 +121,24 @@ describe('LocationPickerModal — GPS button', () => {
     expect(note.props.children).toBe('Location permission was denied.');
     expect(findButton(r, 'Use my GPS position').props.disabled).toBeFalsy();
   });
+
+  it('clears a stale GPS note when the modal closes and reopens', async () => {
+    mockLocation.requestForegroundPermissionsAsync.mockResolvedValue({ status: 'denied' });
+    const r = await render(<LocationPickerModal {...baseProps} />);
+    await TestRenderer.act(async () => {
+      findButton(r, 'Use my GPS position').props.onPress();
+    });
+    expect(r.root.findAll(n => n.type === Text && n.props.testID === 'gps-note')).toHaveLength(1);
+
+    await TestRenderer.act(async () => {
+      r.update(<LocationPickerModal {...baseProps} visible={false} />);
+    });
+    await TestRenderer.act(async () => {
+      r.update(<LocationPickerModal {...baseProps} visible />);
+    });
+
+    expect(r.root.findAll(n => n.type === Text && n.props.testID === 'gps-note')).toHaveLength(0);
+  });
 });
 
 describe('LocationPickerModal — confirm / cancel', () => {

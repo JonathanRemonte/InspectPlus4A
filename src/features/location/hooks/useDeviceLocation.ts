@@ -73,7 +73,15 @@ export function useDeviceLocation() {
     }
   }, []);
 
+  // Back to idle so a stale denied/unavailable/failed message doesn't
+  // reappear next time the picker opens. `fix` and `permissionGranted` are
+  // left alone: a previous fix is still a real fix, and a granted
+  // permission is still granted.
+  const reset = useCallback(() => {
+    setStatus('idle');
+  }, []);
+
   const message = status === 'denied' || status === 'unavailable' || status === 'failed' ? MESSAGES[status] : null;
 
-  return { status, fix, message, permissionGranted, locate, getLastKnownFix };
+  return { status, fix, message, permissionGranted, locate, getLastKnownFix, reset };
 }

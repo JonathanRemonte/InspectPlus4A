@@ -75,7 +75,16 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     if (!visible) return;
     setCenter({ lat: initialCamera.center[1], lng: initialCamera.center[0] });
     setStyleFailed(false);
-  }, [visible, initialCamera]);
+    // Modals in this codebase stay mounted and only toggle `visible` (see
+    // HomeHeader's SyncOptionsModal), so a denied/unavailable/failed note
+    // from a previous open would otherwise still be showing on reopen.
+    // `gps.reset` is a stable `useCallback` reference; `gps` itself is a
+    // fresh object every render, so depending on the whole object here
+    // would re-run this effect (and clear the note) on every keystroke
+    // elsewhere in the tree, not just when the modal opens.
+    gps.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, initialCamera, gps.reset]);
 
   // Only when the caller gave us nothing: a silent read of the phone's
   // last position (no prompt) to open somewhere near the inspector.
@@ -112,7 +121,11 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     if (!fix) return;
     setCenter(fix);
     cameraRef.current?.flyTo({ center: [fix.lng, fix.lat], zoom: PIN_ZOOM, duration: FLY_DURATION_MS });
-  }, [gps]);
+    // `gps.locate` is a stable `useCallback` reference; `gps` itself is a
+    // fresh object every render, so depending on it would rebuild this
+    // callback (and any child re-render it triggers) on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gps.locate]);
 
   const handleConfirm = useCallback(() => {
     const picked = { lat: roundCoordinate(center.lat), lng: roundCoordinate(center.lng) };
