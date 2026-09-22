@@ -126,6 +126,41 @@ describe('useDeviceLocation', () => {
     expect(latest.message).toBeNull();
   });
 
+  it('checkPermission() silently reflects an already-granted permission without prompting', async () => {
+    renderHook();
+    let granted: boolean = false;
+    await TestRenderer.act(async () => {
+      granted = await latest.checkPermission();
+    });
+    expect(granted).toBe(true);
+    expect(latest.permissionGranted).toBe(true);
+    expect(mockLocation.requestForegroundPermissionsAsync).not.toHaveBeenCalled();
+    expect(mockLocation.getCurrentPositionAsync).not.toHaveBeenCalled();
+  });
+
+  it('checkPermission() reports false and never prompts when permission is not granted', async () => {
+    mockLocation.getForegroundPermissionsAsync.mockResolvedValue({ status: 'denied' });
+    renderHook();
+    let granted: boolean = true;
+    await TestRenderer.act(async () => {
+      granted = await latest.checkPermission();
+    });
+    expect(granted).toBe(false);
+    expect(latest.permissionGranted).toBe(false);
+    expect(mockLocation.requestForegroundPermissionsAsync).not.toHaveBeenCalled();
+  });
+
+  it('checkPermission() swallows errors and reports false', async () => {
+    mockLocation.getForegroundPermissionsAsync.mockRejectedValue(new Error('native module unavailable'));
+    renderHook();
+    let granted: boolean = true;
+    await TestRenderer.act(async () => {
+      granted = await latest.checkPermission();
+    });
+    expect(granted).toBe(false);
+    expect(latest.permissionGranted).toBe(false);
+  });
+
   it('reset() after a successful fix keeps the fix and permissionGranted intact', async () => {
     renderHook();
     await TestRenderer.act(async () => {

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import * as Location from 'expo-location';
 import { withTimeout } from '../../../utils/withTimeout';
 
@@ -73,6 +73,20 @@ export function useDeviceLocation() {
     }
   }, []);
 
+  // A silent read of the current permission state — never prompts. Used to
+  // light up the `UserLocation` dot on open when permission was already
+  // granted in a previous session, without waiting for the GPS button.
+  const checkPermission = useCallback(async (): Promise<boolean> => {
+    try {
+      const { status: permission } = await Location.getForegroundPermissionsAsync();
+      const granted = permission === 'granted';
+      setPermissionGranted(granted);
+      return granted;
+    } catch {
+      return false;
+    }
+  }, []);
+
   // Back to idle so a stale denied/unavailable/failed message doesn't
   // reappear next time the picker opens. `fix` and `permissionGranted` are
   // left alone: a previous fix is still a real fix, and a granted
@@ -83,5 +97,12 @@ export function useDeviceLocation() {
 
   const message = status === 'denied' || status === 'unavailable' || status === 'failed' ? MESSAGES[status] : null;
 
-  return { status, fix, message, permissionGranted, locate, getLastKnownFix, reset };
+  // Memoized so the object itself only changes identity when one of its own
+  // fields does — callers (LocationPickerModal) that need the whole object,
+  // or that destructure a stable callback like `locate` out of it, don't
+  // get a fresh reference (and re-run their own effects) on every render.
+  return useMemo(
+    () => ({ status, fix, message, permissionGranted, locate, getLastKnownFix, checkPermission, reset }),
+    [status, fix, message, permissionGranted, locate, getLastKnownFix, checkPermission, reset],
+  );
 }

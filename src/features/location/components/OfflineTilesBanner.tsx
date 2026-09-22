@@ -9,7 +9,10 @@ import { Type } from '../../../design/typography';
 // Informational only: it sits over the map and explains why the map may be
 // blank. It never gates the pin, the readout, GPS or Confirm.
 export const OfflineTilesBanner: React.FC = () => (
-  <View style={styles.banner} testID="offline-tiles-banner" accessibilityRole="alert">
+  // pointerEvents="none": the banner has no controls of its own and sits
+  // over the top strip of the map — without this it would swallow touches
+  // meant for the map underneath.
+  <View style={styles.banner} pointerEvents="none" testID="offline-tiles-banner" accessibilityRole="alert">
     <Ionicons name="cloud-offline-outline" size={14} color={Colors.warning.text} />
     <Text style={styles.text}>No map tiles available offline — your pin and GPS position still work.</Text>
   </View>

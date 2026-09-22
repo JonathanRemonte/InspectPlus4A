@@ -70,12 +70,19 @@ beforeEach(() => {
 });
 
 describe('LocationPickerModal — initial camera', () => {
-  it('opens on the field values at pin zoom when they are valid', async () => {
-    const r = await render(<LocationPickerModal {...baseProps} initialLat="11.144" initialLng="119.395" />);
-    expect(r.root.findByType(Camera).props.initialViewState).toEqual({ center: [119.395, 11.144], zoom: PIN_ZOOM });
-    expect(readout(r)).toBe('11.144000, 119.395000');
-    expect(cameraJumpTo).not.toHaveBeenCalled();
-  });
+  // Longer timeout: as the first test in this file it also pays for the
+  // one-time module init of maplibre/safe-area-context mocks, which under a
+  // full-suite parallel run can occasionally push past Jest's 5s default.
+  it(
+    'opens on the field values at pin zoom when they are valid',
+    async () => {
+      const r = await render(<LocationPickerModal {...baseProps} initialLat="11.144" initialLng="119.395" />);
+      expect(r.root.findByType(Camera).props.initialViewState).toEqual({ center: [119.395, 11.144], zoom: PIN_ZOOM });
+      expect(readout(r)).toBe('11.144000, 119.395000');
+      expect(cameraJumpTo).not.toHaveBeenCalled();
+    },
+    15000,
+  );
 
   it('opens on the overview, then jumps to the last known GPS fix when the fields are empty', async () => {
     mockLocation.getForegroundPermissionsAsync.mockResolvedValue({ status: 'granted' });
@@ -95,6 +102,22 @@ describe('LocationPickerModal — initial camera', () => {
     await render(<LocationPickerModal {...baseProps} />);
     expect(mockLocation.requestForegroundPermissionsAsync).not.toHaveBeenCalled();
     expect(mockLocation.getCurrentPositionAsync).not.toHaveBeenCalled();
+  });
+
+  it('re-seeds the camera when the same instance reopens with different initial coordinates', async () => {
+    const r = await render(<LocationPickerModal {...baseProps} initialLat="11.144" initialLng="119.395" />);
+    expect(r.root.findByType(Camera).props.initialViewState).toEqual({ center: [119.395, 11.144], zoom: PIN_ZOOM });
+    expect(readout(r)).toBe('11.144000, 119.395000');
+
+    await TestRenderer.act(async () => {
+      r.update(<LocationPickerModal {...baseProps} visible={false} initialLat="11.144" initialLng="119.395" />);
+    });
+    await TestRenderer.act(async () => {
+      r.update(<LocationPickerModal {...baseProps} visible initialLat="12.5" initialLng="121.1" />);
+    });
+
+    expect(r.root.findByType(Camera).props.initialViewState).toEqual({ center: [121.1, 12.5], zoom: PIN_ZOOM });
+    expect(readout(r)).toBe('12.500000, 121.100000');
   });
 });
 
@@ -138,6 +161,41 @@ describe('LocationPickerModal — GPS button', () => {
     });
 
     expect(r.root.findAll(n => n.type === Text && n.props.testID === 'gps-note')).toHaveLength(0);
+  });
+
+  it('drops a GPS fix that resolves after the picker is closed and reopened on a different site', async () => {
+    let resolveFix!: (value: { coords: { latitude: number; longitude: number } }) => void;
+    mockLocation.getCurrentPositionAsync.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          resolveFix = resolve;
+        }),
+    );
+
+    const r = await render(<LocationPickerModal {...baseProps} />);
+    await TestRenderer.act(async () => {
+      findButton(r, 'Use my GPS position').props.onPress();
+    });
+
+    // Closed (as if Cancel/back were pressed) then reopened on a known site
+    // while the 15s GPS fix is still in flight.
+    await TestRenderer.act(async () => {
+      r.update(<LocationPickerModal {...baseProps} visible={false} />);
+    });
+    await TestRenderer.act(async () => {
+      r.update(<LocationPickerModal {...baseProps} visible initialLat="11.144" initialLng="119.395" />);
+    });
+
+    // The stale fix now resolves — it must not touch the reopened pin.
+    await TestRenderer.act(async () => {
+      resolveFix({ coords: { latitude: 8.0, longitude: 125.0 } });
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(cameraFlyTo).not.toHaveBeenCalled();
+    expect(readout(r)).toBe('11.144000, 119.395000');
   });
 });
 

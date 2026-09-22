@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { NativeSyntheticEvent } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import NetInfo from '@react-native-community/netinfo';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -56,6 +57,26 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 }) => {
   const cameraRef = useRef<CameraRef>(null);
   const gps = useDeviceLocation();
+  // Destructured so effects/callbacks below can list exactly the function
+  // they use as a plain dependency — each is a stable `useCallback`
+  // reference from useDeviceLocation — instead of a `gps.foo` member
+  // expression, which eslint's exhaustive-deps can't verify is independent
+  // of the rest of `gps` and would otherwise want the whole object.
+  const { reset, checkPermission, getLastKnownFix, locate } = gps;
+
+  // Bumped every time `visible` turns true — one "generation" per open.
+  // `handleLocate` captures the current generation before its GPS await and
+  // checks it again after, so a fix that resolves after the picker was
+  // closed and reopened (possibly on a different site) never lands on the
+  // wrong open's pin.
+  const openGenRef = useRef(0);
+  // `visible` inside `handleLocate`'s closure is whatever it was when the
+  // button was pressed; this ref is always current, including after the
+  // async GPS call resolves.
+  const visibleRef = useRef(visible);
+  useEffect(() => {
+    visibleRef.current = visible;
+  }, [visible]);
 
   // Resolved once per open from the caller's values; the last-known-fix
   // fallback is applied asynchronously below because reading it is async.
@@ -73,18 +94,18 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 
   useEffect(() => {
     if (!visible) return;
+    openGenRef.current += 1;
     setCenter({ lat: initialCamera.center[1], lng: initialCamera.center[0] });
     setStyleFailed(false);
     // Modals in this codebase stay mounted and only toggle `visible` (see
     // HomeHeader's SyncOptionsModal), so a denied/unavailable/failed note
     // from a previous open would otherwise still be showing on reopen.
-    // `gps.reset` is a stable `useCallback` reference; `gps` itself is a
-    // fresh object every render, so depending on the whole object here
-    // would re-run this effect (and clear the note) on every keystroke
-    // elsewhere in the tree, not just when the modal opens.
-    gps.reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, initialCamera, gps.reset]);
+    reset();
+    // Silent check (no prompt): lights up the UserLocation dot right away
+    // when permission was already granted in an earlier session, instead
+    // of waiting for the inspector to press the GPS button.
+    void checkPermission();
+  }, [visible, initialCamera, reset, checkPermission]);
 
   // Only when the caller gave us nothing: a silent read of the phone's
   // last position (no prompt) to open somewhere near the inspector.
@@ -92,7 +113,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     if (!visible) return;
     if (parseLatLng(initialLat, initialLng)) return;
     let cancelled = false;
-    void gps.getLastKnownFix().then(fix => {
+    void getLastKnownFix().then(fix => {
       if (cancelled || !fix) return;
       const next = resolveInitialCamera({ lat: '', lng: '', lastFix: fix });
       setCenter({ lat: next.center[1], lng: next.center[0] });
@@ -101,8 +122,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
+  }, [visible, initialLat, initialLng, getLastKnownFix]);
 
   useEffect(() => {
     if (!visible) return;
@@ -117,15 +137,17 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   }, []);
 
   const handleLocate = useCallback(async () => {
-    const fix = await gps.locate();
+    const openGen = openGenRef.current;
+    const fix = await locate();
     if (!fix) return;
+    // Drop a fix that resolves after Cancel was pressed (the GPS call can
+    // take up to 15s), or after the picker was closed and reopened on a
+    // different site in that window — otherwise a known site's pin gets
+    // yanked to wherever the phone now is.
+    if (!visibleRef.current || openGenRef.current !== openGen) return;
     setCenter(fix);
     cameraRef.current?.flyTo({ center: [fix.lng, fix.lat], zoom: PIN_ZOOM, duration: FLY_DURATION_MS });
-    // `gps.locate` is a stable `useCallback` reference; `gps` itself is a
-    // fresh object every render, so depending on it would rebuild this
-    // callback (and any child re-render it triggers) on every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gps.locate]);
+  }, [locate]);
 
   const handleConfirm = useCallback(() => {
     const picked = { lat: roundCoordinate(center.lat), lng: roundCoordinate(center.lng) };
@@ -137,7 +159,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onCancel}>
-      <View style={styles.screen}>
+      <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <Ionicons name="map-outline" size={16} color={Colors.textWhite} />
@@ -156,6 +178,11 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
           <MapLibreMap
             style={styles.map}
             mapStyle={MAP_STYLE_URL}
+            // A SurfaceView (the Android default) doesn't follow its
+            // parent's view animation, so inside this slide-animated Modal
+            // the map could flash black or snap, and overlays could
+            // intermittently drop behind it, during the open/close animation.
+            androidView="texture"
             touchRotate={false}
             touchPitch={false}
             compass={false}
@@ -205,7 +232,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
           <Button label="Cancel" variant="subtle" onPress={onCancel} />
           <Button label="Use this location" variant="success" icon="checkmark" onPress={handleConfirm} />
         </View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 };
