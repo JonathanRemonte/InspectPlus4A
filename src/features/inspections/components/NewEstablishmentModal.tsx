@@ -19,6 +19,7 @@ import { maskFlexibleDate, isValidFlexibleDate, FLEXIBLE_DATE_HINT, FLEXIBLE_DAT
 import { TextField, SelectField, DateField, RadioGroup, useScrollToInput, focusInput } from '../../../components/form';
 import { emptyGeneralInfoForm, GeneralInfoFormState } from '../types';
 import { CoordinateFields } from '../../location/components/CoordinateFields';
+import { addressPatch } from '../../location/applyResolvedAddress';
 
 // Card shrinks to leave room for the keyboard, capped so it never grows
 // past 85% of the window when the keyboard is hidden.
@@ -161,7 +162,18 @@ export const NewEstablishmentModal: React.FC<NewEstablishmentModalProps> = ({
               placeholder="Enter establishment or company name"
               returnKeyType="next"
               blurOnSubmit={false}
-              onSubmitEditing={() => focusInput(addressRef.current)}
+              onSubmitEditing={() => focusInput(latRef.current)}
+            />
+            <CoordinateFields
+              lat={form.geoLat}
+              lng={form.geoLng}
+              onChange={({ lat, lng, address }) => setForm({ ...form, geoLat: lat, geoLng: lng, ...addressPatch(address) })}
+              packName="estab:pending"
+              latRef={latRef}
+              lngRef={lngRef}
+              onLngSubmitEditing={() => focusInput(addressRef.current)}
+              onLatFocus={() => scrollToInput(latRef)}
+              onLngFocus={() => scrollToInput(lngRef)}
             />
             <View style={styles.row}>
               <TextField
@@ -223,19 +235,8 @@ export const NewEstablishmentModal: React.FC<NewEstablishmentModalProps> = ({
               onChangeText={psicCode => setForm({ ...form, psicCode })}
               returnKeyType="next"
               blurOnSubmit={false}
-              onSubmitEditing={() => focusInput(latRef.current)}
+              onSubmitEditing={() => focusInput(inspectionDateRef.current)}
               onFocus={() => scrollToInput(psicRef)}
-            />
-            <CoordinateFields
-              lat={form.geoLat}
-              lng={form.geoLng}
-              onChange={({ lat, lng }) => setForm({ ...form, geoLat: lat, geoLng: lng })}
-              packName="estab:pending"
-              latRef={latRef}
-              lngRef={lngRef}
-              onLngSubmitEditing={() => focusInput(inspectionDateRef.current)}
-              onLatFocus={() => scrollToInput(latRef)}
-              onLngFocus={() => scrollToInput(lngRef)}
             />
             <DateField
               ref={inspectionDateRef}

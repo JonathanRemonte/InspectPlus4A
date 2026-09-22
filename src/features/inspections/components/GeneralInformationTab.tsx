@@ -12,6 +12,7 @@ import {
 import { PROVINCE_OPTIONS, getCityOptions, getBarangayOptions } from '../../../constants/provinces';
 import { maskFlexibleDate, isValidFlexibleDate, FLEXIBLE_DATE_HINT, FLEXIBLE_DATE_INVALID_HINT } from '../../../utils/flexibleDate';
 import { CoordinateFields } from '../../location/components/CoordinateFields';
+import { addressPatch } from '../../location/applyResolvedAddress';
 import type { GeneralInfoFormState } from '../types';
 
 const OPERATING_STATUS_OPTIONS = ['Operational', 'Temporarily Close', 'Non-Operational'];
@@ -88,11 +89,20 @@ export const GeneralInformationTab: React.FC<GeneralInformationTabProps> = ({
               textCase="upper"
               returnKeyType="next"
               blurOnSubmit={false}
-              onSubmitEditing={() => focusInput(addressRef.current)}
+              onSubmitEditing={() => focusInput(latRef.current)}
 
             />
           </View>
         )}
+        <CoordinateFields
+          lat={value.geoLat}
+          lng={value.geoLng}
+          onChange={({ lat, lng, address }) => onChange({ ...value, geoLat: lat, geoLng: lng, ...addressPatch(address) })}
+          packName={estabId ? `estab:${estabId}` : 'estab:pending'}
+          latRef={latRef}
+          lngRef={lngRef}
+          onLngSubmitEditing={() => focusInput(addressRef.current)}
+        />
         <View style={styles.row}>
           <TextField
             ref={addressRef}
@@ -154,19 +164,10 @@ export const GeneralInformationTab: React.FC<GeneralInformationTabProps> = ({
             onChangeText={psicCode => onChange({ ...value, psicCode })}
             returnKeyType="next"
             blurOnSubmit={false}
-            onSubmitEditing={() => focusInput(latRef.current)}
+            onSubmitEditing={() => focusInput(isNonOperational ? sinceRef.current : hoursRef.current)}
 
           />
         </View>
-        <CoordinateFields
-          lat={value.geoLat}
-          lng={value.geoLng}
-          onChange={({ lat, lng }) => onChange({ ...value, geoLat: lat, geoLng: lng })}
-          packName={estabId ? `estab:${estabId}` : 'estab:pending'}
-          latRef={latRef}
-          lngRef={lngRef}
-          onLngSubmitEditing={() => focusInput(isNonOperational ? sinceRef.current : hoursRef.current)}
-        />
         <View style={styles.row}>
           <SelectField
             label="Status of Operation"

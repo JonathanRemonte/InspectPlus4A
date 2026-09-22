@@ -2,7 +2,8 @@ import React from 'react';
 import { Text, TextInput, TouchableOpacity } from 'react-native';
 import TestRenderer from 'react-test-renderer';
 import { EstablishmentInfoSections } from './EstablishmentInfoSections';
-import { FormSection } from '../../../components/form';
+import { FormSection, SelectField } from '../../../components/form';
+import { LocationPickerModal } from '../../location/components/LocationPickerModal';
 import { patchEstablishmentRecord } from '../../inspections/establishmentPersistence';
 import type { EstablishmentDTO } from '../types';
 
@@ -289,5 +290,57 @@ describe('EstablishmentInfoSections Establishment Details validation', () => {
       fields: expect.objectContaining({ geoLat: 11.144988, geoLng: null }),
     });
     expect(onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it('fills Province, City and Barangay from a confirmed pin and leaves the address line alone', async () => {
+    const onSaved = jest.fn();
+    const r = render(
+      <EstablishmentInfoSections
+        establishment={{ ...baseEstablishment, addressLine: '2713 Zamora St.', province: 'Romblon', city: 'Odiongan', barangay: 'Dapawan' }}
+        canEdit
+        onSaved={onSaved}
+      />,
+    );
+    let section = startEditingDetails(r);
+    await TestRenderer.act(async () => {
+      section.findByType(LocationPickerModal).props.onConfirm({
+        lat: 9.45777,
+        lng: 118.47504,
+        address: { province: 'Palawan', city: 'Aborlan', barangay: 'Cabigaan' },
+      });
+    });
+    section = findSection(r, DETAILS_TITLE);
+    const selectValues = Object.fromEntries(section.findAllByType(SelectField).map(n => [n.props.label, n.props.value]));
+    expect(selectValues).toMatchObject({ Province: 'Palawan', 'City / Municipality': 'Aborlan', Barangay: 'Cabigaan' });
+    const addressInput = section.findAll(n => n.type === TextInput && n.props.placeholder === 'Street / building / lot no. (if known)')[0];
+    expect(addressInput.props.value).toBe('2713 Zamora St.');
+
+    await TestRenderer.act(async () => {
+      findButtonByLabelWithin(section, 'Save').props.onPress();
+    });
+    expect(patchEstablishmentRecord).toHaveBeenCalledWith({
+      estabId: 'estab-1',
+      fields: expect.objectContaining({
+        province: 'Palawan',
+        city: 'Aborlan',
+        barangay: 'Cabigaan',
+        geoLat: 9.45777,
+        geoLng: 118.47504,
+        addressLine: '2713 Zamora St.',
+      }),
+    });
+  });
+
+  it('keeps the dropdowns when the confirmed pin has no barangay', async () => {
+    const r = render(
+      <EstablishmentInfoSections establishment={{ ...baseEstablishment, province: 'Romblon', city: 'Odiongan', barangay: 'Dapawan' }} canEdit onSaved={jest.fn()} />,
+    );
+    let section = startEditingDetails(r);
+    await TestRenderer.act(async () => {
+      section.findByType(LocationPickerModal).props.onConfirm({ lat: 12, lng: 120.5, address: null });
+    });
+    section = findSection(r, DETAILS_TITLE);
+    const selectValues = Object.fromEntries(section.findAllByType(SelectField).map(n => [n.props.label, n.props.value]));
+    expect(selectValues).toMatchObject({ Province: 'Romblon', 'City / Municipality': 'Odiongan', Barangay: 'Dapawan' });
   });
 });
