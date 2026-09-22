@@ -45,7 +45,7 @@ src/features/location/
   mapConfig.ts                 style URL, MIMAROPA overview camera, cache/pack constants
   components/
     CoordinateFields.tsx       Latitude + Longitude TextFields + "Pin on map" button
-    LocationPickerModal.tsx    full-screen picker: MapView, crosshair, GPS button, readout, footer
+    LocationPickerModal.tsx    full-screen picker: Map, crosshair, GPS button, readout, footer
     OfflineTilesBanner.tsx     "No map tiles available offline…" strip
   hooks/
     useDeviceLocation.ts       permission + getCurrentPositionAsync, exposes fix/status
@@ -57,7 +57,7 @@ src/features/location/
 
 Props: `lat: string`, `lng: string`, `onChange({ lat, lng })`,
 `readOnly?`, `pickerTitle?`, `packName?` (used to name the offline pack —
-the establishment id where one exists, otherwise `pending`), plus the
+`estab:<estabId>` where one exists, otherwise `estab:pending`), plus the
 focus-chain props the surrounding forms already pass to `TextField`
 (`returnKeyType`, `onSubmitEditing`, `onFocus` per field via refs).
 
@@ -72,7 +72,7 @@ owns only the modal's open/closed state; values live with the caller.
 Full-screen `Modal` with the app's dialog chrome (navy header, green rule,
 close button; footer with **Cancel** and **Use this location**).
 
-- **Crosshair.** A fixed pin graphic centred over the `MapView`; the map
+- **Crosshair.** A fixed pin graphic centred over the `Map`; the map
   moves under it. `onRegionDidChange` reads the camera centre into local
   state, which drives the readout (`11.144000, 119.395000`) under the map.
 - **Initial camera.** In order: the caller's current values when both
@@ -114,7 +114,7 @@ close button; footer with **Cancel** and **Use this location**).
 
 1. **`NewEstablishmentModal`** — the lat/lng row becomes
    `CoordinateFields` and moves below Nature of Business / PSIC Code.
-   `packName` is `pending`. Focus chain: PSIC → Latitude → Longitude →
+   `packName` is `estab:pending`. Focus chain: PSIC → Latitude → Longitude →
    Inspection Date.
 2. **`EstablishmentInfoSections` Details section** — `geoLat` / `geoLng`
    join `DetailsFields` as strings (`''` when null), `toDetailsFields` /
@@ -147,7 +147,7 @@ or sync changes.
 ## Testing
 
 - **Unit (Jest).** A `@maplibre/maplibre-react-native` mock in
-  `jest.setup.js` exposing `MapView`, `Camera`, `UserLocation`,
+  `jest.setup.js` exposing `Map`, `Camera`, `UserLocation`,
   `offlineManager` and `setMaximumAmbientCacheSize` as spies.
   - `coordinates.ts` — parsing, rounding, validity bounds.
   - `CoordinateFields` — renders both values; button hidden when
