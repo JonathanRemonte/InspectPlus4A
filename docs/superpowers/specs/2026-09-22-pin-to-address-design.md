@@ -1,7 +1,7 @@
 # Pin to Address — Design
 
 **Date:** 2026-09-22
-**Status:** Approved, awaiting implementation plan
+**Status:** Implemented — see docs/superpowers/plans/2026-09-22-pin-to-address.md
 **Extends:** `2026-09-17-map-location-picker-design.md` (same branch, same APK)
 
 ## Goal
