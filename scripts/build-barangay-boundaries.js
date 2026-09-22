@@ -21,7 +21,11 @@ const {
   matchFeature,
 } = require('./barangayNameMatch');
 
-const BASE = 'https://raw.githubusercontent.com/faeldon/philippines-json-maps/master/2023/geojson';
+// Pinned to the commit `master` pointed at on 2026-09-22 (via
+// `gh api repos/faeldon/philippines-json-maps/commits/master --jq .sha`),
+// not `master` itself, so a future regeneration can't silently pull
+// different upstream geometry than the bundle currently committed.
+const BASE = 'https://raw.githubusercontent.com/faeldon/philippines-json-maps/8eeead560246863c8c820c31ca6fbca81a279477/2023/geojson';
 const PROVINCE_CODES = [1704000000, 1705100000, 1705200000, 1705300000, 1705900000];
 const PUERTO_PRINCESA = 1731500000;
 const OUT = path.join(__dirname, '..', 'src', 'data', 'mimaropaBoundaries.json');
@@ -41,8 +45,19 @@ async function fetchJson(relPath, dir) {
   if (!fs.existsSync(file)) {
     const res = await fetch(`${BASE}/${relPath}`);
     if (!res.ok) throw new Error(`${res.status} fetching ${relPath}`);
+    const text = await res.text();
+    // Parse before caching: an HTML error page or a truncated body must
+    // throw here, not get written to disk and look like a hard parse
+    // failure on every run afterwards.
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (err) {
+      throw new Error(`invalid JSON fetching ${BASE}/${relPath}: ${err.message}`);
+    }
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(file, await res.text());
+    fs.writeFileSync(file, text);
+    return parsed;
   }
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
@@ -59,6 +74,56 @@ function flattenRing(ring) {
   for (const [lng, lat] of pts) out.push(round(lng), round(lat));
   return out;
 }
+
+// Ray casting over flat [lng, lat, lng, lat, …] rings — a small CommonJS
+// copy of src/features/location/pointInPolygon.ts, which is the source of
+// truth. This script can't `require` that TypeScript module directly, so
+// this mirror exists purely to validate geometry at build time; keep it in
+// sync with pointInPolygon.ts if that logic ever changes.
+function pointInRing(lng, lat, ring) {
+  let inside = false;
+  const n = ring.length / 2;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const xi = ring[i * 2];
+    const yi = ring[i * 2 + 1];
+    const xj = ring[j * 2];
+    const yj = ring[j * 2 + 1];
+    const crosses = yi > lat !== yj > lat && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
+    if (crosses) inside = !inside;
+  }
+  return inside;
+}
+
+function pointInPolygon(lng, lat, rings) {
+  if (!pointInRing(lng, lat, rings[0])) return false;
+  for (let i = 1; i < rings.length; i++) {
+    if (pointInRing(lng, lat, rings[i])) return false;
+  }
+  return true;
+}
+
+// Mirrors resolveAddress.ts's smallest-bbox-area tie-break, so this
+// validation exercises the same rule the app applies at runtime.
+function resolveBySmallestBbox(allEntries, lat, lng) {
+  let best = null;
+  let bestArea = Infinity;
+  for (const e of allEntries) {
+    const [w, s, east, n] = e.bbox;
+    if (lng < w || lng > east || lat < s || lat > n) continue;
+    if (!pointInPolygon(lng, lat, e.rings)) continue;
+    const area = (east - w) * (n - s);
+    if (area < bestArea) {
+      bestArea = area;
+      best = e;
+    }
+  }
+  return best;
+}
+
+// MIMAROPA's envelope, generously padded — anything outside this is not a
+// simplification artifact, it's a bad coordinate (wrong axis order, wrong
+// units, a stray feature from another region).
+const MIMAROPA_ENVELOPE = { w: 114.0, s: 7.0, e: 123.5, n: 14.5 };
 
 function polygonEntry(base, polygonCoords) {
   const rings = polygonCoords.map(flattenRing);
@@ -135,6 +200,35 @@ async function main() {
       for (const barangay of barangays) {
         if (!seenByKey.has(`${province}|${city}|${barangay}`)) errors.push(`NO POLYGON: ${barangay}, ${city}, ${province}`);
       }
+    }
+  }
+
+  // Geometry sanity, write-blocking like the checks above. Name matching
+  // can be perfect and the geometry still be garbage (wrong axis order, a
+  // simplification bug, a barangay fully swallowed by a neighbour's
+  // polygon) — neither of the checks above would catch that.
+  for (const e of entries) {
+    const [w, s, east, n] = e.bbox;
+    if (w < MIMAROPA_ENVELOPE.w || s < MIMAROPA_ENVELOPE.s || east > MIMAROPA_ENVELOPE.e || n > MIMAROPA_ENVELOPE.n) {
+      errors.push(`BBOX OUTSIDE MIMAROPA: ${e.b}, ${e.c}, ${e.p} bbox=[${e.bbox.join(', ')}]`);
+    }
+  }
+  for (const e of entries) {
+    const ring = e.rings[0];
+    let sx = 0;
+    let sy = 0;
+    const count = ring.length / 2;
+    for (let i = 0; i < ring.length; i += 2) {
+      sx += ring[i];
+      sy += ring[i + 1];
+    }
+    const lng = sx / count;
+    const lat = sy / count;
+    if (!pointInPolygon(lng, lat, e.rings)) continue; // concave: centroid may fall outside its own polygon
+    const resolved = resolveBySmallestBbox(entries, lat, lng);
+    if (!resolved || resolved.p !== e.p || resolved.c !== e.c || resolved.b !== e.b) {
+      const got = resolved ? `${resolved.b}, ${resolved.c}, ${resolved.p}` : 'null';
+      errors.push(`CENTROID MISMATCH: ${e.b}, ${e.c}, ${e.p} centroid resolves to ${got}`);
     }
   }
 
