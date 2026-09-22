@@ -172,6 +172,7 @@ export const LOCATIONS: Record<string, Record<string, string[]>> = {
       "Mapaya",
       "Monte Claro",
       "Murtha",
+      "Naibuan",
       "Natandol",
       "Pag-Asa",
       "Pawican",
