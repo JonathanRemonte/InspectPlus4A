@@ -48,8 +48,8 @@ still unmatched fails the build script rather than shipping a gap.
 
 ```
 scripts/
-  build-barangay-boundaries.mjs   PSGC medres files → src/data/mimaropaBoundaries.json
-  barangayNameMatch.mjs           normalizer + alias table (unit-tested)
+  build-barangay-boundaries.js    PSGC medres files → src/data/mimaropaBoundaries.json
+  barangayNameMatch.js            normalizer + alias table (unit-tested)
 src/data/
   mimaropaBoundaries.json         [{ p, c, b, bbox, rings }] — generated, committed
 src/features/location/
@@ -59,7 +59,8 @@ src/features/location/
 
 ### Build script
 
-`node scripts/build-barangay-boundaries.mjs [--from <dir>]`
+`node scripts/build-barangay-boundaries.js [--from <dir>]` — CommonJS, like
+the repo's other `scripts/docx-*.js` build scripts.
 
 1. Reads the 73 medres `bgysubmuns-municity-17*.json` files (downloaded
    from the repo's `2023/geojson/municities/medres/` into a local
@@ -68,7 +69,7 @@ src/features/location/
    `1731500000` → Palawan), municipality from the `municities-provdist-*`
    files' `adm3_en`, and barangay from `adm4_en`.
 3. Maps each `(province, municipality, barangay)` triple to the exact
-   strings in `mimaropaLocations.ts` through `barangayNameMatch.mjs`:
+   strings in `mimaropaLocations.ts` through `barangayNameMatch.js`:
    - normalize both sides: NFKD → ASCII, lowercase, strip parentheticals,
      strip a trailing `pob.`/`poblacion` marker, Roman numerals → Arabic,
      drop non-alphanumerics;
@@ -97,11 +98,36 @@ export function resolveAddress(lat: number, lng: number): ResolvedAddress | null
   first require, so app start pays nothing).
 - Bbox prefilter, then `pointInPolygon(lng, lat, rings)` — ray casting;
   a point inside the outer ring and inside any hole is outside.
-- First hit wins; on-border ambiguity is accepted (a pin exactly on a
-  boundary line is a coin toss either way and the inspector can correct
-  the dropdown).
+- Smallest-bbox-area match wins, not first hit: the scan checks every
+  entry and keeps the match whose bbox area `(e-w)*(n-s)` is smallest,
+  rather than stopping at the first polygon that contains the point. A
+  barangay whose simplified polygon lies entirely inside a neighbour's
+  simplified polygon would otherwise be permanently unreachable — Tagwak
+  (Boac, Marinduque) sits wholly inside Pawa's polygon, and "Pawa" sorts
+  first alphabetically, so first-hit made Tagwak unreachable by any
+  coordinate. On-border ambiguity elsewhere is still accepted (a pin
+  exactly on a boundary line is a coin toss either way and the inspector
+  can correct the dropdown).
 - Returns the app's own strings, so callers assign them straight to the
   cascading `SelectField`s, whose option lists derive from those values.
+
+### Measured accuracy
+
+Measured against the hires files as ground truth, over 3,760 uniformly
+sampled interior points across Boac, Victoria and Kalayaan:
+
+- Exact barangay: 84.7%. Right municipality, wrong barangay: 12.4%. Wrong
+  municipality: 0.2%. `null` (coverage gap): 2.7%.
+- By distance from the true barangay's border: 0–100 m → 72.1%,
+  100–250 m → 85.0%, 250–500 m → 96.1%, 500 m–1 km → 99.8%, >1 km → 100%.
+
+Uniform sampling over-weights border strips relative to where
+establishments actually sit — most pins land well inside a barangay,
+far from the low-accuracy band above. The live readout also lets the
+inspector see and correct a wrong resolution before confirming. For
+scale, the median polygon has 11 vertices (10th percentile: 5) — the
+medres simplification is coarse enough that border accuracy, not
+interior accuracy, is the binding constraint.
 
 ### Picker
 
@@ -159,6 +185,16 @@ Address Line) in all four forms. Focus chain: Name → Latitude → Longitude
 - `EstablishmentInfoSections.test.tsx` — confirming a pin in edit mode
   sets Province/City/Barangay and leaves Address Line alone; the saved
   patch carries the new values.
+
+### Device checklist
+
+- A coastal/waterfront site. A genuine ~230 m coverage gap exists at
+  Puerto Galera town, where the nearest polygon vertex is 0.23 km away —
+  the pin resolves to `null` and the picker shows the muted "Outside…"
+  line; confirm that this is handled gracefully, not as an error.
+- A site near a barangay border, to see the accuracy trade-off described
+  above first-hand and confirm the inspector can correct the dropdown
+  when the resolved barangay is the neighbour instead of the true one.
 
 ## Out of scope
 
