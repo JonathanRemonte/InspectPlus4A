@@ -164,7 +164,12 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   }, [center, online, packName, onConfirm]);
 
   const showBanner = !online || styleFailed;
-  const liveAddress = useMemo(() => resolveAddress(center.lat, center.lng), [center]);
+  // Gated on `visible`: this modal stays mounted with `visible={pickerOpen}`
+  // toggling (see the note above on reset()), so without the gate this
+  // useMemo — and the 866 KB bundle's lazy `require` inside resolveAddress —
+  // would run the moment the surrounding form first renders, not when the
+  // picker actually opens.
+  const liveAddress = useMemo(() => (visible ? resolveAddress(center.lat, center.lng) : null), [visible, center]);
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onCancel}>

@@ -18,6 +18,15 @@ describe('resolveAddress', () => {
     expect(resolveAddress(14.5995, 120.9842)).toBeNull(); // Manila
   });
 
+  // Tagwak (Boac, Marinduque) lies entirely inside Pawa's simplified
+  // polygon, and "Pawa" sorts first alphabetically — under a first-hit
+  // tie-break no coordinate could ever resolve to Tagwak. This is Tagwak's
+  // own vertex centroid (verified inside its ring by the same ray-casting
+  // logic pointInPolygon uses), rounded to the bundle's 5 dp.
+  it('resolves a point inside Tagwak to Tagwak, not the enclosing Pawa polygon', () => {
+    expect(resolveAddress(13.44483, 121.8763)).toEqual({ province: 'Marinduque', city: 'Boac (Capital)', barangay: 'Tagwak' });
+  });
+
   it('resolves every polygon whose vertex centroid lies inside it back to its own barangay', () => {
     let checked = 0;
     let mismatches = 0;
@@ -36,10 +45,14 @@ describe('resolveAddress', () => {
       const got = resolveAddress(lat, lng);
       if (!got || got.province !== e.p || got.city !== e.c || got.barangay !== e.b) mismatches += 1;
     }
-    expect(checked).toBeGreaterThan(1000);
-    // Overlapping simplified borders can hand a centroid to a neighbour;
-    // that must stay rare.
-    expect(mismatches / checked).toBeLessThan(0.02);
+    // Measured over the real bundle: 1811 centroids pass the concave
+    // filter above. Expected 0 mismatches now that resolveAddress breaks
+    // ties by smallest bbox area instead of first hit — that rule is what
+    // fixed the one mismatch this sweep used to find (Tagwak's centroid
+    // used to resolve to the enclosing Pawa polygon; see the Tagwak test
+    // above).
+    expect(checked).toBeGreaterThan(1700);
+    expect(mismatches).toBe(0);
   });
 });
 
