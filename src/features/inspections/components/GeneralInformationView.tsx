@@ -11,6 +11,8 @@ import { SectionEditActions } from './SectionEditActions';
 import { useEditableSection } from '../hooks/useEditableSection';
 import { SimpleTable } from './ComplianceReadPrimitives';
 import { DenrPermitsSection } from './DenrPermitsSection';
+import { CoordinateFields } from '../../location/components/CoordinateFields';
+import { addressPatch } from '../../location/applyResolvedAddress';
 import type { EstablishmentSnapshot, PermitSnapshotItem, ProductLineItem } from '../../../services/sync/syncTypes';
 import type { EstablishmentDTO } from '../../establishments/types';
 
@@ -252,6 +254,9 @@ interface DetailsSectionProps {
   reportId: string;
   snapshot: EstablishmentSnapshot;
   liveDetails: DetailsFields | null;
+  // The live establishment's id, for naming the map picker's offline pack.
+  // A primitive, so it doesn't disturb the memo.
+  estabId: string | null;
   canEdit: boolean;
   onSaved: () => void;
 }
@@ -260,6 +265,7 @@ const DetailsSection = React.memo(function DetailsSection({
   reportId,
   snapshot,
   liveDetails,
+  estabId,
   canEdit,
   onSaved,
 }: DetailsSectionProps) {
@@ -302,8 +308,20 @@ const DetailsSection = React.memo(function DetailsSection({
         <TextField label="Establishment Name" value={details.draft.name} readOnly={!details.editing} onChangeText={v => details.setDraft(d => ({ ...d, name: v }))} textCase="upper" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => focusInput(formerNameRef.current)} changeNote={liveDetails ? liveRecordNote(details.draft.name, liveDetails.name) : undefined} />
       </View>
       <View style={styles.row}>
-        <TextField ref={formerNameRef} label="Former Establishment Name" value={details.draft.formerName} readOnly={!details.editing} onChangeText={v => details.setDraft(d => ({ ...d, formerName: v }))} textCase="upper" placeholder="—" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => focusInput(addressRef.current)} changeNote={liveDetails ? liveRecordNote(details.draft.formerName, liveDetails.formerName) : undefined} />
+        <TextField ref={formerNameRef} label="Former Establishment Name" value={details.draft.formerName} readOnly={!details.editing} onChangeText={v => details.setDraft(d => ({ ...d, formerName: v }))} textCase="upper" placeholder="—" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => focusInput(latRef.current)} changeNote={liveDetails ? liveRecordNote(details.draft.formerName, liveDetails.formerName) : undefined} />
       </View>
+      <CoordinateFields
+        lat={details.draft.geoLat}
+        lng={details.draft.geoLng}
+        onChange={({ lat, lng, address }) => details.setDraft(d => ({ ...d, geoLat: lat, geoLng: lng, ...addressPatch(address) }))}
+        readOnly={!details.editing}
+        packName={estabId ? `estab:${estabId}` : 'estab:pending'}
+        latRef={latRef}
+        lngRef={lngRef}
+        onLngSubmitEditing={() => focusInput(addressRef.current)}
+        latChangeNote={liveDetails ? liveRecordNote(details.draft.geoLat, liveDetails.geoLat) : undefined}
+        lngChangeNote={liveDetails ? liveRecordNote(details.draft.geoLng, liveDetails.geoLng) : undefined}
+      />
       <View style={styles.row}>
         <TextField ref={addressRef} label="Address" value={details.draft.addressLine} readOnly={!details.editing} onChangeText={v => details.setDraft(d => ({ ...d, addressLine: v }))} placeholder="Street / building / lot no. (if known)" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => focusInput(natureRef.current)} changeNote={liveDetails ? liveRecordNote(details.draft.addressLine, liveDetails.addressLine) : undefined} />
       </View>
@@ -350,11 +368,7 @@ const DetailsSection = React.memo(function DetailsSection({
       </View>
       <View style={styles.row}>
         <TextField ref={natureRef} label="Nature of Business" value={details.draft.natureOfBusiness} readOnly={!details.editing} onChangeText={v => details.setDraft(d => ({ ...d, natureOfBusiness: v }))} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => focusInput(psicRef.current)} changeNote={liveDetails ? liveRecordNote(details.draft.natureOfBusiness, liveDetails.natureOfBusiness) : undefined} />
-        <TextField ref={psicRef} label="PSIC Code" value={details.draft.psicCode} readOnly={!details.editing} onChangeText={v => details.setDraft(d => ({ ...d, psicCode: v }))} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => focusInput(latRef.current)} changeNote={liveDetails ? liveRecordNote(details.draft.psicCode, liveDetails.psicCode) : undefined} />
-      </View>
-      <View style={styles.row}>
-        <TextField ref={latRef} label="Latitude" value={details.draft.geoLat} readOnly={!details.editing} onChangeText={v => details.setDraft(d => ({ ...d, geoLat: v }))} keyboardType="numeric" placeholder="e.g. 11.144" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => focusInput(lngRef.current)} changeNote={liveDetails ? liveRecordNote(details.draft.geoLat, liveDetails.geoLat) : undefined} />
-        <TextField ref={lngRef} label="Longitude" value={details.draft.geoLng} readOnly={!details.editing} onChangeText={v => details.setDraft(d => ({ ...d, geoLng: v }))} keyboardType="numeric" placeholder="e.g. 119.395" returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => focusInput(isNonOperational ? sinceRef.current : hoursRef.current)} changeNote={liveDetails ? liveRecordNote(details.draft.geoLng, liveDetails.geoLng) : undefined} />
+        <TextField ref={psicRef} label="PSIC Code" value={details.draft.psicCode} readOnly={!details.editing} onChangeText={v => details.setDraft(d => ({ ...d, psicCode: v }))} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => focusInput(isNonOperational ? sinceRef.current : hoursRef.current)} changeNote={liveDetails ? liveRecordNote(details.draft.psicCode, liveDetails.psicCode) : undefined} />
       </View>
       <View style={styles.row}>
         {details.editing ? (
@@ -613,7 +627,7 @@ export const GeneralInformationView: React.FC<GeneralInformationViewProps> = ({
         </View>
       )}
 
-      <DetailsSection reportId={reportId} snapshot={snapshot} liveDetails={liveDetails} canEdit={canEdit} onSaved={onSaved} />
+      <DetailsSection reportId={reportId} snapshot={snapshot} liveDetails={liveDetails} estabId={liveEstablishment?.estabId ?? null} canEdit={canEdit} onSaved={onSaved} />
       <PersonnelSection reportId={reportId} snapshot={snapshot} livePersonnel={livePersonnel} canEdit={canEdit} onSaved={onSaved} />
       <PcoSection reportId={reportId} snapshot={snapshot} livePco={livePco} canEdit={canEdit} onSaved={onSaved} />
       <ProductLinesSection reportId={reportId} snapshot={snapshot} canEdit={canEdit} onSaved={onSaved} />

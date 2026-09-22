@@ -54,7 +54,8 @@
         }
       ],
       "expo-sharing",
-      "expo-asset"
+      "expo-asset",
+      "@maplibre/maplibre-react-native"
     ],
     "extra": {
       "eas": {
