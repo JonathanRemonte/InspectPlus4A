@@ -20,11 +20,15 @@ import { MAP_STYLE_URL, PIN_ZOOM } from '../mapConfig';
 import { formatCoordinate, parseLatLng, resolveInitialCamera, roundCoordinate } from '../coordinates';
 import { cacheAreaAroundPin } from '../offlinePacks';
 import { useDeviceLocation } from '../hooks/useDeviceLocation';
+import { formatResolvedAddress, resolveAddress, type ResolvedAddress } from '../resolveAddress';
 import { OfflineTilesBanner } from './OfflineTilesBanner';
 
 export interface PickedLocation {
   lat: number;
   lng: number;
+  // The barangay the pin sits in, or null outside every MIMAROPA polygon —
+  // see resolveAddress.ts. Callers apply it to Province/City/Barangay.
+  address: ResolvedAddress | null;
 }
 
 export interface LocationPickerModalProps {
@@ -150,12 +154,17 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   }, [locate]);
 
   const handleConfirm = useCallback(() => {
-    const picked = { lat: roundCoordinate(center.lat), lng: roundCoordinate(center.lng) };
-    if (online) void cacheAreaAroundPin(packName, picked.lat, picked.lng);
+    const lat = roundCoordinate(center.lat);
+    const lng = roundCoordinate(center.lng);
+    // Resolved from the rounded pair so the payload can't disagree with
+    // what the readout showed for these exact coordinates.
+    const picked: PickedLocation = { lat, lng, address: resolveAddress(lat, lng) };
+    if (online) void cacheAreaAroundPin(packName, lat, lng);
     onConfirm(picked);
   }, [center, online, packName, onConfirm]);
 
   const showBanner = !online || styleFailed;
+  const liveAddress = useMemo(() => resolveAddress(center.lat, center.lng), [center]);
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onCancel}>
@@ -220,6 +229,12 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
           <Text style={styles.readoutLabel}>Pin coordinates</Text>
           <Text style={styles.readout} testID="coordinate-readout">
             {`${formatCoordinate(center.lat)}, ${formatCoordinate(center.lng)}`}
+          </Text>
+          <Text
+            style={liveAddress ? styles.addressReadout : styles.addressReadoutMuted}
+            testID="address-readout"
+            numberOfLines={2}>
+            {formatResolvedAddress(liveAddress)}
           </Text>
           {gps.message && (
             <Text style={styles.gpsNote} testID="gps-note">
@@ -321,6 +336,19 @@ const styles = StyleSheet.create({
     lineHeight: Type.body.lineHeight,
     fontWeight: '700',
     color: Colors.textPrimary,
+    marginTop: Spacing.xxs,
+  },
+  addressReadout: {
+    fontSize: Type.bodySm.fontSize,
+    lineHeight: Type.bodySm.lineHeight,
+    fontWeight: '600',
+    color: Colors.navy,
+    marginTop: Spacing.xxs,
+  },
+  addressReadoutMuted: {
+    fontSize: Type.bodySm.fontSize,
+    lineHeight: Type.bodySm.lineHeight,
+    color: Colors.textMuted,
     marginTop: Spacing.xxs,
   },
   gpsNote: {

@@ -48,7 +48,7 @@ describe('CoordinateFields', () => {
     expect(picker.props.initialLat).toBe('11.144');
     expect(picker.props.initialLng).toBe('119.395');
     expect(picker.props.packName).toBe('estab:abc');
-    TestRenderer.act(() => picker.props.onConfirm({ lat: 11.144988, lng: 119.395123 }));
+    TestRenderer.act(() => picker.props.onConfirm({ lat: 11.144988, lng: 119.395123, address: null }));
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith({ lat: '11.144988', lng: '119.395123' });
     expect(r.root.findByType(LocationPickerModal).props.visible).toBe(false);

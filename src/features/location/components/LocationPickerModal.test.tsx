@@ -6,9 +6,14 @@ import * as Location from 'expo-location';
 import { Camera, Map as MapLibreMap, UserLocation } from '@maplibre/maplibre-react-native';
 import { LocationPickerModal } from './LocationPickerModal';
 import { cacheAreaAroundPin } from '../offlinePacks';
+import { resolveAddress } from '../resolveAddress';
 import { MIMAROPA_OVERVIEW, PIN_ZOOM } from '../mapConfig';
 
 jest.mock('../offlinePacks', () => ({ cacheAreaAroundPin: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('../resolveAddress', () => {
+  const actual = jest.requireActual('../resolveAddress');
+  return { ...actual, resolveAddress: jest.fn() };
+});
 
 const { __cameraFlyTo: cameraFlyTo, __cameraJumpTo: cameraJumpTo } = jest.requireMock('@maplibre/maplibre-react-native');
 const mockNetInfo = NetInfo as unknown as { addEventListener: jest.Mock; fetch: jest.Mock };
@@ -18,6 +23,8 @@ const mockLocation = Location as unknown as {
   getCurrentPositionAsync: jest.Mock;
   getLastKnownPositionAsync: jest.Mock;
 };
+const mockResolveAddress = resolveAddress as jest.Mock;
+const CABIGAAN = { province: 'Palawan', city: 'Aborlan', barangay: 'Cabigaan' };
 
 type Renderer = TestRenderer.ReactTestRenderer;
 
@@ -37,6 +44,9 @@ const findButton = (r: Renderer, label: string) => {
 
 const readout = (r: Renderer) =>
   r.root.findAll(n => n.type === Text && n.props.testID === 'coordinate-readout')[0].props.children;
+
+const addressReadout = (r: Renderer) =>
+  r.root.findAll(n => n.type === Text && n.props.testID === 'address-readout')[0].props.children;
 
 const moveMap = async (r: Renderer, lng: number, lat: number) => {
   await TestRenderer.act(async () => {
@@ -67,6 +77,7 @@ beforeEach(() => {
   mockLocation.getLastKnownPositionAsync.mockResolvedValue(null);
   mockLocation.requestForegroundPermissionsAsync.mockResolvedValue({ status: 'granted' });
   mockLocation.getCurrentPositionAsync.mockResolvedValue({ coords: { latitude: 11.144, longitude: 119.395 } });
+  mockResolveAddress.mockReturnValue(null);
 });
 
 describe('LocationPickerModal — initial camera', () => {
@@ -208,7 +219,7 @@ describe('LocationPickerModal — confirm / cancel', () => {
     await TestRenderer.act(async () => {
       findButton(r, 'Use this location').props.onPress();
     });
-    expect(onConfirm).toHaveBeenCalledWith({ lat: 11.144988, lng: 119.395123 });
+    expect(onConfirm).toHaveBeenCalledWith({ lat: 11.144988, lng: 119.395123, address: null });
     expect(cacheAreaAroundPin).toHaveBeenCalledWith('estab:abc', 11.144988, 119.395123);
   });
 
@@ -220,7 +231,7 @@ describe('LocationPickerModal — confirm / cancel', () => {
     await TestRenderer.act(async () => {
       findButton(r, 'Use this location').props.onPress();
     });
-    expect(baseProps.onConfirm).toHaveBeenCalledWith({ lat: 11.144, lng: 119.395 });
+    expect(baseProps.onConfirm).toHaveBeenCalledWith({ lat: 11.144, lng: 119.395, address: null });
     expect(cacheAreaAroundPin).not.toHaveBeenCalled();
   });
 
@@ -240,6 +251,42 @@ describe('LocationPickerModal — confirm / cancel', () => {
       r.root.findByType(Modal).props.onRequestClose();
     });
     expect(onCancel).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('LocationPickerModal — resolved address', () => {
+  it('shows the outside note when the pin resolves to nothing', async () => {
+    const r = await render(<LocationPickerModal {...baseProps} initialLat="12.0" initialLng="120.5" />);
+    expect(addressReadout(r)).toBe('Outside MIMAROPA barangay boundaries');
+  });
+
+  it('resolves live as the map settles', async () => {
+    const r = await render(<LocationPickerModal {...baseProps} />);
+    mockResolveAddress.mockReturnValue(CABIGAAN);
+    await moveMap(r, 118.47504, 9.45777);
+    expect(mockResolveAddress).toHaveBeenLastCalledWith(9.45777, 118.47504);
+    expect(addressReadout(r)).toBe('Brgy. Cabigaan, Aborlan, Palawan');
+  });
+
+  it('confirms with the address resolved from the rounded coordinates', async () => {
+    const onConfirm = jest.fn();
+    const r = await render(<LocationPickerModal {...baseProps} onConfirm={onConfirm} />);
+    mockResolveAddress.mockReturnValue(CABIGAAN);
+    await moveMap(r, 118.4750412345, 9.4577712345);
+    await TestRenderer.act(async () => {
+      findButton(r, 'Use this location').props.onPress();
+    });
+    expect(mockResolveAddress).toHaveBeenLastCalledWith(9.457771, 118.475041);
+    expect(onConfirm).toHaveBeenCalledWith({ lat: 9.457771, lng: 118.475041, address: CABIGAAN });
+  });
+
+  it('confirms with address null when the pin is outside every barangay', async () => {
+    const onConfirm = jest.fn();
+    const r = await render(<LocationPickerModal {...baseProps} initialLat="12.0" initialLng="120.5" onConfirm={onConfirm} />);
+    await TestRenderer.act(async () => {
+      findButton(r, 'Use this location').props.onPress();
+    });
+    expect(onConfirm).toHaveBeenCalledWith({ lat: 12, lng: 120.5, address: null });
   });
 });
 
