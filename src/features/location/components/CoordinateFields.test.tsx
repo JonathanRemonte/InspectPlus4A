@@ -48,10 +48,33 @@ describe('CoordinateFields', () => {
     expect(picker.props.initialLat).toBe('11.144');
     expect(picker.props.initialLng).toBe('119.395');
     expect(picker.props.packName).toBe('estab:abc');
-    TestRenderer.act(() => picker.props.onConfirm({ lat: 11.144988, lng: 119.395123, address: null }));
+    TestRenderer.act(() =>
+      picker.props.onConfirm({ lat: 11.144988, lng: 119.395123, address: { province: 'Palawan', city: 'Aborlan', barangay: 'Cabigaan' } }),
+    );
     expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange).toHaveBeenCalledWith({ lat: '11.144988', lng: '119.395123' });
+    expect(onChange).toHaveBeenCalledWith({
+      lat: '11.144988',
+      lng: '119.395123',
+      address: { province: 'Palawan', city: 'Aborlan', barangay: 'Cabigaan' },
+    });
     expect(r.root.findByType(LocationPickerModal).props.visible).toBe(false);
+  });
+
+  it('passes a null address through unchanged on confirm', () => {
+    const onChange = jest.fn();
+    const r = render(<CoordinateFields lat="" lng="" onChange={onChange} packName="estab:pending" />);
+    TestRenderer.act(() => pinButtons(r)[0].props.onPress());
+    TestRenderer.act(() => r.root.findByType(LocationPickerModal).props.onConfirm({ lat: 12, lng: 120.5, address: null }));
+    expect(onChange).toHaveBeenCalledWith({ lat: '12', lng: '120.5', address: null });
+  });
+
+  it('never attaches an address to a typed edit', () => {
+    const onChange = jest.fn();
+    const r = render(<CoordinateFields lat="11.144" lng="119.395" onChange={onChange} packName="estab:pending" />);
+    const [latInput] = r.root.findAllByType(TextInput);
+    TestRenderer.act(() => latInput.props.onChangeText('12'));
+    expect(onChange).toHaveBeenLastCalledWith({ lat: '12', lng: '119.395' });
+    expect(onChange.mock.calls[0][0]).not.toHaveProperty('address');
   });
 
   it('closes the picker on cancel without changing anything', () => {

@@ -6,11 +6,22 @@ import { Colors } from '../../../design/colors';
 import { Radius } from '../../../design/radius';
 import { Spacing } from '../../../design/spacing';
 import { LocationPickerModal, type PickedLocation } from './LocationPickerModal';
+import type { ResolvedAddress } from '../resolveAddress';
+
+// What the row reports back. `address` is present only when the picker
+// confirmed a pin (null when the pin sat outside every barangay); a typed
+// edit carries coordinates alone, so a form never overwrites its address
+// dropdowns mid-typing.
+export interface CoordinateChange {
+  lat: string;
+  lng: string;
+  address?: ResolvedAddress | null;
+}
 
 export interface CoordinateFieldsProps {
   lat: string;
   lng: string;
-  onChange: (next: { lat: string; lng: string }) => void;
+  onChange: (next: CoordinateChange) => void;
   readOnly?: boolean;
   // See LocationPickerModal.packName.
   packName: string;
@@ -50,7 +61,7 @@ export const CoordinateFields: React.FC<CoordinateFieldsProps> = ({
 
   const handleConfirm = (picked: PickedLocation) => {
     setPickerOpen(false);
-    onChange({ lat: String(picked.lat), lng: String(picked.lng) });
+    onChange({ lat: String(picked.lat), lng: String(picked.lng), address: picked.address });
   };
 
   if (readOnly) {
