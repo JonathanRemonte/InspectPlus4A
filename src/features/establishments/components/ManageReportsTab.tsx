@@ -1,14 +1,6 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  Keyboard,
-  Alert,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Keyboard, StyleSheet } from 'react-native';
+import { showPrompt } from '../../../services/prompt/promptService';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { EmptyState } from '../../../components/EmptyState';
@@ -86,28 +78,25 @@ export const ManageReportsTab = forwardRef<ManageReportsTabHandle>((_props, ref)
   // Only inspection reports are deletable here, and only by their owner or a
   // Developer account — ReportListCard already hides the button otherwise.
   const handleDelete = useCallback(
-    (item: AllReportItem) => {
+    async (item: AllReportItem) => {
       if (item.kind !== 'inspection' || !(item.inspectorUid === currentUid || isDeveloper)) return;
-      Alert.alert(
-        'Delete report?',
-        `This report for "${item.estabName}" will be removed.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await deleteInspectionReportRecord(item.reportId);
-                refetch();
-              } catch (err) {
-                console.error('[ManageReportsTab] Failed to delete report:', err);
-                Alert.alert('Delete failed', err instanceof Error ? err.message : 'Something went wrong.');
-              }
-            },
-          },
+      const choice = await showPrompt({
+        title: 'Delete report?',
+        message: `This report for "${item.estabName}" will be removed.`,
+        tone: 'danger',
+        actions: [
+          { id: 'cancel', label: 'Cancel', variant: 'cancel' },
+          { id: 'delete', label: 'Delete', variant: 'danger' },
         ],
-      );
+      });
+      if (choice !== 'delete') return;
+try {
+            await deleteInspectionReportRecord(item.reportId);
+            refetch();
+          } catch (err) {
+            console.error('[ManageReportsTab] Failed to delete report:', err);
+            void showPrompt({ title: 'Delete failed', message: err instanceof Error ? err.message : 'Something went wrong.', tone: 'danger' });
+          }
     },
     [currentUid, isDeveloper, refetch],
   );

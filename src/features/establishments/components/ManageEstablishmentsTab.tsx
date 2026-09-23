@@ -1,15 +1,6 @@
 import React, { useState, useCallback, useMemo, useImperativeHandle, forwardRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  Keyboard,
-  Modal,
-  Alert,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Keyboard, Modal, StyleSheet } from 'react-native';
+import { showPrompt } from '../../../services/prompt/promptService';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { EmptyState } from '../../../components/EmptyState';
@@ -121,27 +112,24 @@ export const ManageEstablishmentsTab = forwardRef<ManageEstablishmentsTabHandle>
   // history. RLS only grants delete/update rights to the record's own
   // inspector, so this is only ever reachable via a self-owned card — see
   // the isSelf gate applied where EstablishmentCard is rendered below.
-  const handleDelete = useCallback((item: EstablishmentDTO) => {
-    Alert.alert(
-      'Delete establishment?',
-      `"${item.name}" will be removed from your establishment list. This can be undone by contacting an administrator.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await archiveEstablishmentRecord(item.estabId);
-              refetch();
-            } catch (err) {
-              console.error('[ManageEstablishmentsTab] Failed to delete establishment:', err);
-              Alert.alert('Delete failed', err instanceof Error ? err.message : 'Something went wrong.');
-            }
-          },
-        },
+  const handleDelete = useCallback(async (item: EstablishmentDTO) => {
+    const choice = await showPrompt({
+      title: 'Delete establishment?',
+      message: `"${item.name}" will be removed from your establishment list. This can be undone by contacting an administrator.`,
+      tone: 'danger',
+      actions: [
+        { id: 'cancel', label: 'Cancel', variant: 'cancel' },
+        { id: 'delete', label: 'Delete', variant: 'danger' },
       ],
-    );
+    });
+    if (choice !== 'delete') return;
+try {
+          await archiveEstablishmentRecord(item.estabId);
+          refetch();
+        } catch (err) {
+          console.error('[ManageEstablishmentsTab] Failed to delete establishment:', err);
+          void showPrompt({ title: 'Delete failed', message: err instanceof Error ? err.message : 'Something went wrong.', tone: 'danger' });
+        }
   }, [refetch]);
 
   // ── Render states ────────────────────────────────────────────────────────────

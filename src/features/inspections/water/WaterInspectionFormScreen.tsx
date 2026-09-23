@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, ScrollView, Alert, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
+import { showPrompt } from '../../../services/prompt/promptService';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import type { KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 import { router } from 'expo-router';
@@ -155,22 +156,25 @@ export function WaterFormShell({ start }: { start: ShellStart }) {
         await performSave(status);
         markSaved();
 
-        Alert.alert(
-          status === 'draft' ? 'Draft saved' : 'Report submitted',
-          status === 'draft'
-            ? 'Your water inspection report has been saved as a draft.'
-            : 'Your water inspection report has been submitted.',
-          [{ text: 'OK', onPress: () => router.back() }],
-        );
+        await showPrompt({
+          title: status === 'draft' ? 'Draft saved' : 'Report submitted',
+          message:
+            status === 'draft'
+              ? 'Your water inspection report has been saved as a draft.'
+              : 'Your water inspection report has been submitted.',
+        });
+        router.back();
       } catch (err) {
-        // Alert only ever shows err.message — log the full error (stack
-        // included) so it's visible in the Metro/logcat console, since the
-        // one-line message alone isn't enough to locate the actual failure.
+        // The prompt only ever shows err.message — log the full error
+        // (stack included) so it's visible in the Metro/logcat console,
+        // since the one-line message alone isn't enough to locate the
+        // actual failure.
         console.error('[WaterInspectionFormScreen] Save failed:', err);
-        Alert.alert(
-          'Save failed',
-          err instanceof Error ? err.message : 'Something went wrong while saving this report.',
-        );
+        void showPrompt({
+          title: 'Save failed',
+          message: err instanceof Error ? err.message : 'Something went wrong while saving this report.',
+          tone: 'danger',
+        });
       }
     },
     [performSave, markSaved],
@@ -283,10 +287,11 @@ export const WaterInspectionFormScreen: React.FC = () => {
         setStart({ estabId, initialGeneralInfo, initialInspectionDate });
       } catch (err) {
         console.error('[WaterInspectionFormScreen] Failed to create establishment:', err);
-        Alert.alert(
-          'Save failed',
-          err instanceof Error ? err.message : 'Could not save the establishment. Please try again.',
-        );
+        void showPrompt({
+          title: 'Save failed',
+          message: err instanceof Error ? err.message : 'Could not save the establishment. Please try again.',
+          tone: 'danger',
+        });
       }
     },
     [inspectorUid],

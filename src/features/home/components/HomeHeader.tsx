@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Image, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Image, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { showPrompt } from '../../../services/prompt/promptService';
 import Reanimated, {
   Extrapolation,
   interpolate,
@@ -55,20 +56,25 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
       });
       setSyncModalVisible(false);
       if (!result) {
-        Alert.alert('Sync skipped', 'No internet connection right now.');
+        void showPrompt({ title: 'Sync skipped', message: 'No internet connection right now.' });
         return;
       }
-      Alert.alert(
-        'Sync complete',
-        `Pushed: ${result.pushed ? 'yes' : 'no changes'}\nPulled: ${result.pulled ? 'yes' : 'no'}`
-      );
+      void showPrompt({
+        title: 'Sync complete',
+        message: `Pushed: ${result.pushed ? 'yes' : 'no changes'}
+Pulled: ${result.pulled ? 'yes' : 'no'}`,
+      });
     } catch (err) {
       if (err instanceof UpdateRequiredError) {
-        showUpdateRequiredAlert(err.minVersion);
+        void showUpdateRequiredAlert(err.minVersion);
         return;
       }
       console.error('[HomeHeader] Sync failed:', err);
-      Alert.alert('Sync failed', err instanceof Error ? err.message : 'Something went wrong while syncing.');
+      void showPrompt({
+        title: 'Sync failed',
+        message: err instanceof Error ? err.message : 'Something went wrong while syncing.',
+        tone: 'danger',
+      });
     } finally {
       setSyncing(false);
     }
@@ -87,44 +93,48 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
       pending === 0
         ? 'Nothing on this phone is waiting to sync.'
         : `${pending} ${pending === 1 ? 'entry' : 'entries'} on this phone ${pending === 1 ? 'hasn\u2019t' : 'haven\u2019t'} synced yet. ${pending === 1 ? 'It' : 'They'} will be sent to the server first; if that fails, nothing is reset.`;
-    Alert.alert(
-      'Reset and re-download?',
-      `${stake}\n\nEverything already synced will be removed from this phone and downloaded again from the server. This can take a few minutes on a slow connection.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset and re-download',
-          style: 'destructive',
-          onPress: async () => {
-            setSyncing(true);
-            try {
-              const result = await runResetAndRedownload(uid);
-              setSyncModalVisible(false);
-              if (!result) {
-                Alert.alert('Reset skipped', 'No internet connection right now. Nothing was changed.');
-                return;
-              }
-              Alert.alert(
-                'Reset complete',
-                `Pushed: ${result.pushed ? 'yes' : 'no changes'}\nRe-downloaded everything you have access to.`,
-              );
-            } catch (err) {
-              if (err instanceof UpdateRequiredError) {
-                showUpdateRequiredAlert(err.minVersion, 'Nothing was changed.');
-                return;
-              }
-              console.error('[HomeHeader] Reset and re-download failed:', err);
-              Alert.alert(
-                'Reset not done',
-                `${err instanceof Error ? err.message : 'Something went wrong.'}\n\nYour unsynced entries are still on this phone and nothing was removed.`,
-              );
-            } finally {
-              setSyncing(false);
-            }
-          },
-        },
+    const choice = await showPrompt({
+      title: 'Reset and re-download?',
+      message: `${stake}
+
+Everything already synced will be removed from this phone and downloaded again from the server. This can take a few minutes on a slow connection.`,
+      tone: 'danger',
+      actions: [
+        { id: 'cancel', label: 'Cancel', variant: 'cancel' },
+        { id: 'reset', label: 'Reset and re-download', variant: 'danger' },
       ],
-    );
+    });
+    if (choice !== 'reset') return;
+
+    setSyncing(true);
+    try {
+      const result = await runResetAndRedownload(uid);
+      setSyncModalVisible(false);
+      if (!result) {
+        void showPrompt({ title: 'Reset skipped', message: 'No internet connection right now. Nothing was changed.' });
+        return;
+      }
+      void showPrompt({
+        title: 'Reset complete',
+        message: `Pushed: ${result.pushed ? 'yes' : 'no changes'}
+Re-downloaded everything you have access to.`,
+      });
+    } catch (err) {
+      if (err instanceof UpdateRequiredError) {
+        void showUpdateRequiredAlert(err.minVersion, 'Nothing was changed.');
+        return;
+      }
+      console.error('[HomeHeader] Reset and re-download failed:', err);
+      void showPrompt({
+        title: 'Reset not done',
+        message: `${err instanceof Error ? err.message : 'Something went wrong.'}
+
+Your unsynced entries are still on this phone and nothing was removed.`,
+        tone: 'danger',
+      });
+    } finally {
+      setSyncing(false);
+    }
   };
 
   // Surfaces the same failure when it happens from the post-login sync
@@ -132,7 +142,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
   // to report through — mirrors how other screens use
   // subscribeToSyncDataChanged for their own refetch-on-sync behavior.
   useEffect(() => {
-    return subscribeToUpdateRequired(minVersion => showUpdateRequiredAlert(minVersion));
+    return subscribeToUpdateRequired(minVersion => { void showUpdateRequiredAlert(minVersion); });
   }, []);
 
   const handleLogout = async () => {
@@ -145,7 +155,11 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
       await signOut();
     } catch (err) {
       console.warn('[HomeHeader] signOut encountered an error:', err);
-      Alert.alert('Sign out failed', 'Something went wrong while signing out. Please try again.');
+      void showPrompt({
+        title: 'Sign out failed',
+        message: 'Something went wrong while signing out. Please try again.',
+        tone: 'danger',
+      });
     }
   };
 

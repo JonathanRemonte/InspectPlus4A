@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native';
+import { showPrompt } from '../../../services/prompt/promptService';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import type { KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 import { Ionicons } from '@expo/vector-icons';
@@ -60,28 +61,25 @@ export const InspectionReportDetailScreen: React.FC<InspectionReportDetailScreen
 
   // Delete, unlike edit, isn't restricted to drafts — matches the "own
   // record" delete RLS policy on the backend, which only checks ownership.
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (!report) return;
-    Alert.alert(
-      'Delete report?',
-      `This ${INSPECTION_TYPE_LABELS[report.reportType] ?? report.reportType} report will be removed.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteInspectionReportRecord(report.reportId);
-              router.back();
-            } catch (err) {
-              console.error('[InspectionReportDetailScreen] Failed to delete report:', err);
-              Alert.alert('Delete failed', err instanceof Error ? err.message : 'Something went wrong.');
-            }
-          },
-        },
+    const choice = await showPrompt({
+      title: 'Delete report?',
+      message: `This ${INSPECTION_TYPE_LABELS[report.reportType] ?? report.reportType} report will be removed.`,
+      tone: 'danger',
+      actions: [
+        { id: 'cancel', label: 'Cancel', variant: 'cancel' },
+        { id: 'delete', label: 'Delete', variant: 'danger' },
       ],
-    );
+    });
+    if (choice !== 'delete') return;
+try {
+          await deleteInspectionReportRecord(report.reportId);
+          router.back();
+        } catch (err) {
+          console.error('[InspectionReportDetailScreen] Failed to delete report:', err);
+          void showPrompt({ title: 'Delete failed', message: err instanceof Error ? err.message : 'Something went wrong.', tone: 'danger' });
+        }
   }, [report]);
 
   if (loading) {

@@ -1,7 +1,8 @@
 import React from 'react';
-import { Alert, BackHandler, Text } from 'react-native';
+import { BackHandler, Text } from 'react-native';
 import TestRenderer from 'react-test-renderer';
 import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
+import { registerPromptHandler, type PromptRequest } from '../../../services/prompt/promptService';
 
 type Guard = ReturnType<typeof useUnsavedChangesGuard>;
 let latest!: Guard;
@@ -21,16 +22,35 @@ const render = (props: { state: unknown; onLeave: () => void; onSaveDraft: () =>
   return { r, rerender: (next: typeof props) => TestRenderer.act(() => { r.update(<Probe {...next} />); }) };
 };
 
-const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-// The button the modal's caller would tap, by its label.
-const tapAlertButton = async (label: string) => {
-  const [, , buttons] = alertSpy.mock.calls[alertSpy.mock.calls.length - 1];
-  const button = (buttons ?? []).find(b => b.text === label);
-  if (!button) throw new Error(`No "${label}" button; got ${(buttons ?? []).map(b => b.text).join(', ')}`);
-  await TestRenderer.act(async () => { await button.onPress?.(); });
+// Stands in for PromptProvider: records what was asked and answers with
+// whichever action the test names.
+let prompts: PromptRequest[] = [];
+let pending: { request: PromptRequest; resolve: (id: string | null) => void } | null = null;
+
+const promptCount = () => prompts.length;
+
+// Answers the open prompt as if the inspector tapped that button, then
+// flushes the promise chain the guard attached to showPrompt.
+const answerPromptWith = async (actionLabel: string) => {
+  if (!pending) throw new Error('No prompt is open');
+  const action = pending.request.actions?.find(a => a.label === actionLabel);
+  if (!action) throw new Error(`No "${actionLabel}" action; got ${(pending.request.actions ?? []).map(a => a.label).join(', ')}`);
+  const { resolve } = pending;
+  pending = null;
+  await TestRenderer.act(async () => { resolve(action.id); });
 };
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  prompts = [];
+  pending = null;
+  registerPromptHandler((request, resolve) => {
+    prompts.push(request);
+    pending = { request, resolve };
+  });
+});
+
+afterEach(() => registerPromptHandler(null));
 
 describe('useUnsavedChangesGuard', () => {
   it('leaves immediately when nothing has been edited', () => {
@@ -38,7 +58,7 @@ describe('useUnsavedChangesGuard', () => {
     render({ state: { a: 1 }, onLeave, onSaveDraft: jest.fn() });
     TestRenderer.act(() => latest.requestLeave());
     expect(onLeave).toHaveBeenCalledTimes(1);
-    expect(alertSpy).not.toHaveBeenCalled();
+    expect(promptCount()).toBe(0);
   });
 
   it('asks before discarding once the form has been edited', () => {
@@ -48,7 +68,7 @@ describe('useUnsavedChangesGuard', () => {
     rerender({ ...props, state: { a: 2 } });
     TestRenderer.act(() => latest.requestLeave());
     expect(onLeave).not.toHaveBeenCalled();
-    expect(alertSpy).toHaveBeenCalledTimes(1);
+    expect(promptCount()).toBe(1);
   });
 
   it('leaves without saving when the inspector chooses to discard', async () => {
@@ -58,7 +78,7 @@ describe('useUnsavedChangesGuard', () => {
     const { rerender } = render(props);
     rerender({ ...props, state: { a: 2 } });
     TestRenderer.act(() => latest.requestLeave());
-    await tapAlertButton('Discard');
+    await answerPromptWith('Discard');
     expect(onSaveDraft).not.toHaveBeenCalled();
     expect(onLeave).toHaveBeenCalledTimes(1);
   });
@@ -70,7 +90,7 @@ describe('useUnsavedChangesGuard', () => {
     const { rerender } = render(props);
     rerender({ ...props, state: { a: 2 } });
     TestRenderer.act(() => latest.requestLeave());
-    await tapAlertButton('Save draft');
+    await answerPromptWith('Save draft');
     expect(onSaveDraft).toHaveBeenCalledTimes(1);
     expect(onLeave).toHaveBeenCalledTimes(1);
   });
@@ -82,7 +102,7 @@ describe('useUnsavedChangesGuard', () => {
     const { rerender } = render(props);
     rerender({ ...props, state: { a: 2 } });
     TestRenderer.act(() => latest.requestLeave());
-    await tapAlertButton('Save draft');
+    await answerPromptWith('Save draft');
     expect(onSaveDraft).toHaveBeenCalledTimes(1);
     expect(onLeave).not.toHaveBeenCalled();
   });
@@ -95,7 +115,7 @@ describe('useUnsavedChangesGuard', () => {
     TestRenderer.act(() => latest.markSaved());
     TestRenderer.act(() => latest.requestLeave());
     expect(onLeave).toHaveBeenCalledTimes(1);
-    expect(alertSpy).not.toHaveBeenCalled();
+    expect(promptCount()).toBe(0);
   });
 
   it('prompts again for edits made after the draft was saved', () => {
@@ -107,7 +127,7 @@ describe('useUnsavedChangesGuard', () => {
     rerender({ ...props, state: { a: 3 } });
     TestRenderer.act(() => latest.requestLeave());
     expect(onLeave).not.toHaveBeenCalled();
-    expect(alertSpy).toHaveBeenCalledTimes(1);
+    expect(promptCount()).toBe(1);
   });
 
   it('intercepts Android hardware back while dirty, and lets it through when clean', () => {
@@ -121,11 +141,11 @@ describe('useUnsavedChangesGuard', () => {
 
     // Clean: the hook must not claim the event, so the navigator handles it.
     expect(handler()).toBe(false);
-    expect(alertSpy).not.toHaveBeenCalled();
+    expect(promptCount()).toBe(0);
 
     rerender({ ...props, state: { a: 2 } });
     expect(handler()).toBe(true);
-    expect(alertSpy).toHaveBeenCalledTimes(1);
+    expect(promptCount()).toBe(1);
     addSpy.mockRestore();
   });
 });

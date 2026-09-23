@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Alert, BackHandler } from 'react-native';
+import { BackHandler } from 'react-native';
+import { showPrompt } from '../../../services/prompt/promptService';
 
 interface UseUnsavedChangesGuardArgs<T> {
   // Everything that counts as "the inspector's work" on this screen. Compared
@@ -38,28 +39,31 @@ export function useUnsavedChangesGuard<T>({ state, onSaveDraft, onLeave }: UseUn
       onLeave();
       return;
     }
-    Alert.alert(
-      'Leave without saving?',
-      'This report has changes that have not been saved yet.',
-      [
-        { text: 'Keep editing', style: 'cancel' },
-        { text: 'Discard', style: 'destructive', onPress: onLeave },
-        {
-          text: 'Save draft',
-          onPress: async () => {
-            try {
-              await onSaveDraft();
-              markSaved();
-              onLeave();
-            } catch {
-              // The save path reports its own failure. Staying put is the
-              // point: leaving now would discard exactly the work the
-              // inspector just asked to keep.
-            }
-          },
-        },
+    void showPrompt({
+      title: 'Leave without saving?',
+      message: 'This report has changes that have not been saved yet.',
+      tone: 'danger',
+      actions: [
+        { id: 'stay', label: 'Keep editing', variant: 'cancel' },
+        { id: 'discard', label: 'Discard', variant: 'danger' },
+        { id: 'save', label: 'Save draft', variant: 'default' },
       ],
-    );
+    }).then(async choice => {
+      if (choice === 'discard') {
+        onLeave();
+        return;
+      }
+      if (choice !== 'save') return;
+      try {
+        await onSaveDraft();
+        markSaved();
+        onLeave();
+      } catch {
+        // The save path reports its own failure. Staying put is the
+        // point: leaving now would discard exactly the work the
+        // inspector just asked to keep.
+      }
+    });
   }, [isDirty, markSaved, onLeave, onSaveDraft]);
 
   useEffect(() => {

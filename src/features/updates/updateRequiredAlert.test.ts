@@ -1,24 +1,37 @@
-import { Alert, Linking } from 'react-native';
+import { Linking } from 'react-native';
 import { showUpdateRequiredAlert } from './updateRequiredAlert';
 import { LATEST_APK_URL } from './checkForUpdate';
+import { registerPromptHandler, type PromptRequest } from '../../services/prompt/promptService';
 
 describe('showUpdateRequiredAlert', () => {
-  it('names the minimum version and offers the stable APK download beside dismiss', () => {
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  afterEach(() => registerPromptHandler(null));
+
+  it('names the minimum version and offers the stable APK download beside dismiss', async () => {
     const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const seen: PromptRequest[] = [];
+    registerPromptHandler((request, resolve) => {
+      seen.push(request);
+      resolve('download');
+    });
 
-    showUpdateRequiredAlert('1.2.0', 'Nothing was changed.');
+    await showUpdateRequiredAlert('1.2.0', 'Nothing was changed.');
 
-    expect(alert).toHaveBeenCalledTimes(1);
-    const [title, message, buttons] = alert.mock.calls[0] as [string, string, { text: string; onPress?: () => void }[]];
-    expect(title).toBe('Update required');
-    expect(message).toContain('at least version 1.2.0');
-    expect(message).toContain('Nothing was changed.');
-    expect(buttons.map(b => b.text)).toEqual(['Later', 'Download']);
-    buttons[1].onPress?.();
+    expect(seen).toHaveLength(1);
+    expect(seen[0].title).toBe('Update required');
+    expect(seen[0].message).toContain('at least version 1.2.0');
+    expect(seen[0].message).toContain('Nothing was changed.');
+    expect(seen[0].actions?.map(a => a.label)).toEqual(['Later', 'Download']);
     expect(open).toHaveBeenCalledWith(LATEST_APK_URL);
+    open.mockRestore();
+  });
 
-    alert.mockRestore();
+  it('opens nothing when the inspector dismisses it', async () => {
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    registerPromptHandler((_request, resolve) => resolve('later'));
+
+    await showUpdateRequiredAlert('1.2.0');
+
+    expect(open).not.toHaveBeenCalled();
     open.mockRestore();
   });
 });
