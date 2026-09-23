@@ -19,6 +19,7 @@ import { DenrPermitsFormSection } from '../components/DenrPermitsFormSection';
 import { SaveBar } from '../components/SaveBar';
 import { useReportFormState } from '../hooks/useReportFormState';
 import { useMainTabChange } from '../hooks/useMainTabChange';
+import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
 import { createEstablishmentRecord } from '../establishmentPersistence';
 import { buildGeneralInfoFromEstablishment, GeneralInfoFormState, PurposeFormState } from '../types';
 import { WaterExtraFormSectionsView } from './WaterExtraFormSections';
@@ -136,10 +137,23 @@ export function WaterFormShell({ start }: { start: ShellStart }) {
     [save, writeCompliance],
   );
 
+  // Every way off this screen - the header's back arrow, Discard, and
+  // Android's hardware back - goes through this, so unsaved work can't be
+  // lost by a single tap. The three state objects below are the whole of
+  // the inspector's work on this form.
+  const { requestLeave, markSaved } = useUnsavedChangesGuard({
+    state: { generalInfo, purpose, waterCompliance },
+    onSaveDraft: async () => {
+      await performSave('draft');
+    },
+    onLeave: () => router.back(),
+  });
+
   const handleSave = useCallback(
     async (status: 'draft' | 'submitted') => {
       try {
         await performSave(status);
+        markSaved();
 
         Alert.alert(
           status === 'draft' ? 'Draft saved' : 'Report submitted',
@@ -159,7 +173,7 @@ export function WaterFormShell({ start }: { start: ShellStart }) {
         );
       }
     },
-    [performSave],
+    [performSave, markSaved],
   );
 
   // Passed to AttachmentsSection as ensureParentId: attachments need a real
@@ -179,12 +193,12 @@ export function WaterFormShell({ start }: { start: ShellStart }) {
     () => (
       <SaveBar
         saving={saving}
-        onDiscard={() => router.back()}
+        onDiscard={requestLeave}
         onSaveDraft={() => handleSave('draft')}
         onSubmit={() => handleSave('submitted')}
       />
     ),
-    [saving, handleSave]
+    [saving, handleSave, requestLeave]
   );
 
   const hasDp = establishmentHasDischargePermit(generalInfo.denrPermits);
@@ -195,6 +209,7 @@ export function WaterFormShell({ start }: { start: ShellStart }) {
     <ReportThemeProvider reportType={REPORT_TYPE}>
       <View style={styles.flex}>
         <ReportFormHeader
+          onBack={requestLeave}
           establishmentName={generalInfo.name || 'New Establishment'}
           establishmentLocation={formatEstablishmentLocation(generalInfo)}
           reportType={REPORT_TYPE}
