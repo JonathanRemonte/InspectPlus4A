@@ -11,6 +11,7 @@ import { Radius } from '../../../design/radius';
 import { Spacing } from '../../../design/spacing';
 import { FONT_SCALING, Type } from '../../../design/typography';
 import type { EstablishmentReportItem } from '../hooks/useEstablishment';
+import { Badge } from '../../../components/Badge';
 
 // getReportUrgency resolves thresholds through urgencyConfig, which returns
 // the build-time ENV defaults whenever its module-level snapshot has never
@@ -208,6 +209,44 @@ const baseItem: EstablishmentReportItem = {
   status: 'submitted',
   syncStatus: 'synced',
 };
+
+// The Manage Reports tab has always shown a filing-status chip on each
+// card; this section showed none, so the same report read as statusless
+// depending on which screen you opened it from.
+describe('EstablishmentReportsSection filing-status badge', () => {
+  const badgeIn = (r: Renderer, item: EstablishmentReportItem) =>
+    findRow(r, item).findAllByType(Badge);
+
+  it('marks a submitted report as Submitted', () => {
+    const item: EstablishmentReportItem = { ...baseItem, status: 'submitted' };
+    const r = render(
+      <EstablishmentReportsSection reports={[item]} currentUid="uid-1" canManageAll={false} onAddReport={noop} onOpenReport={noop} onDeleteReport={noop} />,
+    );
+    const badges = badgeIn(r, item);
+    expect(badges).toHaveLength(1);
+    expect(badges[0].props.label).toBe('Submitted');
+    expect(badges[0].props.tone).toBe('success');
+  });
+
+  it('marks a draft report as Draft', () => {
+    const item: EstablishmentReportItem = { ...baseItem, status: 'draft' };
+    const r = render(
+      <EstablishmentReportsSection reports={[item]} currentUid="uid-1" canManageAll={false} onAddReport={noop} onOpenReport={noop} onDeleteReport={noop} />,
+    );
+    const badges = badgeIn(r, item);
+    expect(badges).toHaveLength(1);
+    expect(badges[0].props.label).toBe('Draft');
+    expect(badges[0].props.tone).toBe('warning');
+  });
+
+  it('renders no badge when the report carries no status', () => {
+    const item: EstablishmentReportItem = { ...baseItem, status: null };
+    const r = render(
+      <EstablishmentReportsSection reports={[item]} currentUid="uid-1" canManageAll={false} onAddReport={noop} onOpenReport={noop} onDeleteReport={noop} />,
+    );
+    expect(badgeIn(r, item)).toHaveLength(0);
+  });
+});
 
 describe('EstablishmentReportsSection report row token resolution', () => {
   it('resolves the icon wrap background and radius from tokens', () => {

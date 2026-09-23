@@ -4,6 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../../components/AppText';
+import { Badge } from '../../../components/Badge';
 import { Button } from '../../../components/Button';
 import { EmptyState } from '../../../components/EmptyState';
 import { UrgencyRibbon } from '../../../components/UrgencyRibbon';
@@ -207,6 +208,17 @@ const ReportRow: React.FC<{
                   </Text>
                 </View>
               </View>
+              {/* Filing status, same chip ReportListCard shows on the
+                  Manage Reports tab - without it the same report read as
+                  statusless depending on which screen you opened it from.
+                  Urgency stays on the corner ribbon. */}
+              {item.status && (
+                <Badge
+                  label={item.status === 'submitted' ? 'Submitted' : 'Draft'}
+                  tone={item.status === 'submitted' ? 'success' : 'warning'}
+                  style={styles.statusBadge}
+                />
+              )}
             </View>
             <Ionicons name="chevron-forward" size={16} color={Colors.textLight} />
           </TouchableOpacity>
@@ -354,6 +366,9 @@ const styles = StyleSheet.create({
     lineHeight: Type.body.lineHeight,
     fontWeight: '700',
     color: Colors.textPrimary,
+  },
+  statusBadge: {
+    marginTop: Spacing.xs,
   },
   dateRow: {
     flexDirection: 'row',
