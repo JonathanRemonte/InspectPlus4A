@@ -2,8 +2,9 @@ import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../constants/colors';
+import { ENVIRONMENTAL_LAWS, getPermitTypeOptions } from '../../../constants/denrPermits';
 import { database, collections } from '../../../db/database';
-import { FormSection, TextField, DateField, focusInput } from '../../../components/form';
+import { FormSection, TextField, SelectField, DateField, focusInput } from '../../../components/form';
 import { AppText } from '../../../components/AppText';
 import { AddRowButton } from '../../../components/AddRowButton';
 import { SectionEditActions } from './SectionEditActions';
@@ -70,8 +71,6 @@ const EditablePermitCard = React.memo(function EditablePermitCard({
   onChange,
   onRemove,
 }: EditablePermitCardProps) {
-  const enviLawRef = useRef<TextInput>(null);
-  const permitTypeRef = useRef<TextInput>(null);
   const serialRef = useRef<TextInput>(null);
   const issuedRef = useRef<TextInput>(null);
   const expiryRef = useRef<TextInput>(null);
@@ -85,27 +84,25 @@ const EditablePermitCard = React.memo(function EditablePermitCard({
         </TouchableOpacity>
       </View>
       <View style={styles.row}>
-        <TextField
-          ref={enviLawRef}
+        <SelectField
           label="Environmental Law"
           value={permit.envi_law}
-          onChangeText={envi_law => onChange({ ...permit, envi_law })}
-          placeholder="e.g. RA 8749"
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => focusInput(permitTypeRef.current)}
+          options={[...ENVIRONMENTAL_LAWS]}
+          // Changing the law clears the permit type: the old value belongs
+          // to the old law's list and would otherwise linger unselectable.
+          onSelect={envi_law =>
+            onChange(envi_law === permit.envi_law ? permit : { ...permit, envi_law, permit_type: '' })
+          }
         />
-        <TextField
-          ref={permitTypeRef}
+        <SelectField
           label="Permit Type"
           value={permit.permit_type}
-          onChangeText={permit_type => onChange({ ...permit, permit_type })}
-          placeholder="e.g. Permit to Operate"
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => focusInput(serialRef.current)}
+          options={getPermitTypeOptions(permit.envi_law)}
+          onSelect={permit_type => onChange({ ...permit, permit_type })}
+          placeholder={permit.envi_law ? 'Select…' : 'Select law first'}
+          disabled={!permit.envi_law}
         />
-      </View>
+</View>
       <View style={styles.row}>
         <TextField
           ref={serialRef}

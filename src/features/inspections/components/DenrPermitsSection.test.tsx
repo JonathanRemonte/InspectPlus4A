@@ -18,9 +18,11 @@ jest.mock('react-native-keyboard-controller', () => jest.requireActual('react-na
 
 type Renderer = TestRenderer.ReactTestRenderer;
 
-const render = (element: React.ReactElement) => {
+// Async act: @expo/vector-icons' Icon sets state when its font resolves,
+// which lands after a synchronous act() and warns.
+const render = async (element: React.ReactElement) => {
   let r!: Renderer;
-  TestRenderer.act(() => { r = TestRenderer.create(element); });
+  await TestRenderer.act(async () => { r = TestRenderer.create(element); });
   return r;
 };
 
@@ -68,13 +70,13 @@ describe('DenrPermitsSection empty-state message visibility', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the empty-state message when no permits present and NOT editing', () => {
+  it('renders the empty-state message when no permits present and NOT editing', async () => {
     // Mock useEditableSection to return editing=false with empty permits
     jest.spyOn(useEditableSectionModule, 'useEditableSection').mockReturnValue(
       createMockSection([], false),
     );
 
-    const r = render(
+    const r = await render(
       <DenrPermitsSection
         reportId="report-1"
         permits={[]}
@@ -87,13 +89,13 @@ describe('DenrPermitsSection empty-state message visibility', () => {
     expect(hasEmptyStateText(r, emptyStateMessage)).toBe(true);
   });
 
-  it('does NOT render the empty-state message when no permits present but IS editing', () => {
+  it('does NOT render the empty-state message when no permits present but IS editing', async () => {
     // Mock useEditableSection to return editing=true with empty permits
     jest.spyOn(useEditableSectionModule, 'useEditableSection').mockReturnValue(
       createMockSection([], true),
     );
 
-    const r = render(
+    const r = await render(
       <DenrPermitsSection
         reportId="report-1"
         permits={[]}
@@ -107,7 +109,7 @@ describe('DenrPermitsSection empty-state message visibility', () => {
     expect(hasEmptyStateText(r, emptyStateMessage)).toBe(false);
   });
 
-  it('does NOT render the empty-state message when permits are present and NOT editing', () => {
+  it('does NOT render the empty-state message when permits are present and NOT editing', async () => {
     const permits = [samplePermit()];
 
     // Mock useEditableSection to return editing=false with actual permits
@@ -115,7 +117,7 @@ describe('DenrPermitsSection empty-state message visibility', () => {
       createMockSection(permits, false),
     );
 
-    const r = render(
+    const r = await render(
       <DenrPermitsSection
         reportId="report-1"
         permits={permits}
