@@ -277,7 +277,7 @@ describe('EstablishmentCard legibility guarantee', () => {
 
   it('renders nothing below Type.caption.fontSize with edit/delete actions, pending sync, and no tags', () => {
     const item: EstablishmentDTO = { ...baseItem, syncStatus: 'pending', complianceTags: [] };
-    const r = render(<EstablishmentCard item={item} onPress={noop} onEdit={noop} onDelete={noop} />);
+    const r = render(<EstablishmentCard item={item} onPress={noop} onDelete={noop} />);
     const sizes = allFontSizes(r);
     expect(sizes.length).toBeGreaterThan(0);
     sizes.forEach((size) => expect(size).toBeGreaterThanOrEqual(Type.caption.fontSize));
@@ -380,35 +380,30 @@ describe('EstablishmentCard action visibility', () => {
     expect(findActionButton(r, 'Delete')).toHaveLength(0);
   });
 
-  it('shows Edit when onEdit is provided', () => {
-    const r = render(<EstablishmentCard item={baseItem} onPress={noop} onEdit={noop} />);
-    expect(findActionButton(r, 'Edit')).toHaveLength(1);
-    expect(findActionButton(r, 'Delete')).toHaveLength(0);
-  });
-
   it('shows Delete when onDelete is provided', () => {
     const r = render(<EstablishmentCard item={baseItem} onPress={noop} onDelete={noop} />);
     expect(findActionButton(r, 'Delete')).toHaveLength(1);
     expect(findActionButton(r, 'Edit')).toHaveLength(0);
   });
 
-  it('shows all three actions when every handler is provided', () => {
-    const r = render(<EstablishmentCard item={baseItem} onPress={noop} onAdd={noop} onEdit={noop} onDelete={noop} />);
-    expect(findActionButton(r, 'Add Report')).toHaveLength(1);
-    expect(findActionButton(r, 'Edit')).toHaveLength(1);
-    expect(findActionButton(r, 'Delete')).toHaveLength(1);
+  // Edit was retired with /establishment/edit: it called a stub that only
+  // logged, and tapping the card already reaches the in-place editing that
+  // replaced it.
+  it('offers Add Report and Delete, and never an Edit', () => {
+    const r = render(<EstablishmentCard item={baseItem} onPress={noop} onAdd={noop} onDelete={noop} />);
+    expect(menuActions(r)).toEqual(['Add Report', 'Delete']);
   });
 
   it('invokes the handler when its menu action is chosen', () => {
-    const onEdit = jest.fn();
-    const r = render(<EstablishmentCard item={baseItem} onPress={noop} onEdit={onEdit} />);
-    const action = r.root.findByType(RowActionsButton).props.actions.find((a: { id: string }) => a.id === 'edit');
+    const onDelete = jest.fn();
+    const r = render(<EstablishmentCard item={baseItem} onPress={noop} onDelete={onDelete} />);
+    const action = r.root.findByType(RowActionsButton).props.actions.find((a: { id: string }) => a.id === 'delete');
     TestRenderer.act(() => action.onSelect());
-    expect(onEdit).toHaveBeenCalledWith(baseItem);
+    expect(onDelete).toHaveBeenCalledWith(baseItem);
   });
 
   it('carries no swipe gesture, so horizontal drags belong to the tab pager', () => {
-    const r = render(<EstablishmentCard item={baseItem} onPress={noop} onAdd={noop} onEdit={noop} onDelete={noop} />);
+    const r = render(<EstablishmentCard item={baseItem} onPress={noop} onAdd={noop} onDelete={noop} />);
     expect(r.root.findAllByType(GestureDetector)).toHaveLength(0);
   });
 });

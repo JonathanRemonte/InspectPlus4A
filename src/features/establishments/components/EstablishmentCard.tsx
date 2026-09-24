@@ -23,7 +23,6 @@ interface EstablishmentCardProps {
   item: EstablishmentDTO;
   onPress?: (item: EstablishmentDTO) => void;
   onAdd?: (item: EstablishmentDTO) => void;
-  onEdit?: (item: EstablishmentDTO) => void;
   onDelete?: (item: EstablishmentDTO) => void;
 }
 
@@ -58,7 +57,6 @@ export const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
   item,
   onPress,
   onAdd,
-  onEdit,
   onDelete,
 }) => {
   const visibleTags = item.complianceTags.slice(0, MAX_VISIBLE_TAGS);
@@ -72,7 +70,6 @@ export const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
   // Actions the current caller has wired up. Order is the menu's order.
   const actions: RowAction[] = [
     ...(onAdd ? [{ id: 'add', label: 'Add Report', onSelect: () => onAdd(item) }] : []),
-    ...(onEdit ? [{ id: 'edit', label: 'Edit', onSelect: () => onEdit(item) }] : []),
     ...(onDelete ? [{ id: 'delete', label: 'Delete', variant: 'danger' as const, onSelect: () => onDelete(item) }] : []),
   ];
 

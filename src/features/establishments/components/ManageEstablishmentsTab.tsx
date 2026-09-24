@@ -101,11 +101,6 @@ export const ManageEstablishmentsTab = forwardRef<ManageEstablishmentsTabHandle>
     });
   });
 
-  const handleEdit = useCallback((item: EstablishmentDTO) => {
-    // TODO: navigate to establishment edit screen
-    console.log('[ManageReports] Edit establishment:', item.estabId);
-  }, []);
-
   // Establishment "delete" archives the record (see archiveEstablishmentRecord)
   // rather than hard-deleting it — the remote table has no soft-delete column
   // and would reject a hard delete once the establishment has any report
@@ -226,7 +221,6 @@ try {
               item={item}
               onPress={handleOpen}
               onAdd={handleAdd}
-              onEdit={canManage ? handleEdit : undefined}
               onDelete={canManage ? handleDelete : undefined}
             />
           );
