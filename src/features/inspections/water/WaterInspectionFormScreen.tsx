@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, ScrollView, Alert, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
+import { showPrompt } from '../../../services/prompt/promptService';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import type { KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 import { router } from 'expo-router';
@@ -19,6 +20,7 @@ import { DenrPermitsFormSection } from '../components/DenrPermitsFormSection';
 import { SaveBar } from '../components/SaveBar';
 import { useReportFormState } from '../hooks/useReportFormState';
 import { useMainTabChange } from '../hooks/useMainTabChange';
+import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
 import { createEstablishmentRecord } from '../establishmentPersistence';
 import { buildGeneralInfoFromEstablishment, GeneralInfoFormState, PurposeFormState } from '../types';
 import { WaterExtraFormSectionsView } from './WaterExtraFormSections';
@@ -136,30 +138,46 @@ export function WaterFormShell({ start }: { start: ShellStart }) {
     [save, writeCompliance],
   );
 
+  // Every way off this screen - the header's back arrow, Discard, and
+  // Android's hardware back - goes through this, so unsaved work can't be
+  // lost by a single tap. The three state objects below are the whole of
+  // the inspector's work on this form.
+  const { requestLeave, markSaved } = useUnsavedChangesGuard({
+    state: { generalInfo, purpose, waterCompliance },
+    onSaveDraft: async () => {
+      await performSave('draft');
+    },
+    onLeave: () => router.back(),
+  });
+
   const handleSave = useCallback(
     async (status: 'draft' | 'submitted') => {
       try {
         await performSave(status);
+        markSaved();
 
-        Alert.alert(
-          status === 'draft' ? 'Draft saved' : 'Report submitted',
-          status === 'draft'
-            ? 'Your water inspection report has been saved as a draft.'
-            : 'Your water inspection report has been submitted.',
-          [{ text: 'OK', onPress: () => router.back() }],
-        );
+        await showPrompt({
+          title: status === 'draft' ? 'Draft saved' : 'Report submitted',
+          message:
+            status === 'draft'
+              ? 'Your water inspection report has been saved as a draft.'
+              : 'Your water inspection report has been submitted.',
+        });
+        router.back();
       } catch (err) {
-        // Alert only ever shows err.message — log the full error (stack
-        // included) so it's visible in the Metro/logcat console, since the
-        // one-line message alone isn't enough to locate the actual failure.
+        // The prompt only ever shows err.message — log the full error
+        // (stack included) so it's visible in the Metro/logcat console,
+        // since the one-line message alone isn't enough to locate the
+        // actual failure.
         console.error('[WaterInspectionFormScreen] Save failed:', err);
-        Alert.alert(
-          'Save failed',
-          err instanceof Error ? err.message : 'Something went wrong while saving this report.',
-        );
+        void showPrompt({
+          title: 'Save failed',
+          message: err instanceof Error ? err.message : 'Something went wrong while saving this report.',
+          tone: 'danger',
+        });
       }
     },
-    [performSave],
+    [performSave, markSaved],
   );
 
   // Passed to AttachmentsSection as ensureParentId: attachments need a real
@@ -179,12 +197,12 @@ export function WaterFormShell({ start }: { start: ShellStart }) {
     () => (
       <SaveBar
         saving={saving}
-        onDiscard={() => router.back()}
+        onDiscard={requestLeave}
         onSaveDraft={() => handleSave('draft')}
         onSubmit={() => handleSave('submitted')}
       />
     ),
-    [saving, handleSave]
+    [saving, handleSave, requestLeave]
   );
 
   const hasDp = establishmentHasDischargePermit(generalInfo.denrPermits);
@@ -195,6 +213,7 @@ export function WaterFormShell({ start }: { start: ShellStart }) {
     <ReportThemeProvider reportType={REPORT_TYPE}>
       <View style={styles.flex}>
         <ReportFormHeader
+          onBack={requestLeave}
           establishmentName={generalInfo.name || 'New Establishment'}
           establishmentLocation={formatEstablishmentLocation(generalInfo)}
           reportType={REPORT_TYPE}
@@ -268,10 +287,11 @@ export const WaterInspectionFormScreen: React.FC = () => {
         setStart({ estabId, initialGeneralInfo, initialInspectionDate });
       } catch (err) {
         console.error('[WaterInspectionFormScreen] Failed to create establishment:', err);
-        Alert.alert(
-          'Save failed',
-          err instanceof Error ? err.message : 'Could not save the establishment. Please try again.',
-        );
+        void showPrompt({
+          title: 'Save failed',
+          message: err instanceof Error ? err.message : 'Could not save the establishment. Please try again.',
+          tone: 'danger',
+        });
       }
     },
     [inspectorUid],

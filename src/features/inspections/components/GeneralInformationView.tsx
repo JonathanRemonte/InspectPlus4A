@@ -9,6 +9,7 @@ import { PROVINCE_OPTIONS, getCityOptions, getBarangayOptions } from '../../../c
 import { maskFlexibleDate, isValidFlexibleDate, FLEXIBLE_DATE_HINT, FLEXIBLE_DATE_INVALID_HINT } from '../../../utils/flexibleDate';
 import { SectionEditActions } from './SectionEditActions';
 import { useEditableSection } from '../hooks/useEditableSection';
+import { patchPermitsSnapshot } from '../permitsSnapshotPersistence';
 import { SimpleTable } from './ComplianceReadPrimitives';
 import { DenrPermitsSection } from './DenrPermitsSection';
 import { CoordinateFields } from '../../location/components/CoordinateFields';
@@ -632,7 +633,12 @@ export const GeneralInformationView: React.FC<GeneralInformationViewProps> = ({
       <PcoSection reportId={reportId} snapshot={snapshot} livePco={livePco} canEdit={canEdit} onSaved={onSaved} />
       <ProductLinesSection reportId={reportId} snapshot={snapshot} canEdit={canEdit} onSaved={onSaved} />
       {showPermits && (
-        <DenrPermitsSection reportId={reportId} permits={permits} canEdit={canEdit} onSaved={onSaved} />
+        <DenrPermitsSection
+          permits={permits}
+          canEdit={canEdit}
+          onSave={next => patchPermitsSnapshot(reportId, next)}
+          onSaved={onSaved}
+        />
       )}
     </View>
   );

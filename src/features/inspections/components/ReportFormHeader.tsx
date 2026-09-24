@@ -8,6 +8,10 @@ import { getReportTypeMeta } from '../reportTypeMeta';
 import { TwoRowTabs, TwoRowMainTabDef } from './TwoRowTabs';
 
 interface ReportFormHeaderProps {
+  // Defaults to router.back(). The water form passes its unsaved-changes
+  // guard here so the header's back goes through the same prompt as the
+  // hardware back and Discard.
+  onBack?: () => void;
   establishmentName: string;
   establishmentLocation: string;
   reportType: string;
@@ -17,6 +21,7 @@ interface ReportFormHeaderProps {
 }
 
 export const ReportFormHeader: React.FC<ReportFormHeaderProps> = ({
+  onBack,
   establishmentName,
   establishmentLocation,
   reportType,
@@ -46,7 +51,7 @@ export const ReportFormHeader: React.FC<ReportFormHeaderProps> = ({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
+      <TouchableOpacity style={styles.backBtn} onPress={onBack ?? (() => router.back())} activeOpacity={0.7}>
         <Ionicons name="chevron-back" size={16} color={Colors.navy} />
         <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Modal, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Modal, StyleSheet } from 'react-native';
+import { showPrompt } from '../../../services/prompt/promptService';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../constants/colors';
 import { FormSection } from '../../../components/form';
@@ -72,24 +73,21 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({ parentTy
     });
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
-    Alert.alert(
-      `Delete ${ids.length} photo${ids.length === 1 ? '' : 's'}?`,
-      'These photos will be removed from the report.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await removeMany(ids);
-            exitSelection();
-          },
-        },
-      ]
-    );
+    const choice = await showPrompt({
+      title: `Delete ${ids.length} photo${ids.length === 1 ? '' : 's'}?`,
+      message: 'These photos will be removed from the report.',
+      tone: 'danger',
+      actions: [
+        { id: 'cancel', label: 'Cancel', variant: 'cancel' },
+        { id: 'delete', label: 'Delete', variant: 'danger' },
+      ],
+    });
+    if (choice !== 'delete') return;
+    await removeMany(ids);
+    exitSelection();
   };
 
   return (

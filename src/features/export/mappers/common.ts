@@ -29,7 +29,7 @@ const PERMIT_MATCHERS: [PermitRow | 'ecc', RegExp][] = [
   ['discharge_permit_number', /discharge|9275/],
 ];
 
-function permitRowFor(p: PermitSnapshotItem): PermitRow | 'ecc' | null {
+export function permitRowFor(p: PermitSnapshotItem): PermitRow | 'ecc' | null {
   const hay = `${text(p.permit_type)} ${text(p.envi_law)}`.toLowerCase();
   for (const [row, re] of PERMIT_MATCHERS) if (re.test(hay)) return row;
   return null;

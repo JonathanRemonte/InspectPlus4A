@@ -1,15 +1,14 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../../components/AppText';
+import { Badge } from '../../../components/Badge';
 import { Button } from '../../../components/Button';
+import { RowActionsButton, type RowAction } from '../../../components/RowActionsButton';
 import { EmptyState } from '../../../components/EmptyState';
 import { UrgencyRibbon } from '../../../components/UrgencyRibbon';
 import { REPORT_TYPE_DISPLAY, ReportDataKey } from '../../../constants/reportTypeDisplay';
 import { Colors } from '../../../design/colors';
-import { Duration } from '../../../design/motion';
 import { Radius } from '../../../design/radius';
 import { Spacing } from '../../../design/spacing';
 import { FONT_SCALING, Type } from '../../../design/typography';
@@ -34,11 +33,6 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-// Swipe-to-reveal Delete, matching ReportListCard's (Manage Reports tab)
-// gesture treatment — this section only ever shows a single action, unlike
-// ReportListCard's Edit+Delete, so revealWidth is just one ACTION_WIDTH or 0.
-const ACTION_WIDTH = 72;
-const OPEN_THRESHOLD_RATIO = 0.4;
 
 const ReportRow: React.FC<{
   item: EstablishmentReportItem;
@@ -52,77 +46,19 @@ const ReportRow: React.FC<{
   // ReportListCard's fallback so the two components can't drift again.
   const display = REPORT_TYPE_DISPLAY[item.reportType as ReportDataKey];
 
-  const revealWidth = showDelete ? ACTION_WIDTH : 0;
-  const openThreshold = revealWidth * OPEN_THRESHOLD_RATIO;
-
-  const translateX = useSharedValue(0);
-  const startX = useSharedValue(0);
-
-  const close = () => {
-    translateX.value = withTiming(0, { duration: Duration.base });
-  };
-
-  const panGesture = Gesture.Pan()
-    .enabled(revealWidth > 0)
-    .activeOffsetX([-10, 10])
-    .failOffsetY([-8, 8])
-    .onStart(() => {
-      startX.value = translateX.value;
-    })
-    .onUpdate(e => {
-      translateX.value = Math.min(0, Math.max(-revealWidth, startX.value + e.translationX));
-    })
-    .onEnd(() => {
-      translateX.value = withTiming(
-        translateX.value < -openThreshold ? -revealWidth : 0,
-        { duration: Duration.base },
-      );
-    });
-
-  const rowAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
-
-  // A tap while the row is swiped open snaps it shut instead of opening the
-  // report — same convention as ReportListCard.
-  const handlePress = () => {
-    if (translateX.value < -1) {
-      close();
-      return;
-    }
-    onOpen();
-  };
-
-  const handleDelete = () => {
-    close();
-    onDelete();
-  };
+  const actions: RowAction[] = showDelete
+    ? [{ id: 'delete', label: 'Delete', variant: 'danger' as const, onSelect: onDelete }]
+    : [];
 
   return (
     <View style={styles.rowWrap}>
-      {showDelete && (
-        <View style={styles.swipeActions}>
-          <TouchableOpacity
-            style={styles.deleteAction}
-            onPress={handleDelete}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel={`Delete ${item.title}`}>
-            <Ionicons name="trash-outline" size={20} color={Colors.textWhite} />
-            <Text style={styles.deleteActionText}>Delete</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      <GestureDetector gesture={panGesture}>
-        <Animated.View style={rowAnimatedStyle}>
           <TouchableOpacity
             style={[
               styles.row,
               urgency.level === 'overdue' && styles.rowOverdue,
               urgency.level === 'due-soon' && styles.rowDueSoon,
             ]}
-            onPress={handlePress}
+        onPress={onOpen}
             activeOpacity={0.75}
             accessibilityRole="button"
             accessibilityLabel={item.title}>
@@ -207,11 +143,26 @@ const ReportRow: React.FC<{
                   </Text>
                 </View>
               </View>
+              {/* Filing status, same chip ReportListCard shows on the
+                  Manage Reports tab - without it the same report read as
+                  statusless depending on which screen you opened it from.
+                  Urgency stays on the corner ribbon. */}
+              {item.status && (
+                <Badge
+                  label={item.status === 'submitted' ? 'Submitted' : 'Draft'}
+                  tone={item.status === 'submitted' ? 'success' : 'warning'}
+                  style={styles.statusBadge}
+                />
+              )}
             </View>
-            <Ionicons name="chevron-forward" size={16} color={Colors.textLight} />
-          </TouchableOpacity>
-        </Animated.View>
-      </GestureDetector>
+            {/* Overflow menu where this row has actions; chevron otherwise,
+                so the trailing edge still reads as "tap to open". */}
+            {actions.length > 0 ? (
+              <RowActionsButton title={item.title} actions={actions} />
+            ) : (
+              <Ionicons name="chevron-forward" size={16} color={Colors.textLight} />
+            )}
+      </TouchableOpacity>
     </View>
   );
 };
@@ -293,31 +244,9 @@ const styles = StyleSheet.create({
   rowWrap: {
     marginBottom: Spacing.md,
   },
-  swipeActions: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-  },
   // Same "delete" red as ReportListCard/EstablishmentCard's swipe actions —
   // this row previously hardcoded its own separate red hex instead of
   // reusing it.
-  deleteAction: {
-    width: ACTION_WIDTH,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-    backgroundColor: Colors.conflict,
-  },
-  deleteActionText: {
-    fontSize: Type.caption.fontSize,
-    lineHeight: Type.caption.lineHeight,
-    fontWeight: '700',
-    color: Colors.textWhite,
-  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -354,6 +283,9 @@ const styles = StyleSheet.create({
     lineHeight: Type.body.lineHeight,
     fontWeight: '700',
     color: Colors.textPrimary,
+  },
+  statusBadge: {
+    marginTop: Spacing.xs,
   },
   dateRow: {
     flexDirection: 'row',

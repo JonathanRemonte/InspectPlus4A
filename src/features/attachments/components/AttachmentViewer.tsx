@@ -1,20 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  Modal,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  useWindowDimensions,
-  ViewToken,
-} from 'react-native';
+import { View, Text, Image, FlatList, TextInput, TouchableOpacity, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, StyleSheet, useWindowDimensions, ViewToken } from 'react-native';
+import { showPrompt } from '../../../services/prompt/promptService';
 import Reanimated, { LinearTransition } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -160,9 +146,9 @@ export const AttachmentViewer: React.FC<AttachmentViewerProps> = ({
     setDownloading(true);
     try {
       await downloadAttachmentToGallery(current);
-      Alert.alert('Saved', 'Photo saved to your device’s Photos, in the "InspectPlus" album.');
+      void showPrompt({ title: 'Saved', message: 'Photo saved to your device’s Photos, in the "InspectPlus" album.' });
     } catch (err) {
-      Alert.alert('Download failed', err instanceof Error ? err.message : 'Something went wrong.');
+      void showPrompt({ title: 'Download failed', message: err instanceof Error ? err.message : 'Something went wrong.', tone: 'danger' });
     } finally {
       setDownloading(false);
     }
@@ -175,7 +161,7 @@ export const AttachmentViewer: React.FC<AttachmentViewerProps> = ({
       setCopyFeedback(true);
       setTimeout(() => setCopyFeedback(false), 1500);
     } catch (err) {
-      Alert.alert('Copy failed', err instanceof Error ? err.message : 'Something went wrong.');
+      void showPrompt({ title: 'Copy failed', message: err instanceof Error ? err.message : 'Something went wrong.', tone: 'danger' });
     }
   };
 

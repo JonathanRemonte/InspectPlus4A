@@ -5,13 +5,11 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../../components/AppText';
+import { RowActionsButton, type RowAction } from '../../../components/RowActionsButton';
 import { DueCountBadge } from '../../../components/DueCountBadge';
 import { Colors } from '../../../design/colors';
-import { Duration } from '../../../design/motion';
 import { Elevation } from '../../../design/elevation';
 import { Radius } from '../../../design/radius';
 import { Spacing } from '../../../design/spacing';
@@ -25,7 +23,6 @@ interface EstablishmentCardProps {
   item: EstablishmentDTO;
   onPress?: (item: EstablishmentDTO) => void;
   onAdd?: (item: EstablishmentDTO) => void;
-  onEdit?: (item: EstablishmentDTO) => void;
   onDelete?: (item: EstablishmentDTO) => void;
 }
 
@@ -54,17 +51,12 @@ function getTagMeta(tag: ComplianceTag) {
 
 const MAX_VISIBLE_TAGS = 3;
 
-// Full-size action buttons revealed by swiping the card left — sized for a
-// comfortable tap target (unlike the old cramped inline pill buttons).
-const ACTION_WIDTH = 72;
-const OPEN_THRESHOLD_RATIO = 0.4;
 const ICON_BOX = 44;
 
 export const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
   item,
   onPress,
   onAdd,
-  onEdit,
   onDelete,
 }) => {
   const visibleTags = item.complianceTags.slice(0, MAX_VISIBLE_TAGS);
@@ -74,90 +66,18 @@ export const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
   // caller passes undefined for a jurisdiction-visible establishment that
   // isn't the current user's own, so those buttons (and the swipe distance
   // needed to reveal them) simply don't exist rather than rendering as
-  // dead taps.
-  const visibleActionCount = 1 + (onEdit ? 1 : 0) + (onDelete ? 1 : 0);
-  const revealWidth = ACTION_WIDTH * visibleActionCount;
-  const openThreshold = revealWidth * OPEN_THRESHOLD_RATIO;
 
-  const translateX = useSharedValue(0);
-  const startX = useSharedValue(0);
-
-  const close = () => {
-    translateX.value = withTiming(0, { duration: Duration.base });
-  };
-
-  const panGesture = Gesture.Pan()
-    .activeOffsetX([-10, 10])
-    .failOffsetY([-8, 8])
-    .onStart(() => {
-      startX.value = translateX.value;
-    })
-    .onUpdate(e => {
-      translateX.value = Math.min(0, Math.max(-revealWidth, startX.value + e.translationX));
-    })
-    .onEnd(() => {
-      translateX.value = withTiming(
-        translateX.value < -openThreshold ? -revealWidth : 0,
-        { duration: Duration.base },
-      );
-    });
-
-  const cardAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
-
-  // A tap while the row is swiped open snaps it shut instead of navigating —
-  // the standard swipe-actions convention.
-  const handleCardPress = () => {
-    if (translateX.value < -1) {
-      close();
-      return;
-    }
-    onPress?.(item);
-  };
-
-  const handleAction = (handler?: (item: EstablishmentDTO) => void) => {
-    close();
-    handler?.(item);
-  };
+  // Actions the current caller has wired up. Order is the menu's order.
+  const actions: RowAction[] = [
+    ...(onAdd ? [{ id: 'add', label: 'Add Report', onSelect: () => onAdd(item) }] : []),
+    ...(onDelete ? [{ id: 'delete', label: 'Delete', variant: 'danger' as const, onSelect: () => onDelete(item) }] : []),
+  ];
 
   return (
     <View style={styles.rowWrap}>
-      {/* Actions revealed behind the card when swiped left */}
-      <View style={styles.swipeActions}>
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.actionAdd]}
-          onPress={() => handleAction(onAdd)}
-          activeOpacity={0.8}>
-          <Ionicons name="add-circle-outline" size={22} color={Colors.textSecondary} />
-          <Text style={styles.actionAddText}>Add</Text>
-        </TouchableOpacity>
-        {onEdit && (
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.actionEdit]}
-            onPress={() => handleAction(onEdit)}
-            activeOpacity={0.8}>
-            <Ionicons name="pencil" size={20} color={Colors.textWhite} />
-            <Text style={styles.actionEditText}>Edit</Text>
-          </TouchableOpacity>
-        )}
-        {onDelete && (
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.actionDelete]}
-            onPress={() => handleAction(onDelete)}
-            activeOpacity={0.8}>
-            <Ionicons name="trash-outline" size={20} color={Colors.textWhite} />
-            <Text style={styles.actionDeleteText}>Delete</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Foreground card — slides left via gesture to reveal the actions */}
-      <GestureDetector gesture={panGesture}>
-        <Animated.View style={cardAnimatedStyle}>
-          <TouchableOpacity
+      <TouchableOpacity
             style={styles.card}
-            onPress={handleCardPress}
+        onPress={() => onPress?.(item)}
             activeOpacity={onPress ? 0.9 : 1}
             disabled={!onPress}>
             {/* Icon */}
@@ -231,10 +151,15 @@ export const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
             </View>
 
             {/* Chevron */}
-            <Ionicons name="chevron-forward" size={14} color={Colors.textLight} />
-          </TouchableOpacity>
-        </Animated.View>
-      </GestureDetector>
+            {/* The overflow menu replaces the chevron when this row has
+                actions; a row with none keeps the chevron so the trailing
+                edge still reads as "tap to open". */}
+            {actions.length > 0 ? (
+              <RowActionsButton title={item.name} actions={actions} />
+            ) : (
+              <Ionicons name="chevron-forward" size={14} color={Colors.textLight} />
+            )}
+      </TouchableOpacity>
     </View>
   );
 };
@@ -243,41 +168,17 @@ const styles = StyleSheet.create({
   rowWrap: {
     marginBottom: Spacing.md,
   },
-  swipeActions: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-  },
-  actionBtn: {
-    width: ACTION_WIDTH,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-  },
-  actionAdd: {
-    backgroundColor: Colors.bgLight,
-  },
   actionAddText: {
     fontSize: Type.caption.fontSize,
     lineHeight: Type.caption.lineHeight,
     fontWeight: '700',
     color: Colors.textSecondary,
   },
-  actionEdit: {
-    backgroundColor: Colors.navy,
-  },
   actionEditText: {
     fontSize: Type.caption.fontSize,
     lineHeight: Type.caption.lineHeight,
     fontWeight: '700',
     color: Colors.textWhite,
-  },
-  actionDelete: {
-    backgroundColor: Colors.conflict,
   },
   actionDeleteText: {
     fontSize: Type.caption.fontSize,
