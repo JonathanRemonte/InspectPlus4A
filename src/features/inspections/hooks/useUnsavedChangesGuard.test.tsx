@@ -149,3 +149,43 @@ describe('useUnsavedChangesGuard', () => {
     addSpy.mockRestore();
   });
 });
+
+// useScreenFooter memoises the footer node on the deps it is given and
+// setFooter re-renders this screen, so an unstable callback in those deps
+// is an infinite loop - its own source comments record hitting exactly
+// that. WaterFormShell passes onSaveDraft/onLeave as inline arrows, so the
+// hook has to absorb their churn rather than pass it on.
+describe('useUnsavedChangesGuard callback identity', () => {
+  const props = () => ({
+    state: { a: 1 },
+    onLeave: () => {},
+    onSaveDraft: async () => {},
+  });
+
+  it('keeps requestLeave stable when the caller passes fresh callbacks every render', () => {
+    const { rerender } = render(props());
+    const first = latest.requestLeave;
+    rerender(props());
+    rerender(props());
+    expect(latest.requestLeave).toBe(first);
+  });
+
+  it('keeps markSaved stable too', () => {
+    const { rerender } = render(props());
+    const first = latest.markSaved;
+    rerender(props());
+    expect(latest.markSaved).toBe(first);
+  });
+
+  it('still calls the newest callbacks, not the ones captured on first render', async () => {
+    const stale = jest.fn();
+    const fresh = jest.fn();
+    const base = { state: { a: 1 }, onSaveDraft: async () => {} };
+    const { rerender } = render({ ...base, onLeave: stale });
+    rerender({ ...base, state: { a: 2 }, onLeave: fresh });
+    TestRenderer.act(() => latest.requestLeave());
+    await answerPromptWith('Discard');
+    expect(fresh).toHaveBeenCalledTimes(1);
+    expect(stale).not.toHaveBeenCalled();
+  });
+});

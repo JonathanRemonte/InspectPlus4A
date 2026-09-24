@@ -26,6 +26,16 @@ export function useUnsavedChangesGuard<T>({ state, onSaveDraft, onLeave }: UseUn
   const current = useRef(snapshot(state));
   current.current = snapshot(state);
 
+  // Callers pass these as inline arrows, so they are new objects on every
+  // render. Held in a ref rather than listed as dependencies: requestLeave
+  // has to keep one identity for its whole life, because useScreenFooter
+  // memoises the footer on the deps it is handed and setFooter re-renders
+  // this screen - an unstable callback there loops forever (see
+  // ScreenFooterContext). The ref is refreshed every render, so the
+  // handlers that eventually run are always the current ones.
+  const handlers = useRef({ onSaveDraft, onLeave });
+  handlers.current = { onSaveDraft, onLeave };
+
   const isDirty = useCallback(() => current.current !== baseline.current, []);
 
   // Call after a successful save: what is on screen is now what is stored, so
@@ -36,7 +46,7 @@ export function useUnsavedChangesGuard<T>({ state, onSaveDraft, onLeave }: UseUn
 
   const requestLeave = useCallback(() => {
     if (!isDirty()) {
-      onLeave();
+      handlers.current.onLeave();
       return;
     }
     void showPrompt({
@@ -50,21 +60,21 @@ export function useUnsavedChangesGuard<T>({ state, onSaveDraft, onLeave }: UseUn
       ],
     }).then(async choice => {
       if (choice === 'discard') {
-        onLeave();
+        handlers.current.onLeave();
         return;
       }
       if (choice !== 'save') return;
       try {
-        await onSaveDraft();
+        await handlers.current.onSaveDraft();
         markSaved();
-        onLeave();
+        handlers.current.onLeave();
       } catch {
         // The save path reports its own failure. Staying put is the
         // point: leaving now would discard exactly the work the
         // inspector just asked to keep.
       }
     });
-  }, [isDirty, markSaved, onLeave, onSaveDraft]);
+  }, [isDirty, markSaved]);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
