@@ -44,7 +44,6 @@ export const PromptProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const request = pending?.request;
   const actions = request?.actions?.length ? request.actions : [DISMISS_ACTION];
   const danger = request?.tone === 'danger';
-  const asList = request?.layout === 'list';
 
   return (
     <>
@@ -81,18 +80,18 @@ export const PromptProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     </View>
                   )}
 
-                  <View style={asList ? styles.actionList : styles.footer}>
+                  <View style={styles.footer}>
                     {actions.map(action => {
                       const variant = BUTTON_STYLE[action.variant ?? 'default'];
                       return (
                         <TouchableOpacity
                           key={action.id}
-                          style={[styles.btn, asList && styles.btnListItem, variant.button]}
+                          style={[styles.btn, variant.button]}
                           onPress={() => answer(action.id)}
                           activeOpacity={0.8}
                           accessibilityRole="button"
                           accessibilityLabel={action.label}>
-                          <Text style={[styles.btnText, asList && styles.btnTextListItem, variant.label]}>{action.label}</Text>
+                          <Text style={[styles.btnText, variant.label]}>{action.label}</Text>
                         </TouchableOpacity>
                       );
                     })}
@@ -179,23 +178,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     borderRadius: Radius.md,
-  },
-  // A menu of choices rather than a confirm's button row: each action is a
-  // full-width row, so the list reads top-to-bottom and every target is the
-  // same comfortable size.
-  actionList: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    gap: Spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-  },
-  btnListItem: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  btnTextListItem: {
-    textAlign: 'center',
   },
   btnText: {
     fontSize: Type.bodySm.fontSize,

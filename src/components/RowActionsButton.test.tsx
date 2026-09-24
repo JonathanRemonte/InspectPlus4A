@@ -1,24 +1,15 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { Modal, Text, TouchableOpacity } from 'react-native';
 import TestRenderer from 'react-test-renderer';
 import { RowActionsButton } from './RowActionsButton';
-import { registerPromptHandler, type PromptRequest } from '../services/prompt/promptService';
 
 type Renderer = TestRenderer.ReactTestRenderer;
 
-let prompts: PromptRequest[] = [];
-let pending: { request: PromptRequest; resolve: (id: string | null) => void } | null = null;
-
-beforeEach(() => {
-  prompts = [];
-  pending = null;
-  registerPromptHandler((request, resolve) => {
-    prompts.push(request);
-    pending = { request, resolve };
-  });
-});
-afterEach(() => registerPromptHandler(null));
-
+// react-native's View is a function component under jest-expo, not a host
+// component, so createNodeMock never fires and measureInWindow is inert -
+// the measurement path cannot be exercised here. That is exactly why the
+// menu opens on the press rather than on the measurement; placement itself
+// is covered by popoverPosition.test.ts.
 const render = (element: React.ReactElement) => {
   let r!: Renderer;
   TestRenderer.act(() => { r = TestRenderer.create(element); });
@@ -28,22 +19,32 @@ const render = (element: React.ReactElement) => {
 const menuButton = (r: Renderer) =>
   r.root.findAll(n => n.type === TouchableOpacity && n.props?.accessibilityLabel === 'More actions');
 
-// Answers the open menu as if that row had been tapped.
-const choose = async (label: string) => {
-  if (!pending) throw new Error('No menu is open');
-  const action = pending.request.actions?.find(a => a.label === label);
-  if (!action) throw new Error(`No "${label}" in the menu`);
-  const { resolve } = pending;
-  pending = null;
-  await TestRenderer.act(async () => { resolve(action.id); });
+const openMenu = async (r: Renderer) => {
+  await TestRenderer.act(async () => { menuButton(r)[0].props.onPress(); });
 };
 
-const dismiss = async () => {
-  if (!pending) throw new Error('No menu is open');
-  const { resolve } = pending;
-  pending = null;
-  await TestRenderer.act(async () => { resolve(null); });
+const isOpen = (r: Renderer) => r.root.findAllByType(Modal).length > 0;
+
+const actionRow = (r: Renderer, label: string) => {
+  const matches = r.root.findAll(n => n.type === TouchableOpacity && n.props?.accessibilityLabel === label);
+  if (matches.length !== 1) throw new Error(`Expected 1 "${label}" row, found ${matches.length}`);
+  return matches[0];
 };
+
+// The dismiss backdrop is a Pressable covering the screen. Pressable is a
+// wrapper component here, so it is located by its label and handler rather
+// than by type, which would match neither the wrapper nor its inner node
+// reliably.
+const backdrop = (r: Renderer) => {
+  const matches = r.root.findAll(
+    n => n.props?.accessibilityLabel === 'Dismiss menu' && typeof n.props?.onPress === 'function',
+  );
+  if (matches.length === 0) throw new Error('No dismiss backdrop found');
+  return matches[0];
+};
+
+const labels = (r: Renderer) =>
+  r.root.findAllByType(Text).map(n => n.props.children).filter(c => typeof c === 'string');
 
 describe('RowActionsButton', () => {
   it('renders nothing when the row has no actions available to this user', () => {
@@ -51,17 +52,12 @@ describe('RowActionsButton', () => {
     expect(menuButton(r)).toHaveLength(0);
   });
 
-  it('opens a list-layout menu titled after the row', async () => {
-    const r = render(
-      <RowActionsButton title="Water Monitoring Report" actions={[{ id: 'delete', label: 'Delete', onSelect: jest.fn() }]} />,
-    );
-    await TestRenderer.act(async () => { menuButton(r)[0].props.onPress(); });
-    expect(prompts).toHaveLength(1);
-    expect(prompts[0].title).toBe('Water Monitoring Report');
-    expect(prompts[0].layout).toBe('list');
+  it('shows no popover until the button is pressed', () => {
+    const r = render(<RowActionsButton title="Report" actions={[{ id: 'delete', label: 'Delete', onSelect: jest.fn() }]} />);
+    expect(isOpen(r)).toBe(false);
   });
 
-  it('offers every action plus a way out, in order', async () => {
+  it('opens a popover listing every action', async () => {
     const r = render(
       <RowActionsButton
         title="Report"
@@ -71,12 +67,27 @@ describe('RowActionsButton', () => {
         ]}
       />,
     );
-    await TestRenderer.act(async () => { menuButton(r)[0].props.onPress(); });
-    expect(prompts[0].actions?.map(a => a.label)).toEqual(['Edit', 'Delete', 'Cancel']);
-    expect(prompts[0].actions?.[1].variant).toBe('danger');
+    await openMenu(r);
+    expect(isOpen(r)).toBe(true);
+    expect(labels(r)).toEqual(expect.arrayContaining(['Edit', 'Delete']));
   });
 
-  it('runs only the action that was chosen', async () => {
+  // Tapping outside is how an anchored popover is dismissed, so a Cancel row
+  // would only add height to say what the backdrop already says.
+  it('offers no Cancel row', async () => {
+    const r = render(<RowActionsButton title="Report" actions={[{ id: 'delete', label: 'Delete', onSelect: jest.fn() }]} />);
+    await openMenu(r);
+    expect(labels(r)).not.toContain('Cancel');
+  });
+
+  it('shows no title, icon or close button — only the actions', async () => {
+    const r = render(<RowActionsButton title="Water Monitoring Report" actions={[{ id: 'delete', label: 'Delete', onSelect: jest.fn() }]} />);
+    await openMenu(r);
+    expect(labels(r)).toEqual(['Delete']);
+    expect(r.root.findAll(n => n.type === TouchableOpacity && n.props?.accessibilityLabel === 'Close')).toHaveLength(0);
+  });
+
+  it('runs only the action that was chosen, and closes', async () => {
     const onEdit = jest.fn();
     const onDelete = jest.fn();
     const r = render(
@@ -88,25 +99,38 @@ describe('RowActionsButton', () => {
         ]}
       />,
     );
-    await TestRenderer.act(async () => { menuButton(r)[0].props.onPress(); });
-    await choose('Delete');
+    await openMenu(r);
+    await TestRenderer.act(async () => { actionRow(r, 'Delete').props.onPress(); });
     expect(onDelete).toHaveBeenCalledTimes(1);
     expect(onEdit).not.toHaveBeenCalled();
+    expect(isOpen(r)).toBe(false);
   });
 
-  it('runs nothing when the menu is dismissed', async () => {
+  it('runs nothing when the backdrop is tapped', async () => {
     const onDelete = jest.fn();
     const r = render(<RowActionsButton title="Report" actions={[{ id: 'delete', label: 'Delete', onSelect: onDelete }]} />);
-    await TestRenderer.act(async () => { menuButton(r)[0].props.onPress(); });
-    await dismiss();
+    await openMenu(r);
+    await TestRenderer.act(async () => { backdrop(r).props.onPress(); });
     expect(onDelete).not.toHaveBeenCalled();
+    expect(isOpen(r)).toBe(false);
   });
 
-  it('runs nothing when Cancel is chosen', async () => {
+  it('runs nothing when Android hardware back dismisses it', async () => {
     const onDelete = jest.fn();
     const r = render(<RowActionsButton title="Report" actions={[{ id: 'delete', label: 'Delete', onSelect: onDelete }]} />);
-    await TestRenderer.act(async () => { menuButton(r)[0].props.onPress(); });
-    await choose('Cancel');
+    await openMenu(r);
+    await TestRenderer.act(async () => { r.root.findAllByType(Modal)[0].props.onRequestClose(); });
     expect(onDelete).not.toHaveBeenCalled();
+    expect(isOpen(r)).toBe(false);
+  });
+
+  it('still opens, positioned, when the platform declines to measure the button', async () => {
+    const r = render(<RowActionsButton title="Report" actions={[{ id: 'delete', label: 'Delete', onSelect: jest.fn() }]} />);
+    await openMenu(r);
+    const positioned = r.root.findAll(n => {
+      const style = Object.assign({}, ...[n.props?.style].flat(Infinity).filter(Boolean));
+      return style.position === 'absolute' && typeof style.top === 'number' && typeof style.left === 'number';
+    });
+    expect(positioned.length).toBeGreaterThan(0);
   });
 });
