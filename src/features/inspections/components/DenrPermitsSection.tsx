@@ -3,24 +3,12 @@ import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-nativ
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../constants/colors';
 import { ENVIRONMENTAL_LAWS, getPermitTypeOptions } from '../../../constants/denrPermits';
-import { database, collections } from '../../../db/database';
 import { FormSection, TextField, SelectField, DateField, focusInput } from '../../../components/form';
 import { AppText } from '../../../components/AppText';
 import { AddRowButton } from '../../../components/AddRowButton';
 import { SectionEditActions } from './SectionEditActions';
 import { useEditableSection } from '../hooks/useEditableSection';
 import type { PermitSnapshotItem } from '../../../services/sync/syncTypes';
-
-async function patchPermitsSnapshot(reportId: string, permits: PermitSnapshotItem[]) {
-  await database.write(async () => {
-    const rec = await collections.inspectionReports.find(reportId);
-    await rec.update(r => {
-      r.permitsSnapshot = permits;
-      r.updatedAt = new Date().toISOString();
-      r.syncState = 'pending_update';
-    });
-  });
-}
 
 const emptyPermit = (): PermitSnapshotItem => ({
   envi_law: '',
@@ -139,21 +127,26 @@ const EditablePermitCard = React.memo(function EditablePermitCard({
 });
 
 interface DenrPermitsSectionProps {
-  reportId: string;
   permits: PermitSnapshotItem[];
   canEdit: boolean;
+  // How this caller persists the edited list. The report screens write the
+  // report's own permits snapshot; the establishment screen writes the
+  // establishment's denrPermits. The section itself stays ignorant of both,
+  // which is what lets one component serve both.
+  onSave: (next: PermitSnapshotItem[]) => Promise<void>;
   onSaved: () => void;
 }
 
-// The "3. Compliance Status" tab's content for water reports (and General
-// Information's own permits section for every other report type) — see
-// waterReportTabs.ts for why water reports show this under its own tab
-// instead of inside General Information.
-export const DenrPermitsSection: React.FC<DenrPermitsSectionProps> = ({ reportId, permits, canEdit, onSaved }) => {
+// The permits list, editable in place, shared by the report screens and the
+// establishment detail screen. For water reports it is the "3. Compliance
+// Status" tab's content; for every other report type it sits inside General
+// Information (see waterReportTabs.ts); on an establishment it is the last
+// section of EstablishmentInfoSections.
+export const DenrPermitsSection: React.FC<DenrPermitsSectionProps> = ({ permits, canEdit, onSave, onSaved }) => {
   const permitsSection = useEditableSection<PermitSnapshotItem[]>({
     value: permits,
     onSave: async next => {
-      await patchPermitsSnapshot(reportId, next);
+      await onSave(next);
       onSaved();
     },
   });

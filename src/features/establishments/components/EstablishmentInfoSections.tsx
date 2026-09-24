@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
 import { View, Text, Switch, TextInput, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../design/colors';
 import { Radius } from '../../../design/radius';
 import { Spacing } from '../../../design/spacing';
@@ -8,16 +7,16 @@ import { Type } from '../../../design/typography';
 import { FormSection, TextField, SelectField, DateField, DynamicRowTable, focusInput } from '../../../components/form';
 import type { DynamicRow } from '../../../components/form';
 import { AppText } from '../../../components/AppText';
-import { Button } from '../../../components/Button';
 import { PROVINCE_OPTIONS, getCityOptions, getBarangayOptions } from '../../../constants/provinces';
 import { maskFlexibleDate, isValidFlexibleDate, FLEXIBLE_DATE_HINT, FLEXIBLE_DATE_INVALID_HINT } from '../../../utils/flexibleDate';
 import { useEditableSection } from '../../inspections/hooks/useEditableSection';
+import { DenrPermitsSection } from '../../inspections/components/DenrPermitsSection';
 import { CoordinateFields } from '../../location/components/CoordinateFields';
 import { addressPatch } from '../../location/applyResolvedAddress';
 import { SectionEditActions } from '../../inspections/components/SectionEditActions';
 import { patchEstablishmentRecord } from '../../inspections/establishmentPersistence';
 import type { EstablishmentContentField } from '../../inspections/establishmentPersistence';
-import type { EstablishmentDTO, EstablishmentOperatingStatus, PermitSnapshotItem } from '../types';
+import type { EstablishmentDTO, EstablishmentOperatingStatus } from '../types';
 
 interface EstablishmentInfoSectionsProps {
   establishment: EstablishmentDTO;
@@ -29,11 +28,6 @@ interface EstablishmentInfoSectionsProps {
   // and every section (including this one's siblings) picks up the new
   // live values.
   onSaved: () => void;
-  // Permits editing hasn't been built yet — this stays a stub the caller
-  // wires up separately, unrelated to the granular editing this file adds
-  // to the other four sections. Omitted for the same ownership reason as
-  // canEdit above.
-  onUpdatePermits?: () => void;
 }
 
 const OPERATING_STATUS_OPTIONS = ['Operational', 'Temporarily Close', 'Non-Operational'];
@@ -188,36 +182,6 @@ function fromProductLinesFields(rows: DynamicRow[]): Partial<Record<Establishmen
       })),
   };
 }
-
-// ── DENR Permits (unchanged — read-only pending its own editing flow) ─────
-// denrPermits is a flat array of freeform entries — one card per entry,
-// matching how the report form's General Information tab
-// (GeneralInformationTab.tsx) edits this same array.
-const PermitCard: React.FC<{ permit: PermitSnapshotItem }> = ({ permit }) => (
-  <View style={styles.permitCard}>
-    <View style={styles.permitCardHeader}>
-      <Ionicons name="document-text-outline" size={13} color={Colors.green} />
-      <AppText
-        variant="marquee"
-        text={[permit.envi_law, permit.permit_type].filter(Boolean).join(' — ') || 'Permit'}
-        style={styles.permitCardTitle}
-        containerStyle={styles.permitCardTitleContainer}
-      />
-    </View>
-    <View style={styles.permitRow}>
-      <Text style={styles.permitLabel}>Permit / Serial No.</Text>
-      <AppText variant="marquee" text={permit.permit_serial || '—'} style={styles.permitValue} containerStyle={styles.permitValueContainer} />
-    </View>
-    <View style={styles.permitRow}>
-      <Text style={styles.permitLabel}>Date Issued</Text>
-      <AppText variant="single" text={permit.issued_date || '—'} style={styles.permitValue} containerStyle={styles.permitValueContainer} />
-    </View>
-    <View style={styles.permitRow}>
-      <Text style={styles.permitLabel}>Expiry Date</Text>
-      <AppText variant="single" text={permit.expiry_date || '—'} style={styles.permitValue} containerStyle={styles.permitValueContainer} />
-    </View>
-  </View>
-);
 
 // ── Section components ───────────────────────────────────────────────────
 // Each section owns its own useEditableSection call and refs, and is
@@ -561,10 +525,7 @@ export const EstablishmentInfoSections: React.FC<EstablishmentInfoSectionsProps>
   establishment,
   canEdit,
   onSaved,
-  onUpdatePermits,
 }) => {
-  const permits = establishment.denrPermits;
-
   return (
     <View>
       <DetailsSection establishment={establishment} canEdit={canEdit} onSaved={onSaved} />
@@ -572,24 +533,18 @@ export const EstablishmentInfoSections: React.FC<EstablishmentInfoSectionsProps>
       <PcoSection establishment={establishment} canEdit={canEdit} onSaved={onSaved} />
       <ProductLinesSection establishment={establishment} canEdit={canEdit} onSaved={onSaved} />
 
-      <FormSection
-        icon="document-outline"
-        title="DENR Permits, Licenses & Clearances"
-        headerRight={
-          onUpdatePermits && (
-            <Button label="Edit" icon="pencil" variant="outline" onPress={onUpdatePermits} />
-          )
-        }>
-        {permits.length === 0 ? (
-          <Text style={styles.emptyText}>No permits on record.</Text>
-        ) : (
-          <View style={styles.permitList}>
-            {permits.map((permit, i) => (
-              <PermitCard key={i} permit={permit} />
-            ))}
-          </View>
-        )}
-      </FormSection>
+      {/* The same section the report screens use, saving into the
+          establishment's own permits rather than a report's snapshot.
+          Reports already filed keep the permits they recorded; this list
+          feeds reports created from here on. */}
+      <DenrPermitsSection
+        permits={establishment.denrPermits}
+        canEdit={canEdit}
+        onSave={next =>
+          patchEstablishmentRecord({ estabId: establishment.estabId, fields: { denrPermits: next } })
+        }
+        onSaved={onSaved}
+      />
     </View>
   );
 };

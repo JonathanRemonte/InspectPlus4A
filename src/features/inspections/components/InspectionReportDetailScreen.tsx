@@ -17,6 +17,7 @@ import { GeneralInformationView } from './GeneralInformationView';
 import { PurposeOfInspectionView } from './PurposeOfInspectionView';
 import { ComplianceStatusView } from './ComplianceStatusView';
 import { DenrPermitsSection } from './DenrPermitsSection';
+import { patchPermitsSnapshot } from '../permitsSnapshotPersistence';
 import { useHeaderScroll } from '../../home/context/HeaderScrollContext';
 import { WaterExtraSectionsView } from '../water/WaterComplianceEditSections';
 import { ReportThemeProvider } from '../../../core/providers/ReportThemeProvider';
@@ -216,9 +217,9 @@ try {
           {activeMainTab.key === 'compliance' &&
             (isWater ? (
               <DenrPermitsSection
-                reportId={report.reportId}
                 permits={report.permitsSnapshot}
                 canEdit={canEdit}
+                onSave={next => patchPermitsSnapshot(report.reportId, next)}
                 onSaved={refetch}
               />
             ) : (

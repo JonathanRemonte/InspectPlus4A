@@ -38,7 +38,13 @@ const hasEmptyStateText = (r: Renderer, message: string): boolean => {
   return matches.length === 1;
 };
 
+// The empty-state tests below stub useEditableSection. Without this the
+// stub leaks into every test that follows and they silently exercise a
+// component frozen in read-only mode.
+afterEach(() => jest.restoreAllMocks());
+
 const noop = () => {};
+const noopSave = async () => {};
 
 const samplePermit = (): PermitSnapshotItem => ({
   envi_law: 'RA 8749',
@@ -78,7 +84,7 @@ describe('DenrPermitsSection empty-state message visibility', () => {
 
     const r = await render(
       <DenrPermitsSection
-        reportId="report-1"
+        onSave={noopSave}
         permits={[]}
         canEdit={true}
         onSaved={noop}
@@ -97,7 +103,7 @@ describe('DenrPermitsSection empty-state message visibility', () => {
 
     const r = await render(
       <DenrPermitsSection
-        reportId="report-1"
+        onSave={noopSave}
         permits={[]}
         canEdit={true}
         onSaved={noop}
@@ -119,7 +125,7 @@ describe('DenrPermitsSection empty-state message visibility', () => {
 
     const r = await render(
       <DenrPermitsSection
-        reportId="report-1"
+        onSave={noopSave}
         permits={permits}
         canEdit={true}
         onSaved={noop}
@@ -128,5 +134,60 @@ describe('DenrPermitsSection empty-state message visibility', () => {
 
     // With permits present, the empty-state message should NOT be visible
     expect(hasEmptyStateText(r, emptyStateMessage)).toBe(false);
+  });
+});
+
+// The section is shared: the report screens persist into the report's own
+// permits snapshot, the establishment screen into the establishment's
+// denrPermits. It knows only that saving is something its caller does.
+describe('DenrPermitsSection delegates persistence to its caller', () => {
+  const permit = (): PermitSnapshotItem => ({
+    envi_law: 'RA 9275',
+    permit_type: 'Discharge Permit',
+    permit_serial: 'DP-1',
+    issued_date: '2026-01-01',
+    expiry_date: '2027-01-01',
+  });
+
+  const startEditing = async (r: TestRenderer.ReactTestRenderer) => {
+    await TestRenderer.act(async () => {
+      r.root
+        .findAll(n => n.props?.accessibilityLabel === 'Edit' && typeof n.props?.onPress === 'function')[0]
+        .props.onPress();
+    });
+  };
+
+  const save = async (r: TestRenderer.ReactTestRenderer) => {
+    await TestRenderer.act(async () => {
+      r.root
+        .findAll(n => n.props?.accessibilityLabel === 'Save' && typeof n.props?.onPress === 'function')[0]
+        .props.onPress();
+    });
+  };
+
+  it('hands the edited permits to onSave, then reports the save upward', async () => {
+    const onSave = jest.fn().mockResolvedValue(undefined);
+    const onSaved = jest.fn();
+    const r = await render(
+      <DenrPermitsSection permits={[permit()]} canEdit onSave={onSave} onSaved={onSaved} />,
+    );
+    await startEditing(r);
+    await save(r);
+    expect(onSave).toHaveBeenCalledWith([permit()]);
+    expect(onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the editor open and reports nothing upward when the save fails', async () => {
+    const onSave = jest.fn().mockRejectedValue(new Error('offline'));
+    const onSaved = jest.fn();
+    const r = await render(
+      <DenrPermitsSection permits={[permit()]} canEdit onSave={onSave} onSaved={onSaved} />,
+    );
+    await startEditing(r);
+    await save(r);
+    expect(onSaved).not.toHaveBeenCalled();
+    expect(
+      r.root.findAll(n => n.props?.accessibilityLabel === 'Save' && typeof n.props?.onPress === 'function'),
+    ).not.toHaveLength(0);
   });
 });

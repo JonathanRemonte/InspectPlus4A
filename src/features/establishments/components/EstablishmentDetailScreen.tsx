@@ -81,11 +81,6 @@ export const EstablishmentDetailScreen: React.FC<EstablishmentDetailScreenProps>
     });
   }, [refetch, refetchReports]);
 
-  const handleUpdatePermits = useCallback(() => {
-    // TODO: navigate to permits edit flow
-    console.log('[EstablishmentDetail] Update permits:', estabId);
-  }, [estabId]);
-
   const handleOpenReport = useGuardedPress((item: EstablishmentReportItem) => {
     if (item.kind === 'inspection') {
       router.push({ pathname: '/inspection/[id]', params: { id: item.reportId } });
@@ -178,7 +173,6 @@ try {
           establishment={establishment}
           canEdit={canManageEstablishment}
           onSaved={refetch}
-          onUpdatePermits={canManageEstablishment ? handleUpdatePermits : undefined}
         />
 
         <EstablishmentReportsSection
