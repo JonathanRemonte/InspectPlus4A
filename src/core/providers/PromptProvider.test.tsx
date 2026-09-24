@@ -109,3 +109,54 @@ describe('PromptProvider', () => {
     expect(texts(r)).toEqual(expect.arrayContaining(['Second']));
   });
 });
+
+// An action menu is the same promise-and-queue machinery as a confirm, but
+// it reads as a list of choices rather than a row of buttons, so the
+// actions stack full-width and left-aligned instead of wrapping in the
+// footer. RowActionsButton is the caller.
+describe('PromptProvider list layout', () => {
+  const actionButtons = (r: Renderer) =>
+    r.root.findAll(n => n.type === TouchableOpacity && typeof n.props?.accessibilityLabel === 'string' && n.props.accessibilityLabel !== 'Close');
+
+  it('stacks each action full-width when layout is list', async () => {
+    const r = await render();
+    await TestRenderer.act(async () => {
+      void showPrompt({
+        title: 'Water Monitoring Report',
+        layout: 'list',
+        actions: [
+          { id: 'edit', label: 'Edit' },
+          { id: 'delete', label: 'Delete', variant: 'danger' },
+          { id: 'cancel', label: 'Cancel', variant: 'cancel' },
+        ],
+      });
+    });
+    const styles = actionButtons(r).map(n => Object.assign({}, ...[n.props.style].flat(Infinity).filter(Boolean)));
+    expect(styles).toHaveLength(3);
+    for (const style of styles) expect(style.width).toBe('100%');
+  });
+
+  it('still lays actions out as footer buttons by default', async () => {
+    const r = await render();
+    await TestRenderer.act(async () => {
+      void showPrompt({ title: 'Delete report?', actions: [{ id: 'cancel', label: 'Cancel' }, { id: 'delete', label: 'Delete' }] });
+    });
+    const styles = actionButtons(r).map(n => Object.assign({}, ...[n.props.style].flat(Infinity).filter(Boolean)));
+    expect(styles).toHaveLength(2);
+    for (const style of styles) expect(style.width).toBeUndefined();
+  });
+
+  it('resolves with the action chosen from the list', async () => {
+    const r = await render();
+    let choice: string | null | undefined;
+    await TestRenderer.act(async () => {
+      void showPrompt({
+        title: 'Report',
+        layout: 'list',
+        actions: [{ id: 'edit', label: 'Edit' }, { id: 'delete', label: 'Delete', variant: 'danger' }],
+      }).then(c => { choice = c; });
+    });
+    await TestRenderer.act(async () => { button(r, 'Delete').props.onPress(); });
+    expect(choice).toBe('delete');
+  });
+});

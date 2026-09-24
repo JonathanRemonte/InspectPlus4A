@@ -1,14 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../../components/AppText';
 import { Badge } from '../../../components/Badge';
+import { RowActionsButton, type RowAction } from '../../../components/RowActionsButton';
 import { UrgencyRibbon } from '../../../components/UrgencyRibbon';
 import { REPORT_TYPE_DISPLAY, ReportDataKey } from '../../../constants/reportTypeDisplay';
 import { Colors } from '../../../design/colors';
-import { Duration } from '../../../design/motion';
 import { Elevation } from '../../../design/elevation';
 import { Radius } from '../../../design/radius';
 import { Spacing } from '../../../design/spacing';
@@ -47,10 +45,6 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-// Full-size action buttons revealed by swiping the card left — matches
-// EstablishmentCard's swipe-actions treatment.
-const ACTION_WIDTH = 72;
-const OPEN_THRESHOLD_RATIO = 0.4;
 const ICON_BOX = 38;
 
 export const ReportListCard: React.FC<ReportListCardProps> = ({
@@ -84,44 +78,15 @@ export const ReportListCard: React.FC<ReportListCardProps> = ({
   // owned by this inspector, or a Developer account.
   const showEdit = item.kind === 'inspection' && !isSubmitted && isOwnerOrManager;
 
-  const visibleActionCount = (showEdit ? 1 : 0) + (showDelete ? 1 : 0);
-  const revealWidth = ACTION_WIDTH * visibleActionCount;
-  const openThreshold = revealWidth * OPEN_THRESHOLD_RATIO;
-
-  const translateX = useSharedValue(0);
-  const startX = useSharedValue(0);
-
-  const close = () => {
-    translateX.value = withTiming(0, { duration: Duration.base });
-  };
-
-  const panGesture = Gesture.Pan()
-    // Swiping for edit/delete and ticking rows for export are two conflicting
-    // gestures on one row, so the swipe is off while selecting.
-    .enabled(revealWidth > 0 && !selectable)
-    // Leftward only. These rows reveal their actions on the right edge and
-    // travel only left (translateX is clamped to <= 0 below), so claiming
-    // rightward drags as well would contest the home screen's horizontal
-    // tab pager for a gesture this row cannot use. failOffsetX releases a
-    // rightward drag immediately so the pager gets it.
-    .activeOffsetX(-10)
-    .failOffsetX(10)
-    .failOffsetY([-8, 8])
-    .onStart(() => {
-      startX.value = translateX.value;
-    })
-    .onUpdate(e => {
-      translateX.value = Math.min(0, Math.max(-revealWidth, startX.value + e.translationX));
-    })
-    .onEnd(() => {
-      translateX.value = withTiming(translateX.value < -openThreshold ? -revealWidth : 0, {
-        duration: Duration.base,
-      });
-    });
-
-  const cardAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
+  // Actions this viewer may take on this row. Selection mode (the Export
+  // tab) offers none: the row's tap is a tick there, so a menu would compete
+  // with it.
+  const actions: RowAction[] = selectable
+    ? []
+    : [
+        ...(showEdit ? [{ id: 'edit', label: 'Edit', onSelect: () => onEdit(item) }] : []),
+        ...(showDelete ? [{ id: 'delete', label: 'Delete', variant: 'danger' as const, onSelect: () => onDelete(item) }] : []),
+      ];
 
   const handleCardPress = () => {
     if (selectable) {
@@ -129,56 +94,11 @@ export const ReportListCard: React.FC<ReportListCardProps> = ({
       onToggleSelect?.(item);
       return;
     }
-    // A tap while the row is swiped open snaps it shut instead of navigating.
-    if (translateX.value < -1) {
-      close();
-      return;
-    }
     onPress(item);
-  };
-
-  const handleAction = (handler: (item: AllReportItem) => void) => {
-    close();
-    handler(item);
   };
 
   return (
     <View style={styles.rowWrap}>
-      {/* Actions revealed behind the card when swiped left. Selection mode
-          already disables the pan gesture that would reveal them (see
-          panGesture above), but a dimmed card (a run in flight, or "No
-          template yet") is translucent enough to let them show through
-          underneath — so they're not rendered at all while selectable. */}
-      {!selectable && (
-        <View style={styles.swipeActions}>
-          {showEdit && (
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.actionEdit]}
-              onPress={() => handleAction(onEdit)}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel={`Edit ${item.title}`}>
-              <Ionicons name="pencil" size={20} color={Colors.textWhite} />
-              <Text style={styles.actionText}>Edit</Text>
-            </TouchableOpacity>
-          )}
-          {showDelete && (
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.actionDelete]}
-              onPress={() => handleAction(onDelete)}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel={`Delete ${item.title}`}>
-              <Ionicons name="trash-outline" size={20} color={Colors.textWhite} />
-              <Text style={styles.actionText}>Delete</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-
-      {/* Foreground card — slides left via gesture to reveal the actions */}
-      <GestureDetector gesture={panGesture}>
-        <Animated.View style={cardAnimatedStyle}>
           <TouchableOpacity
             style={[
               styles.card,
@@ -360,10 +280,15 @@ export const ReportListCard: React.FC<ReportListCardProps> = ({
               )}
             </View>
 
-            {!selectable && <Ionicons name="chevron-forward" size={14} color={Colors.textLight} />}
-          </TouchableOpacity>
-        </Animated.View>
-      </GestureDetector>
+            {/* The overflow menu replaces the chevron when this row has
+                actions. Selection mode shows neither. */}
+            {!selectable &&
+              (actions.length > 0 ? (
+                <RowActionsButton title={item.title} actions={actions} />
+              ) : (
+                <Ionicons name="chevron-forward" size={14} color={Colors.textLight} />
+              ))}
+      </TouchableOpacity>
     </View>
   );
 };
@@ -371,33 +296,6 @@ export const ReportListCard: React.FC<ReportListCardProps> = ({
 const styles = StyleSheet.create({
   rowWrap: {
     marginBottom: Spacing.md,
-  },
-  swipeActions: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-  },
-  actionBtn: {
-    width: ACTION_WIDTH,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-  },
-  actionEdit: {
-    backgroundColor: Colors.navy,
-  },
-  actionDelete: {
-    backgroundColor: Colors.conflict,
-  },
-  actionText: {
-    fontSize: Type.caption.fontSize,
-    lineHeight: Type.caption.lineHeight,
-    fontWeight: '700',
-    color: Colors.textWhite,
   },
   card: {
     flexDirection: 'row',

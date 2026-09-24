@@ -23,6 +23,10 @@ export interface PromptRequest {
   tone?: 'info' | 'danger';
   // Omitted for a plain notice, which gets a single dismiss button.
   actions?: PromptAction[];
+  // 'buttons' (default) puts the actions in a footer row - a confirm.
+  // 'list' stacks them full-width as a menu of choices; see
+  // components/RowActionsButton.tsx.
+  layout?: 'buttons' | 'list';
 }
 
 type Resolve = (id: string | null) => void;

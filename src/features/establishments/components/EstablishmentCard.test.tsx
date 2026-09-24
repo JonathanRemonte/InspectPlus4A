@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
+import { RowActionsButton } from '../../../components/RowActionsButton';
 import { Ionicons } from '@expo/vector-icons';
 import TestRenderer from 'react-test-renderer';
 import { EstablishmentCard } from './EstablishmentCard';
@@ -72,10 +73,15 @@ const findCard = (r: Renderer) =>
     (n) => n.type === TouchableOpacity && flattenStyle(n.props.style).backgroundColor === Colors.white,
   );
 
-const findActionButton = (r: Renderer, label: string) =>
-  r.root.findAll(
-    (n) => n.type === TouchableOpacity && n.props?.children?.[1]?.props?.children === label,
-  );
+// Actions used to be buttons revealed by swiping; they are now declared to
+// RowActionsButton, which shows them in a menu. Asserting on the declared
+// list checks the permission gating without reaching into the menu's UI.
+const menuActions = (r: Renderer): string[] => {
+  const buttons = r.root.findAllByType(RowActionsButton);
+  return buttons.length === 0 ? [] : buttons[0].props.actions.map((a: { label: string }) => a.label);
+};
+
+const findActionButton = (r: Renderer, label: string) => (menuActions(r).includes(label) ? [label] : []);
 
 // Locate the ordered list of the card body's real JSX children — name,
 // locationRow, tagRow, and (conditionally) the sync row — by first finding
@@ -105,10 +111,6 @@ const findContentChildren = (r: Renderer) => {
   const hostLayer = matches[0].children[0] as TestRenderer.ReactTestInstance;
   return hostLayer.children as TestRenderer.ReactTestInstance[];
 };
-
-const isPanGestureEnabled = (r: Renderer): boolean | undefined =>
-  (r.root.findByType(GestureDetector).props as { gesture: { config: { enabled?: boolean } } }).gesture
-    .config.enabled;
 
 // @expo/vector-icons renders its glyph as a Text under the hood, with the
 // icon's `size` prop applied as that Text's fontSize — that's an icon size,
@@ -370,10 +372,10 @@ describe('EstablishmentCard sync flag placement', () => {
   });
 });
 
-describe('EstablishmentCard action visibility (unchanged by this task)', () => {
-  it('always shows Add, and hides Edit/Delete when their handlers are not provided', () => {
+describe('EstablishmentCard action visibility', () => {
+  it('always offers Add Report, and hides Edit/Delete when their handlers are not provided', () => {
     const r = render(<EstablishmentCard item={baseItem} onPress={noop} onAdd={noop} />);
-    expect(findActionButton(r, 'Add')).toHaveLength(1);
+    expect(findActionButton(r, 'Add Report')).toHaveLength(1);
     expect(findActionButton(r, 'Edit')).toHaveLength(0);
     expect(findActionButton(r, 'Delete')).toHaveLength(0);
   });
@@ -392,37 +394,25 @@ describe('EstablishmentCard action visibility (unchanged by this task)', () => {
 
   it('shows all three actions when every handler is provided', () => {
     const r = render(<EstablishmentCard item={baseItem} onPress={noop} onAdd={noop} onEdit={noop} onDelete={noop} />);
-    expect(findActionButton(r, 'Add')).toHaveLength(1);
+    expect(findActionButton(r, 'Add Report')).toHaveLength(1);
     expect(findActionButton(r, 'Edit')).toHaveLength(1);
     expect(findActionButton(r, 'Delete')).toHaveLength(1);
   });
 
-  it('closes the swipe and invokes the handler when an action is pressed', () => {
+  it('invokes the handler when its menu action is chosen', () => {
     const onEdit = jest.fn();
     const r = render(<EstablishmentCard item={baseItem} onPress={noop} onEdit={onEdit} />);
-    const [editBtn] = findActionButton(r, 'Edit');
-    TestRenderer.act(() => {
-      editBtn.props.onPress();
-    });
+    const action = r.root.findByType(RowActionsButton).props.actions.find((a: { id: string }) => a.id === 'edit');
+    TestRenderer.act(() => action.onSelect());
     expect(onEdit).toHaveBeenCalledWith(baseItem);
   });
-});
 
-describe('EstablishmentCard swipe gesture', () => {
-  // EstablishmentCard's Add action is always present (unlike ReportListCard,
-  // where Edit/Delete can both be absent), so the pan gesture never has a
-  // `.enabled(false)` case — it stays enabled regardless of which of
-  // onEdit/onDelete are supplied. This locks that invariant in.
-  it('stays enabled with only the default Add action available', () => {
-    const r = render(<EstablishmentCard item={baseItem} onPress={noop} />);
-    expect(isPanGestureEnabled(r)).not.toBe(false);
-  });
-
-  it('stays enabled with every action available', () => {
+  it('carries no swipe gesture, so horizontal drags belong to the tab pager', () => {
     const r = render(<EstablishmentCard item={baseItem} onPress={noop} onAdd={noop} onEdit={noop} onDelete={noop} />);
-    expect(isPanGestureEnabled(r)).not.toBe(false);
+    expect(r.root.findAllByType(GestureDetector)).toHaveLength(0);
   });
 });
+
 
 describe('EstablishmentCard press behavior (unchanged by this task)', () => {
   it('calls onPress with the item when tapped', () => {
@@ -497,21 +487,3 @@ describe('EstablishmentCard due indicator', () => {
 // the card had no use for and made swiping back a tab nearly impossible on
 // top of a list. Claiming leftward only, and failing fast rightward, hands
 // every right-swipe to the pager.
-describe('EstablishmentCard swipe direction', () => {
-  const panConfig = (r: Renderer) =>
-    (r.root.findByType(GestureDetector).props as {
-      gesture: { config: { activeOffsetXStart?: number; activeOffsetXEnd?: number; failOffsetXEnd?: number } };
-    }).gesture.config;
-
-  it('activates only on a leftward drag, never a rightward one', () => {
-    const r = render(<EstablishmentCard item={baseItem} onPress={noop} />);
-    const config = panConfig(r);
-    expect(config.activeOffsetXStart).toBe(-10);
-    expect(config.activeOffsetXEnd).toBeUndefined();
-  });
-
-  it('fails fast on a rightward drag so the tab pager receives it', () => {
-    const r = render(<EstablishmentCard item={baseItem} onPress={noop} />);
-    expect(panConfig(r).failOffsetXEnd).toBe(10);
-  });
-});

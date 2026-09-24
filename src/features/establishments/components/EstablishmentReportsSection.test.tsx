@@ -12,6 +12,7 @@ import { Spacing } from '../../../design/spacing';
 import { FONT_SCALING, Type } from '../../../design/typography';
 import type { EstablishmentReportItem } from '../hooks/useEstablishment';
 import { Badge } from '../../../components/Badge';
+import { RowActionsButton } from '../../../components/RowActionsButton';
 
 // getReportUrgency resolves thresholds through urgencyConfig, which returns
 // the build-time ENV defaults whenever its module-level snapshot has never
@@ -64,23 +65,17 @@ const findIconWrap = (r: Renderer) => {
 const findRow = (r: Renderer, item: EstablishmentReportItem) =>
   r.root.find((n) => n.type === TouchableOpacity && n.props?.accessibilityLabel === item.title);
 
-const findDeleteButtons = (r: Renderer, item: EstablishmentReportItem) =>
-  r.root.findAll(
-    (n) => n.type === TouchableOpacity && n.props?.accessibilityLabel === `Delete ${item.title}`,
-  );
+// Delete used to be a button revealed by swiping; it is now declared to
+// RowActionsButton, which shows it in a menu.
+const findDeleteButtons = (r: Renderer, item: EstablishmentReportItem) => {
+  const menus = findRow(r, item).findAllByType(RowActionsButton);
+  return menus.length === 0
+    ? []
+    : menus[0].props.actions.filter((a: { id: string }) => a.id === 'delete');
+};
 
 const findAddReportButton = (r: Renderer) =>
   r.root.find((n) => n.type === TouchableOpacity && n.props?.accessibilityLabel === 'Add Report');
-
-// Each row owns exactly one GestureDetector for its swipe-to-reveal pan
-// gesture. Gesture.Pan().enabled(x) stores the flag on the gesture's own
-// `config` object (handlers/gestures/gesture.js), so reading it here
-// inspects the actual recognizer state the native side would honor — same
-// technique as ReportListCard.test.tsx. Every test that calls this renders
-// exactly one report, so there is exactly one GestureDetector to find.
-const isPanGestureEnabled = (r: Renderer): boolean =>
-  (r.root.findByType(GestureDetector).props as { gesture: { config: { enabled: boolean } } }).gesture
-    .config.enabled;
 
 // @expo/vector-icons renders its glyph as a Text under the hood, with the
 // icon's `size` prop applied as that Text's fontSize — that's an icon size,
@@ -802,8 +797,8 @@ describe('EstablishmentReportsSection urgency ribbon', () => {
   });
 });
 
-describe('EstablishmentReportsSection delete visibility and swipe gesture (unchanged by this task)', () => {
-  it('shows Delete and enables the swipe gesture for an inspection report the viewer owns', () => {
+describe('EstablishmentReportsSection delete visibility', () => {
+  it('shows Delete for an inspection report the viewer owns', () => {
     const item: EstablishmentReportItem = { ...baseItem, kind: 'inspection', inspectorUid: 'uid-1' };
     const r = render(
       <EstablishmentReportsSection
@@ -816,7 +811,6 @@ describe('EstablishmentReportsSection delete visibility and swipe gesture (uncha
       />,
     );
     expect(findDeleteButtons(r, item)).toHaveLength(1);
-    expect(isPanGestureEnabled(r)).toBe(true);
   });
 
   it('shows Delete for a report the viewer does not own when canManageAll is true (Developer account)', () => {
@@ -832,10 +826,9 @@ describe('EstablishmentReportsSection delete visibility and swipe gesture (uncha
       />,
     );
     expect(findDeleteButtons(r, item)).toHaveLength(1);
-    expect(isPanGestureEnabled(r)).toBe(true);
   });
 
-  it('hides Delete and disables the swipe gesture for an inspection report the viewer does not own', () => {
+  it('hides Delete for an inspection report the viewer does not own', () => {
     const item: EstablishmentReportItem = { ...baseItem, kind: 'inspection', inspectorUid: 'someone-else' };
     const r = render(
       <EstablishmentReportsSection
@@ -848,7 +841,6 @@ describe('EstablishmentReportsSection delete visibility and swipe gesture (uncha
       />,
     );
     expect(findDeleteButtons(r, item)).toHaveLength(0);
-    expect(isPanGestureEnabled(r)).toBe(false);
   });
 
   it('never shows Delete for a survey report, even when owned and manageable', () => {
@@ -864,11 +856,10 @@ describe('EstablishmentReportsSection delete visibility and swipe gesture (uncha
       />,
     );
     expect(findDeleteButtons(r, item)).toHaveLength(0);
-    expect(isPanGestureEnabled(r)).toBe(false);
   });
 });
 
-describe('EstablishmentReportsSection press wiring (unchanged by this task)', () => {
+describe('EstablishmentReportsSection press wiring', () => {
   it('opens the report on press', () => {
     const onOpenReport = jest.fn();
     const r = render(
@@ -900,10 +891,8 @@ describe('EstablishmentReportsSection press wiring (unchanged by this task)', ()
         onDeleteReport={onDeleteReport}
       />,
     );
-    const [deleteBtn] = findDeleteButtons(r, item);
-    TestRenderer.act(() => {
-      deleteBtn.props.onPress();
-    });
+    const [deleteAction] = findDeleteButtons(r, item);
+    TestRenderer.act(() => deleteAction.onSelect());
     expect(onDeleteReport).toHaveBeenCalledWith(item);
   });
 
@@ -1067,5 +1056,50 @@ describe('EstablishmentReportsSection legibility guarantee', () => {
     const sizes = allFontSizes(r);
     expect(sizes.length).toBeGreaterThan(0);
     sizes.forEach((size) => expect(size).toBeGreaterThanOrEqual(Type.caption.fontSize));
+  });
+});
+
+// Swipe-to-reveal was replaced by an overflow menu: it was invisible until
+// discovered, and on the home screen it fought the horizontal tab pager for
+// the same drags. These rows are on the detail screen, but all three
+// swipeable rows changed together so they behave alike.
+describe('EstablishmentReportsSection row actions', () => {
+  const rowFor = (r: Renderer, item: EstablishmentReportItem) => findRow(r, item);
+
+  it('offers Delete in a menu for a report the viewer owns', () => {
+    const item: EstablishmentReportItem = { ...baseItem, inspectorUid: 'uid-1' };
+    const r = render(
+      <EstablishmentReportsSection reports={[item]} currentUid="uid-1" canManageAll={false} onAddReport={noop} onOpenReport={noop} onDeleteReport={noop} />,
+    );
+    const menus = rowFor(r, item).findAllByType(RowActionsButton);
+    expect(menus).toHaveLength(1);
+    expect(menus[0].props.actions.map((a: { label: string }) => a.label)).toEqual(['Delete']);
+  });
+
+  it('shows no menu for a report the viewer may not delete', () => {
+    const item: EstablishmentReportItem = { ...baseItem, inspectorUid: 'someone-else' };
+    const r = render(
+      <EstablishmentReportsSection reports={[item]} currentUid="uid-1" canManageAll={false} onAddReport={noop} onOpenReport={noop} onDeleteReport={noop} />,
+    );
+    expect(rowFor(r, item).findAllByType(RowActionsButton)).toHaveLength(0);
+  });
+
+  it('deletes the report when that menu action is chosen', () => {
+    const onDeleteReport = jest.fn();
+    const item: EstablishmentReportItem = { ...baseItem, inspectorUid: 'uid-1' };
+    const r = render(
+      <EstablishmentReportsSection reports={[item]} currentUid="uid-1" canManageAll={false} onAddReport={noop} onOpenReport={noop} onDeleteReport={onDeleteReport} />,
+    );
+    const action = rowFor(r, item).findByType(RowActionsButton).props.actions[0];
+    TestRenderer.act(() => action.onSelect());
+    expect(onDeleteReport).toHaveBeenCalledWith(item);
+  });
+
+  it('carries no swipe gesture', () => {
+    const item: EstablishmentReportItem = { ...baseItem, inspectorUid: 'uid-1' };
+    const r = render(
+      <EstablishmentReportsSection reports={[item]} currentUid="uid-1" canManageAll={false} onAddReport={noop} onOpenReport={noop} onDeleteReport={noop} />,
+    );
+    expect(r.root.findAllByType(GestureDetector)).toHaveLength(0);
   });
 });
