@@ -99,7 +99,13 @@ export const ReportListCard: React.FC<ReportListCardProps> = ({
     // Swiping for edit/delete and ticking rows for export are two conflicting
     // gestures on one row, so the swipe is off while selecting.
     .enabled(revealWidth > 0 && !selectable)
-    .activeOffsetX([-10, 10])
+    // Leftward only. These rows reveal their actions on the right edge and
+    // travel only left (translateX is clamped to <= 0 below), so claiming
+    // rightward drags as well would contest the home screen's horizontal
+    // tab pager for a gesture this row cannot use. failOffsetX releases a
+    // rightward drag immediately so the pager gets it.
+    .activeOffsetX(-10)
+    .failOffsetX(10)
     .failOffsetY([-8, 8])
     .onStart(() => {
       startX.value = translateX.value;

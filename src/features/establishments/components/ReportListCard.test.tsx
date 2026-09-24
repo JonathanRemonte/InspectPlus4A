@@ -1171,3 +1171,29 @@ describe('ReportListCard urgency ribbon', () => {
     expect(dueSoonCard.backgroundColor).toBe(Colors.warning.bg);
   });
 });
+
+// The home screen's tab pager is a horizontal pagingEnabled ScrollView, so a
+// horizontal drag that starts on a card is contested between the two. These
+// cards only ever travel LEFT (translateX is clamped to <= 0), so claiming
+// rightward drags too - which activeOffsetX([-10, 10]) did - stole a gesture
+// the card had no use for and made swiping back a tab nearly impossible on
+// top of a list. Claiming leftward only, and failing fast rightward, hands
+// every right-swipe to the pager.
+describe('ReportListCard swipe direction', () => {
+  const panConfig = (r: Renderer) =>
+    (r.root.findByType(GestureDetector).props as {
+      gesture: { config: { activeOffsetXStart?: number; activeOffsetXEnd?: number; failOffsetXEnd?: number } };
+    }).gesture.config;
+
+  it('activates only on a leftward drag, never a rightward one', () => {
+    const r = render(<ReportListCard item={baseItem} currentUid={baseItem.inspectorUid} canManageAll={false} onPress={noop} onEdit={noop} onDelete={noop} />);
+    const config = panConfig(r);
+    expect(config.activeOffsetXStart).toBe(-10);
+    expect(config.activeOffsetXEnd).toBeUndefined();
+  });
+
+  it('fails fast on a rightward drag so the tab pager receives it', () => {
+    const r = render(<ReportListCard item={baseItem} currentUid={baseItem.inspectorUid} canManageAll={false} onPress={noop} onEdit={noop} onDelete={noop} />);
+    expect(panConfig(r).failOffsetXEnd).toBe(10);
+  });
+});
