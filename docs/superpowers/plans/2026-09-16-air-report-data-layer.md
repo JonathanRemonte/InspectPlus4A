@@ -41,7 +41,9 @@
 | `src/features/inspections/air/airChecklistData.test.ts` | Create | 4 |
 | `src/features/inspections/air/airTypes.ts` | Create: form state, save/load boundary | 5 |
 | `src/features/inspections/air/airTypes.test.ts` | Create | 5 |
-| `src/features/inspections/hooks/useInspectionReport.ts` | Modify: five checklist groups, template order | 6 |
+| `src/features/inspections/hooks/useInspectionReport.ts` | Modify: add `airChecklistGroupsFrom` beside the view types | 6 |
+| `src/features/inspections/hooks/loadInspectionReportDetail.ts` | Modify: call it from the `air_monitoring` branch | 6 |
+| `src/features/inspections/hooks/airComplianceView.test.ts` | Create | 6 |
 
 ---
 
@@ -1426,13 +1428,17 @@ EOF
 ### Task 6: Read side — five checklist groups in template order
 
 **Files:**
-- Modify: `src/features/inspections/hooks/useInspectionReport.ts:327-343` (the `air_monitoring` branch)
+- Modify: `src/features/inspections/hooks/useInspectionReport.ts` (add the helper beside the `AirComplianceView` / `ChecklistGroup` / `ChecklistEntry` declarations)
+- Modify: `src/features/inspections/hooks/loadInspectionReportDetail.ts:160-179` (the `air_monitoring` branch — the call site)
+- Test: `src/features/inspections/hooks/airComplianceView.test.ts`
 
 **Interfaces:**
 - Consumes: `AIR_CHECKLIST_GROUPS` (Task 4) for the titles; `ComplianceAir.checklistAppendixF` / `.checklistConsentAgreement` (Task 2).
 - Produces: `AirComplianceView.checklists` has five `ChecklistGroup`s, titled and ordered as the form prints them.
 
-This branch of the hook is only exercised for `air_monitoring` reports, which nothing creates yet, so the existing hook tests do not reach it; the change is covered by typecheck plus a targeted assertion below.
+**Amended 2026-09-25 (Ruling 5).** The plan originally put both the helper and the call site in `useInspectionReport.ts`. Since then `develop` landed `refactor(reports): pull the report-detail loader out of useInspectionReport`, which moved the `air_monitoring` branch verbatim into `loadInspectionReportDetail.ts`. The helper stays in `useInspectionReport.ts` (that is where `AirComplianceView`, `ChecklistGroup` and `ChecklistEntry` are declared, and the loader already imports types from it); only the call site moves.
+
+This branch of the loader is only exercised for `air_monitoring` reports, which nothing creates yet, so the existing loader tests do not reach it; the change is covered by typecheck plus a targeted assertion below.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1441,6 +1447,13 @@ Create `src/features/inspections/hooks/airComplianceView.test.ts`:
 ```ts
 import { AIR_CHECKLIST_GROUPS } from '../air/airChecklistData';
 import { airChecklistGroupsFrom } from './useInspectionReport';
+
+// useInspectionReport pulls in the native SQLite adapter and the supabase
+// client transitively, neither of which loads under Jest — same two mocks
+// src/features/establishments/hooks/useEstablishment.test.ts:8-19 uses.
+// jest.mock calls are hoisted above the imports.
+jest.mock('../../../db/database', () => ({ database: {}, collections: {} }));
+jest.mock('../../../services/supabase/client', () => ({ supabase: {} }));
 
 // The detail screen's read-only view of an air report lists the checklist
 // groups as the printed form does - all five, in its order - so a reviewer
@@ -1479,6 +1492,8 @@ In `src/features/inspections/hooks/useInspectionReport.ts`, add to the imports:
 import { AIR_CHECKLIST_GROUPS } from '../air/airChecklistData';
 ```
 
+Note this makes `useInspectionReport.ts` import a value (not just a type) for the first time from the air feature folder; that is fine — it already imports values from `../types` and `../../establishments/hooks/useEstablishment`.
+
 Directly above `export interface AirComplianceView {`, add:
 
 ```ts
@@ -1502,20 +1517,28 @@ export function airChecklistGroupsFrom(c: {
 }
 ```
 
-Then in the `air_monitoring` branch, replace:
+Then in `src/features/inspections/hooks/loadInspectionReportDetail.ts`, add to its imports:
 
 ```ts
-              checklists: [
-                { title: 'DAO 2000-81', items: c.checklistDao200081 ?? [] },
-                { title: 'DAO 2004-26', items: c.checklistDao200426 ?? [] },
-                { title: 'EMB Memorandum Circular', items: c.checklistEmbMc ?? [] },
-              ],
+import { airChecklistGroupsFrom } from './useInspectionReport';
+```
+
+(it already has `import type { ComplianceView, InspectionReportSummary } from './useInspectionReport';` — add this as a separate value import beside it.)
+
+In that file's `air_monitoring` branch, replace:
+
+```ts
+        checklists: [
+          { title: 'DAO 2000-81', items: c.checklistDao200081 ?? [] },
+          { title: 'DAO 2004-26', items: c.checklistDao200426 ?? [] },
+          { title: 'EMB Memorandum Circular', items: c.checklistEmbMc ?? [] },
+        ],
 ```
 
 with:
 
 ```ts
-              checklists: airChecklistGroupsFrom(c),
+        checklists: airChecklistGroupsFrom(c),
 ```
 
 - [ ] **Step 4: Run it to see it pass, then typecheck and lint**
@@ -1531,7 +1554,7 @@ Expected: PASS; typecheck and lint clean. If typecheck complains that `Complianc
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/features/inspections/hooks/useInspectionReport.ts src/features/inspections/hooks/airComplianceView.test.ts
+git add src/features/inspections/hooks/useInspectionReport.ts src/features/inspections/hooks/loadInspectionReportDetail.ts src/features/inspections/hooks/airComplianceView.test.ts
 git commit -m "$(cat <<'EOF'
 feat(air): read all five checklist groups in the form's order
 
@@ -1554,7 +1577,9 @@ npm run lint
 npm test
 ```
 
-Expected: typecheck and lint clean; every suite passes (baseline was 77 suites / 858 tests; expect 81 suites and roughly 890 tests).
+Expected: typecheck and lint clean; every suite passes. Baseline on this branch after the 2026-09-25 rebase onto develop is **119 suites / 1251 tests**; this plan adds four test files (checklistEntries, airChecklistData, airTypes, airComplianceView), so expect **123 suites** and roughly 1285 tests.
+
+Note: a cold run with an empty Jest cache was observed to fail 2 tests once, with the immediate warm re-run fully green. If you hit a failure, re-run before investigating; if it reproduces warm, it is real — investigate and report it.
 
 - [ ] **Step 2: Confirm the branch is only what the spec asked for**
 
@@ -1563,7 +1588,9 @@ git log --oneline develop..HEAD
 git diff --stat develop..HEAD
 ```
 
-Expected: seven commits (spec + Tasks 1–6). The diffstat touches only the files in this plan's file map plus the spec and this plan. Nothing under `src/app/`, `src/components/`, `src/constants/reportTypes.ts`, or `assets/`.
+Use `git log --oneline develop..HEAD` and `git diff --stat develop..HEAD`.
+
+Expected: eight commits (spec, plan, Tasks 1–6). The diffstat touches only the files in this plan's file map plus the spec and this plan. Nothing under `src/app/`, `src/components/`, `src/constants/reportTypes.ts`, or `assets/`.
 
 - [ ] **Step 3: Report**
 
