@@ -67,6 +67,13 @@ import { schemaMigrations, addColumns, createTable, unsafeExecuteSql } from '@no
 // (ambient, effluent or both). Existing rows get NULL - correct, since no
 // inspection before this was ever asked; their sampling points stand as
 // they are.
+//
+// v15 -> v16: compliance_air gains checklistAppendixF and
+// checklistConsentAgreement - the printed Air Monitoring form's fourth and
+// fifth checklist groups (the CEMS quality-assurance questions and the two
+// Consent Agreement ones), which the table lacked columns for. Existing
+// rows get NULL, which the model's asArray reads as [] - correct, since no
+// inspection before this was ever asked either group's questions.
 export const migrations = schemaMigrations({
   migrations: [
     {
@@ -202,6 +209,18 @@ export const migrations = schemaMigrations({
           columns: [
             { name: 'samplingConducted', type: 'boolean', isOptional: true },
             { name: 'samplingClassification', type: 'string', isOptional: true },
+          ],
+        }),
+      ],
+    },
+    {
+      toVersion: 16,
+      steps: [
+        addColumns({
+          table: 'compliance_air',
+          columns: [
+            { name: 'checklistAppendixF', type: 'string', isOptional: true },
+            { name: 'checklistConsentAgreement', type: 'string', isOptional: true },
           ],
         }),
       ],

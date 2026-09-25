@@ -447,9 +447,36 @@ report-creation time. Deliberately excludes `product`, `year_established`,
 
 ### Important fields
 - `emission_sources`
-- `checklist_dao_2004_26`
-- `checklist_dao_2000_81`
-- `checklist_emb_mc`
+- `checklist_dao_2004_26` — jsonb array, the printed Air Monitoring form's
+  "DAO 2004-26" checklist group (Table 7). Each item is `{ key, legal_ref,
+  requirement, compliant, remarks }`; `key` identifies the question and is
+  what the client matches on when reading — written by the same helper
+  (`airChecklistsForSave` in `src/features/inspections/air/airTypes.ts`) as
+  `checklist_dao_2000_81` and `checklist_emb_mc` below. One item, keyed
+  `dao2004-26-r19-s12-quarterly-smr`, additionally carries `quarters` — an
+  array of `'Q1' | 'Q2' | 'Q3' | 'Q4'` recording which quarterly
+  self-monitoring reports were submitted, the four tick boxes the printed
+  form asks beside that question. `quarters` is kept whatever the
+  `compliant` answer is: ticks alongside an `N` is a coherent record — it
+  says which quarters arrived and that the obligation was still not met —
+  deliberately unlike `compliance_water`'s rule (below) of dropping text
+  stranded by an untick. A reader reconstructing entries field-by-field must
+  carry `quarters` through itself, or it is silently dropped.
+- `checklist_dao_2000_81` — jsonb array, the printed form's "DAO 2000-81"
+  checklist group. Same keyed entry shape as `checklist_dao_2004_26` above,
+  written by the same helper.
+- `checklist_emb_mc` — jsonb array, the printed form's "EMB Memorandum
+  Circulars" checklist group. Same keyed entry shape, same helper.
+- `checklist_appendix_f` — jsonb array, the printed form's "Appendix F
+  (Quality Assurance Procedures)" group: the CEMS quality-assurance
+  questions citing 40 CFR 60 Appendix F. Same keyed entry shape —
+  `{ key, legal_ref, requirement, compliant, remarks }`, matched on `key`
+  when read. Additive — `NULL` on rows written before the column existed,
+  which the client reads as `[]`.
+- `checklist_consent_agreement` — jsonb array, the printed form's "For
+  Facilities Engaged with Consent Agreement" group (two questions citing
+  DAO 2000-81 Part 7 Rule 25 Section 9). Same keyed entry shape as
+  `checklist_appendix_f`, same additive note.
 - `pto_conditions`
 - `other_observations`
 - `remarks_recommendations`
