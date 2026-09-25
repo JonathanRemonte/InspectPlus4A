@@ -108,8 +108,15 @@ export interface AirChecklistFormValues {
   smrQuarters: SmrQuarter[];
 }
 
+// The quarterly-SMR entry (key SMR_QUARTER_KEY) additionally carries the
+// Q1-Q4 ticks the form prints beside it - the other DAO 2004-26 entries,
+// and every entry in the other four columns, are plain FindingsEntry.
+export interface SmrFindingsEntry extends FindingsEntry {
+  quarters: SmrQuarter[];
+}
+
 export interface AirChecklistRecord {
-  checklistDao200426: FindingsEntry[];
+  checklistDao200426: (FindingsEntry | SmrFindingsEntry)[];
   checklistDao200081: FindingsEntry[];
   checklistEmbMc: FindingsEntry[];
   checklistAppendixF: FindingsEntry[];
@@ -147,9 +154,18 @@ export function airChecklistsForSave(form: AirChecklistFormValues): AirChecklist
 
 // Quarters come back in SMR_QUARTERS order (Q1..Q4), filtered to the four
 // the form knows; anything else an older or foreign build wrote is dropped.
-function smrQuartersFrom(entries: readonly StoredFindingsEntry[]): SmrQuarter[] {
-  const smr = entries.find(e => e.key === SMR_QUARTER_KEY) as Record<string, unknown> | undefined;
-  const stored = Array.isArray(smr?.quarters) ? (smr.quarters as unknown[]) : [];
+//
+// entries is still the loose StoredFindingsEntry - a row from an older or
+// foreign build may hold anything - but intersecting with an optional
+// `quarters` here (rather than casting to Record<string, unknown>) is
+// enough to read it: StoredFindingsEntry's arms are both already assignable
+// to it, so no cast is needed, and StoredAirChecklistRecord's tolerance for
+// arbitrary stored JSON is untouched.
+function smrQuartersFrom(
+  entries: readonly (StoredFindingsEntry & { quarters?: unknown })[],
+): SmrQuarter[] {
+  const smr = entries.find(e => e.key === SMR_QUARTER_KEY);
+  const stored = Array.isArray(smr?.quarters) ? smr.quarters : [];
   return SMR_QUARTERS.filter(q => stored.includes(q));
 }
 

@@ -19,7 +19,11 @@ begin;
 --
 -- Additive per docs/sync-contract.md's Backward Compatibility Rules: both
 -- columns are nullable, and a client that has not yet shipped the fields
--- simply omits them from its push payload, leaving NULL.
+-- simply omits them from its push payload, and the insert/upsert below
+-- coalesce(…, '[]'::jsonb), so such a client writes '[]', not NULL. This
+-- isn't specific to these two columns — a whole-record upsert from any
+-- client is authoritative for every column on the row it writes, old or
+-- new, since the row it sends has no way to say "leave this column alone".
 --
 -- pull_changes needs no change: it emits to_jsonb(ca) for whole
 -- compliance_air rows, so the new columns reach the client as soon as

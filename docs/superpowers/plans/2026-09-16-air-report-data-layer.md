@@ -41,9 +41,9 @@
 | `src/features/inspections/air/airChecklistData.test.ts` | Create | 4 |
 | `src/features/inspections/air/airTypes.ts` | Create: form state, save/load boundary | 5 |
 | `src/features/inspections/air/airTypes.test.ts` | Create | 5 |
-| `src/features/inspections/hooks/useInspectionReport.ts` | Modify: add `airChecklistGroupsFrom` beside the view types | 6 |
+| `src/features/inspections/air/airChecklistGroups.ts` | Create: `airChecklistGroupsFrom` (moved out of `useInspectionReport.ts` post-hoc — see Task 6's second amendment) | 6 |
 | `src/features/inspections/hooks/loadInspectionReportDetail.ts` | Modify: call it from the `air_monitoring` branch | 6 |
-| `src/features/inspections/hooks/airComplianceView.test.ts` | Create | 6 |
+| `src/features/inspections/air/airChecklistGroups.test.ts` | Create | 6 |
 
 ---
 
@@ -1428,9 +1428,9 @@ EOF
 ### Task 6: Read side — five checklist groups in template order
 
 **Files:**
-- Modify: `src/features/inspections/hooks/useInspectionReport.ts` (add the helper beside the `AirComplianceView` / `ChecklistGroup` / `ChecklistEntry` declarations)
+- Create: `src/features/inspections/air/airChecklistGroups.ts` (the helper — see the second amendment below for why this isn't `useInspectionReport.ts`)
 - Modify: `src/features/inspections/hooks/loadInspectionReportDetail.ts:160-179` (the `air_monitoring` branch — the call site)
-- Test: `src/features/inspections/hooks/airComplianceView.test.ts`
+- Test: `src/features/inspections/air/airChecklistGroups.test.ts`
 
 **Interfaces:**
 - Consumes: `AIR_CHECKLIST_GROUPS` (Task 4) for the titles; `ComplianceAir.checklistAppendixF` / `.checklistConsentAgreement` (Task 2).
@@ -1438,22 +1438,17 @@ EOF
 
 **Amended 2026-09-25 (Ruling 5).** The plan originally put both the helper and the call site in `useInspectionReport.ts`. Since then `develop` landed `refactor(reports): pull the report-detail loader out of useInspectionReport`, which moved the `air_monitoring` branch verbatim into `loadInspectionReportDetail.ts`. The helper stays in `useInspectionReport.ts` (that is where `AirComplianceView`, `ChecklistGroup` and `ChecklistEntry` are declared, and the loader already imports types from it); only the call site moves.
 
+**Amended 2026-09-25 (again).** Landing the above created a second problem: the value-level import of `airChecklistGroupsFrom` from `useInspectionReport.ts` gave `loadInspectionReportDetail.ts` a circular dependency back on itself (the loader already imports types from `useInspectionReport.ts`, and now would also import a value that lives in the same module graph), which forced a stub mock into the loader's own test to work around. Commit `19e420d` (`refactor(air): break the checklist-groups import cycle`) fixed this by moving the helper to its own module, `src/features/inspections/air/airChecklistGroups.ts`, importing `ChecklistEntry`/`ChecklistGroup` from `useInspectionReport.ts` as types only (which doesn't participate in the value-level cycle), and its test to `src/features/inspections/air/airChecklistGroups.test.ts`. Steps 1, 3 and 5 below, and the Files list and file-map row above, are updated for this; the function's own body and the call site in `loadInspectionReportDetail.ts` are unchanged.
+
 This branch of the loader is only exercised for `air_monitoring` reports, which nothing creates yet, so the existing loader tests do not reach it; the change is covered by typecheck plus a targeted assertion below.
 
 - [ ] **Step 1: Write the failing test**
 
-Create `src/features/inspections/hooks/airComplianceView.test.ts`:
+Create `src/features/inspections/air/airChecklistGroups.test.ts`:
 
 ```ts
-import { AIR_CHECKLIST_GROUPS } from '../air/airChecklistData';
-import { airChecklistGroupsFrom } from './useInspectionReport';
-
-// useInspectionReport pulls in the native SQLite adapter and the supabase
-// client transitively, neither of which loads under Jest — same two mocks
-// src/features/establishments/hooks/useEstablishment.test.ts:8-19 uses.
-// jest.mock calls are hoisted above the imports.
-jest.mock('../../../db/database', () => ({ database: {}, collections: {} }));
-jest.mock('../../../services/supabase/client', () => ({ supabase: {} }));
+import { AIR_CHECKLIST_GROUPS } from './airChecklistData';
+import { airChecklistGroupsFrom } from './airChecklistGroups';
 
 // The detail screen's read-only view of an air report lists the checklist
 // groups as the printed form does - all five, in its order - so a reviewer
@@ -1479,26 +1474,27 @@ describe('airChecklistGroupsFrom', () => {
 - [ ] **Step 2: Run it to see it fail**
 
 ```bash
-npx jest src/features/inspections/hooks/airComplianceView.test.ts
+npx jest src/features/inspections/air/airChecklistGroups.test.ts
 ```
 
-Expected: FAIL — `airChecklistGroupsFrom` is not exported from `./useInspectionReport`.
+Expected: FAIL — `./airChecklistGroups` does not exist yet.
 
 - [ ] **Step 3: Add the helper and use it**
 
-In `src/features/inspections/hooks/useInspectionReport.ts`, add to the imports:
+Create `src/features/inspections/air/airChecklistGroups.ts`:
 
 ```ts
-import { AIR_CHECKLIST_GROUPS } from '../air/airChecklistData';
+import { AIR_CHECKLIST_GROUPS } from './airChecklistData';
+import type { ChecklistEntry, ChecklistGroup } from '../hooks/useInspectionReport';
 ```
 
-Note this makes `useInspectionReport.ts` import a value (not just a type) for the first time from the air feature folder; that is fine — it already imports values from `../types` and `../../establishments/hooks/useEstablishment`.
+`ChecklistEntry` and `ChecklistGroup` are declared on `useInspectionReport.ts` alongside `AirComplianceView`; importing them as types only (not the module's values) is what keeps this out of the loader's dependency cycle — see the second amendment above.
 
-Directly above `export interface AirComplianceView {`, add:
+As the rest of that file, add:
 
 ```ts
 // The five checklist columns as the form prints them, in its order. Exported
-// for its test; the hook is the only production caller.
+// for its test; the loader is the only production caller.
 export function airChecklistGroupsFrom(c: {
   checklistDao200426?: ChecklistEntry[] | null;
   checklistDao200081?: ChecklistEntry[] | null;
@@ -1520,10 +1516,10 @@ export function airChecklistGroupsFrom(c: {
 Then in `src/features/inspections/hooks/loadInspectionReportDetail.ts`, add to its imports:
 
 ```ts
-import { airChecklistGroupsFrom } from './useInspectionReport';
+import { airChecklistGroupsFrom } from '../air/airChecklistGroups';
 ```
 
-(it already has `import type { ComplianceView, InspectionReportSummary } from './useInspectionReport';` — add this as a separate value import beside it.)
+(it already has `import type { ComplianceView, InspectionReportSummary } from './useInspectionReport';` — add this as a separate value import from the new module, not from `./useInspectionReport`.)
 
 In that file's `air_monitoring` branch, replace:
 
@@ -1544,7 +1540,7 @@ with:
 - [ ] **Step 4: Run it to see it pass, then typecheck and lint**
 
 ```bash
-npx jest src/features/inspections/hooks/airComplianceView.test.ts
+npx jest src/features/inspections/air/airChecklistGroups.test.ts
 npm run typecheck
 npm run lint
 ```
@@ -1554,7 +1550,7 @@ Expected: PASS; typecheck and lint clean. If typecheck complains that `Complianc
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/features/inspections/hooks/useInspectionReport.ts src/features/inspections/hooks/loadInspectionReportDetail.ts src/features/inspections/hooks/airComplianceView.test.ts
+git add src/features/inspections/air/airChecklistGroups.ts src/features/inspections/hooks/loadInspectionReportDetail.ts src/features/inspections/air/airChecklistGroups.test.ts
 git commit -m "$(cat <<'EOF'
 feat(air): read all five checklist groups in the form's order
 
