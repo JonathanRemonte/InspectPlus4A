@@ -4,6 +4,7 @@ import type { Attachment } from '../../../db/models/Attachment';
 import { isEstablishmentVisible, isPrivilegedRole, reportSyncStatusWithAttachments } from '../../establishments/hooks/useEstablishment';
 import { buildPurposeFormFromModel, PurposeFormState } from '../types';
 import type { ComplianceView, InspectionReportSummary } from './useInspectionReport';
+import { airChecklistGroupsFrom } from './useInspectionReport';
 
 export interface Viewer {
   uid: string;
@@ -166,11 +167,7 @@ export async function loadInspectionReportDetail(
       complianceView = {
         kind: 'air',
         emissionSources: c.emissionSources ?? [],
-        checklists: [
-          { title: 'DAO 2000-81', items: c.checklistDao200081 ?? [] },
-          { title: 'DAO 2004-26', items: c.checklistDao200426 ?? [] },
-          { title: 'EMB Memorandum Circular', items: c.checklistEmbMc ?? [] },
-        ],
+        checklists: airChecklistGroupsFrom(c),
         ptoConditions: c.ptoConditions ?? [],
         otherObservations: c.otherObservations,
         remarksRecommendations: c.remarksRecommendations,
