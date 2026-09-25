@@ -12,9 +12,6 @@ jest.mock('../../establishments/hooks/useEstablishment', () => ({
   isEstablishmentVisible: (estab: { province: string }, province: string) => estab.province === province,
   reportSyncStatusWithAttachments: () => 'synced',
 }));
-jest.mock('./useInspectionReport', () => ({
-  airChecklistGroupsFrom: (c: Record<string, unknown>) => [],
-}));
 
 const report = {
   reportId: 'r1', estabId: 'e1', inspectorUid: 'u2', purposeId: 'p1', reportType: 'water_monitoring',

@@ -4,7 +4,7 @@ import type { Attachment } from '../../../db/models/Attachment';
 import { isEstablishmentVisible, isPrivilegedRole, reportSyncStatusWithAttachments } from '../../establishments/hooks/useEstablishment';
 import { buildPurposeFormFromModel, PurposeFormState } from '../types';
 import type { ComplianceView, InspectionReportSummary } from './useInspectionReport';
-import { airChecklistGroupsFrom } from './useInspectionReport';
+import { airChecklistGroupsFrom } from '../air/airChecklistGroups';
 
 export interface Viewer {
   uid: string;

@@ -1,12 +1,5 @@
-import { AIR_CHECKLIST_GROUPS } from '../air/airChecklistData';
-import { airChecklistGroupsFrom } from './useInspectionReport';
-
-// useInspectionReport pulls in the native SQLite adapter and the supabase
-// client transitively, neither of which loads under Jest — same two mocks
-// src/features/establishments/hooks/useEstablishment.test.ts:8-19 uses.
-// jest.mock calls are hoisted above the imports.
-jest.mock('../../../db/database', () => ({ database: {}, collections: {} }));
-jest.mock('../../../services/supabase/client', () => ({ supabase: {} }));
+import { AIR_CHECKLIST_GROUPS } from './airChecklistData';
+import { airChecklistGroupsFrom } from './airChecklistGroups';
 
 // The detail screen's read-only view of an air report lists the checklist
 // groups as the printed form does - all five, in its order - so a reviewer
