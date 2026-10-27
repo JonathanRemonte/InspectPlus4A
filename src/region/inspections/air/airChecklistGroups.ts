@@ -1,5 +1,5 @@
 import { AIR_CHECKLIST_GROUPS } from './airChecklistData';
-import type { ChecklistEntry, ChecklistGroup } from '../hooks/useInspectionReport';
+import type { ChecklistEntry, ChecklistGroup } from '../../../features/inspections/hooks/useInspectionReport';
 
 // The five checklist columns as the form prints them, in its order. Exported
 // for its test; the loader is the only production caller.

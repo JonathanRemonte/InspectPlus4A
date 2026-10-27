@@ -4,7 +4,7 @@ import type {
   PreviousInspectionState,
   SamplingPointCard,
   WwtpDetailCard,
-} from '../features/inspections/water/waterTypes';
+} from './inspections/water/waterTypes';
 
 export interface WaterComplianceView {
   kind: 'water';

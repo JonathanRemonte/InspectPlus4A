@@ -2,7 +2,7 @@
 // the establishment's province. Backed by the bundled dataset in
 // src/data/mimaropaWaterbodies.ts, mirroring how provinces.ts is backed by
 // mimaropaLocations.ts.
-import { WATERBODIES, WaterbodyGroup } from '../data/mimaropaWaterbodies';
+import { WATERBODIES, WaterbodyGroup } from './mimaropaWaterbodies';
 
 export type { WaterbodyGroup };
 

@@ -1,6 +1,6 @@
 import { formatReportDate } from '../../../utils/formatReportDate';
 import { formatEstablishmentLocation } from '../../../utils/establishmentLocation';
-import { DOCUMENTS_REVIEWED_OPTIONS } from '../../inspections/water/waterChecklistData';
+import { DOCUMENTS_REVIEWED_OPTIONS } from '../../../region';
 import type { PermitSnapshotItem } from '../../../services/sync/syncTypes';
 import { ROW_MINIMUMS } from '../rowMinimums';
 import type { ExportPhoto, InspectionBundle, MapContext, TemplateData } from '../types';

@@ -1,6 +1,6 @@
 import { Q } from '@nozbe/watermelondb';
 import { collections } from '../../db/database';
-import { airChecklistGroupsFrom } from '../../features/inspections/air/airChecklistGroups';
+import { airChecklistGroupsFrom } from '../inspections/air/airChecklistGroups';
 import type { AirComplianceView, EiaComplianceView, HazwasteComplianceView, WaterComplianceView } from '../complianceViews';
 
 export async function loadWaterCompliance(reportId: string): Promise<WaterComplianceView | null> {

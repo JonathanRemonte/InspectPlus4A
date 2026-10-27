@@ -1,4 +1,4 @@
-import { WATERBODIES } from '../data/mimaropaWaterbodies';
+import { WATERBODIES } from './mimaropaWaterbodies';
 import { getWaterbodyGroups, WATERBODY_NOT_LISTED } from './waterbodies';
 
 // Both sets of figures are printed in the source PDF's own summary table, so

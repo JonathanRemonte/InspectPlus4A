@@ -29,6 +29,6 @@
   "features/inspections/components/PurposeOfInspectionView.tsx",
   "features/inspections/components/ReportFormHeader.tsx",
   "features/inspections/components/TwoRowTabs.tsx",
-  "features/inspections/water/WaterComplianceEditSections.tsx",
-  "features/inspections/water/WaterExtraFormSections.tsx"
+  "region/inspections/water/WaterComplianceEditSections.tsx",
+  "region/inspections/water/WaterExtraFormSections.tsx"
 ]

@@ -7,6 +7,7 @@ jest.mock('../../../db/database', () => ({
     get: (_t, name: string) => ({ query: (...args: unknown[]) => ({ fetch: () => mockFetch(name, args) }) }),
   }),
 }));
+jest.mock('../../../services/supabase/client', () => ({ supabase: {} }));
 jest.mock('../../establishments/hooks/useEstablishment', () => ({
   isPrivilegedRole: (role: string) => role === 'Developer',
   isEstablishmentVisible: (estab: { province: string }, province: string) => estab.province === province,

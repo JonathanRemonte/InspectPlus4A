@@ -11,18 +11,18 @@ import { useAuthContext } from '../../../core/providers/AuthProvider';
 import { generateId } from '../../../utils/crypto';
 import { getDeviceId } from '../../../utils/device';
 import { nextSyncStateForEdit } from '../../../utils/syncState';
-import { EstablishmentPickerStep } from '../components/EstablishmentPickerStep';
-import { NewEstablishmentModal } from '../components/NewEstablishmentModal';
-import { ReportFormHeader } from '../components/ReportFormHeader';
-import { GeneralInformationTab } from '../components/GeneralInformationTab';
-import { PurposeOfInspectionTab } from '../components/PurposeOfInspectionTab';
-import { DenrPermitsFormSection } from '../components/DenrPermitsFormSection';
-import { SaveBar } from '../components/SaveBar';
-import { useReportFormState } from '../hooks/useReportFormState';
-import { useMainTabChange } from '../hooks/useMainTabChange';
-import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
-import { createEstablishmentRecord } from '../establishmentPersistence';
-import { buildGeneralInfoFromEstablishment, GeneralInfoFormState, PurposeFormState } from '../types';
+import { EstablishmentPickerStep } from '../../../features/inspections/components/EstablishmentPickerStep';
+import { NewEstablishmentModal } from '../../../features/inspections/components/NewEstablishmentModal';
+import { ReportFormHeader } from '../../../features/inspections/components/ReportFormHeader';
+import { GeneralInformationTab } from '../../../features/inspections/components/GeneralInformationTab';
+import { PurposeOfInspectionTab } from '../../../features/inspections/components/PurposeOfInspectionTab';
+import { DenrPermitsFormSection } from '../../../features/inspections/components/DenrPermitsFormSection';
+import { SaveBar } from '../../../features/inspections/components/SaveBar';
+import { useReportFormState } from '../../../features/inspections/hooks/useReportFormState';
+import { useMainTabChange } from '../../../features/inspections/hooks/useMainTabChange';
+import { useUnsavedChangesGuard } from '../../../features/inspections/hooks/useUnsavedChangesGuard';
+import { createEstablishmentRecord } from '../../../features/inspections/establishmentPersistence';
+import { buildGeneralInfoFromEstablishment, GeneralInfoFormState } from '../../../features/inspections/types';
 import { WaterExtraFormSectionsView } from './WaterExtraFormSections';
 import {
   emptyWaterComplianceForm,
@@ -38,21 +38,14 @@ import {
   WaterComplianceFormState,
 } from './waterTypes';
 import { buildWaterReportTabs, establishmentHasDischargePermit } from './waterReportTabs';
-import type { EstablishmentDTO } from '../../establishments/types';
-import { useHeaderScroll } from '../../home/context/HeaderScrollContext';
-import { useScreenFooter } from '../../home/context/ScreenFooterContext';
-import { AttachmentsSection } from '../../attachments/components/AttachmentsSection';
+import type { EstablishmentDTO } from '../../../features/establishments/types';
+import { useHeaderScroll } from '../../../features/home/context/HeaderScrollContext';
+import { useScreenFooter } from '../../../features/home/context/ScreenFooterContext';
+import { AttachmentsSection } from '../../../features/attachments/components/AttachmentsSection';
 import { ReportThemeProvider } from '../../../core/providers/ReportThemeProvider';
+import type { ShellStart } from '../../../core/region/contract';
 
 const REPORT_TYPE = 'water_monitoring';
-
-export interface ShellStart {
-  estabId: string | null; // null when creating a brand-new establishment
-  initialGeneralInfo: GeneralInfoFormState;
-  initialInspectionDate?: string;
-  initialPurpose?: PurposeFormState;
-  initialControlNumber?: string;
-}
 
 export function WaterFormShell({ start }: { start: ShellStart }) {
   const [activeMain, setActiveMain] = useState('geninfo');

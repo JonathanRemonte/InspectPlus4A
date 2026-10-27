@@ -1,7 +1,8 @@
 import { mapWater } from './water';
 import { fullWaterBundle, emptyWaterBundle, malformedWaterBundle, fullWaterCompliance, signatories } from './fixtures';
 import { TICKED, UNTICKED } from './primitives';
-import { WATER_FINDINGS_CHECKLIST } from '../../inspections/water/waterChecklistData';
+// eslint-disable-next-line no-restricted-imports -- mapper moves to src/region/export in Task 9
+import { WATER_FINDINGS_CHECKLIST } from '../../../region/inspections/water/waterChecklistData';
 import { ROW_MINIMUMS } from '../rowMinimums';
 import type { TemplateData } from '../types';
 

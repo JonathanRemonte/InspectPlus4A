@@ -2,8 +2,8 @@ import React from 'react';
 import type { DetailTabProps } from '../../core/region/contract';
 import { DenrPermitsSection } from '../../features/inspections/components/DenrPermitsSection';
 import { patchPermitsSnapshot } from '../../features/inspections/permitsSnapshotPersistence';
-import { WaterExtraSectionsView } from '../../features/inspections/water/WaterComplianceEditSections';
-import { buildWaterReportTabs, establishmentHasDischargePermit } from '../../features/inspections/water/waterReportTabs';
+import { WaterExtraSectionsView } from '../inspections/water/WaterComplianceEditSections';
+import { buildWaterReportTabs, establishmentHasDischargePermit } from '../inspections/water/waterReportTabs';
 
 const WATER_SECTION_TABS = ['watersupply', 'wastewaterpollution', 'samplingfindings'];
 

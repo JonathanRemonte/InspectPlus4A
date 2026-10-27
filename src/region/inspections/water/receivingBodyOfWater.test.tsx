@@ -13,7 +13,7 @@ import {
   emptyWwtpDetail,
   WaterComplianceFormState,
 } from './waterTypes';
-import { WATERBODY_NOT_LISTED } from '../../../constants/waterbodies';
+import { WATERBODY_NOT_LISTED } from '../../data/waterbodies';
 
 // A bare stub (`update: () => {}`) would let the edit screen's save() resolve
 // without proving what it actually wrote - see wwtpTypeOther.test.tsx, which

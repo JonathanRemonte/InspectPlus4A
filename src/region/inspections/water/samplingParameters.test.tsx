@@ -3,7 +3,7 @@ import { TextInput } from 'react-native';
 import renderer, { act } from 'react-test-renderer';
 import { ComboInput, FormSection, TextField, TimeField } from '../../../components/form';
 import type { YnValue } from '../../../components/form';
-import { YnBadge } from '../components/ComplianceReadPrimitives';
+import { YnBadge } from '../../../features/inspections/components/ComplianceReadPrimitives';
 import { WaterExtraFormSectionsView } from './WaterExtraFormSections';
 import { SamplingPointsSection } from './WaterComplianceEditSections';
 import { buildWaterReportTabs } from './waterReportTabs';

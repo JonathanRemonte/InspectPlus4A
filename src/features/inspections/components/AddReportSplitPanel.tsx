@@ -32,7 +32,8 @@ import {
   buildPurposeFormFromModel,
   emptyPurposeForm,
 } from '../types';
-import { WaterFormShell, ShellStart } from '../water/WaterInspectionFormScreen';
+import { reportForms } from '../../../region/modules';
+import type { ShellStart } from '../../../core/region/contract';
 import { useHeaderScroll } from '../../home/context/HeaderScrollContext';
 
 interface AddReportSplitPanelProps {
@@ -143,7 +144,8 @@ export const AddReportSplitPanel: React.FC<AddReportSplitPanelProps> = ({ estabI
   const handleBack = useCallback(() => router.back(), []);
   const handleOpenForm = useCallback(() => setStarted(true), []);
 
-  if (started && selectedType === 'water' && generalInfo) {
+  const FormShell = selectedType ? reportForms[selectedType]?.FormShell : undefined;
+  if (started && FormShell && generalInfo) {
     const start: ShellStart = {
       estabId,
       initialGeneralInfo: generalInfo,
@@ -151,7 +153,7 @@ export const AddReportSplitPanel: React.FC<AddReportSplitPanelProps> = ({ estabI
       initialPurpose: purpose,
       initialControlNumber: controlNumber,
     };
-    return <WaterFormShell start={start} />;
+    return <FormShell start={start} />;
   }
 
   if (loading) {

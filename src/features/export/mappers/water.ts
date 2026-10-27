@@ -1,8 +1,10 @@
 import type { YnValue } from '../../../components/form';
 import { formatReportDate } from '../../../utils/formatReportDate';
 import type { WaterComplianceView } from '../../../region';
-import { WATER_FINDINGS_CHECKLIST, WWTP_TYPE_OTHERS, WWTP_CONDITION_OTHERS } from '../../inspections/water/waterChecklistData';
-import { decodeWwtpComponent, describeNonWwtpTreatment, findingsValuesFromEntries } from '../../inspections/water/waterTypes';
+// eslint-disable-next-line no-restricted-imports -- mapper moves to src/region/export in Task 9
+import { WATER_FINDINGS_CHECKLIST, WWTP_TYPE_OTHERS, WWTP_CONDITION_OTHERS } from '../../../region/inspections/water/waterChecklistData';
+// eslint-disable-next-line no-restricted-imports -- mapper moves to src/region/export in Task 9
+import { decodeWwtpComponent, describeNonWwtpTreatment, findingsValuesFromEntries } from '../../../region/inspections/water/waterTypes';
 import { ROW_MINIMUMS } from '../rowMinimums';
 import type { InspectionBundle, MapContext, TemplateData } from '../types';
 import { mapCommon } from './common';

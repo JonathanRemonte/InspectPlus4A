@@ -4,7 +4,7 @@ import { WaterExtraSectionsView } from './WaterComplianceEditSections';
 import { WaterExtraFormSectionsView } from './WaterExtraFormSections';
 import { buildWaterReportTabs, establishmentHasDischargePermit } from './waterReportTabs';
 import { emptyWaterComplianceForm } from './waterTypes';
-import type { WaterComplianceView } from '../../../region';
+import type { WaterComplianceView } from '../..';
 import type { PermitSnapshotItem } from '../../../services/sync/syncTypes';
 
 // WaterComplianceEditSections imports database/collections (via

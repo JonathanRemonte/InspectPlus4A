@@ -2,7 +2,7 @@ import React from 'react';
 import { Text } from 'react-native';
 import renderer, { act } from 'react-test-renderer';
 import { YesNoNAToggle } from '../../../components/form';
-import { YnBadge } from '../components/ComplianceReadPrimitives';
+import { YnBadge } from '../../../features/inspections/components/ComplianceReadPrimitives';
 import { WaterExtraFormSectionsView } from './WaterExtraFormSections';
 import { SummaryOfFindingsSection } from './WaterComplianceEditSections';
 import { buildWaterReportTabs } from './waterReportTabs';

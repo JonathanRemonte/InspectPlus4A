@@ -4,7 +4,7 @@ import {
   checklistValuesFromEntries,
   type FindingsEntry,
   type StoredFindingsEntry,
-} from '../checklistEntries';
+} from '../../../features/inspections/checklistEntries';
 import {
   WATER_FINDINGS_CHECKLIST,
   NON_WWTP_TREATMENT_OTHERS,
@@ -15,7 +15,7 @@ import {
   BIOLOGICAL_TREATMENT_OPTIONS,
   CHEMICAL_TREATMENT_OPTIONS,
 } from './waterChecklistData';
-import { getWaterbodyGroups, WATERBODY_NOT_LISTED } from '../../../constants/waterbodies';
+import { getWaterbodyGroups, WATERBODY_NOT_LISTED } from '../../data/waterbodies';
 
 export interface WwtpDetailCard {
   outletNo: string;

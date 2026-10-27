@@ -5,6 +5,7 @@ import type { SvgProps } from 'react-native-svg';
 import type { Ionicons } from '@expo/vector-icons';
 import type { TwoRowMainTabDef } from '../../features/inspections/components/TwoRowTabs';
 import type { ComplianceView, InspectionReportSummary } from '../../features/inspections/hooks/useInspectionReport';
+import type { GeneralInfoFormState, PurposeFormState } from '../../features/inspections/types';
 
 // What the foundation needs from a region. Each region repo (EMB4B, EMB4A)
 // implements it through three entry points — src/region, src/region/db and
@@ -135,6 +136,24 @@ export interface ReportDataModule {
 }
 
 /** The `src/region/modules` entry point. */
+/** What the Add Report panel already collected when it opens a type's form. */
+export interface ShellStart {
+  estabId: string | null; // null when creating a brand-new establishment
+  initialGeneralInfo: GeneralInfoFormState;
+  initialInspectionDate?: string;
+  initialPurpose?: PurposeFormState;
+  initialControlNumber?: string;
+}
+
+/** The forms for one create entry (REPORT_TYPES key). */
+export interface ReportFormModule {
+  /** Rendered by /inspection/new?type=<key>. */
+  NewFormScreen?: React.ComponentType;
+  /** Rendered by the establishment's Add Report panel once the shared steps are done. */
+  FormShell?: React.ComponentType<{ start: ShellStart }>;
+}
+
 export interface RegionModulesIndex {
   reportDataModules: Partial<Record<string, ReportDataModule>>;
+  reportForms: Partial<Record<string, ReportFormModule>>;
 }

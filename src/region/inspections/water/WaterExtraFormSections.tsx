@@ -51,7 +51,7 @@ import {
   SamplingParameterRow,
 } from './waterTypes';
 import type { WaterMainTabDef } from './waterReportTabs';
-import { getWaterbodyGroups, WATERBODY_NOT_LISTED } from '../../../constants/waterbodies';
+import { getWaterbodyGroups, WATERBODY_NOT_LISTED } from '../../data/waterbodies';
 
 const YES_NO = [
   { label: 'Yes', value: 'yes' },

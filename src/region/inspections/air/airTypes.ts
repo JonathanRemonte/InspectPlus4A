@@ -4,7 +4,7 @@ import {
   checklistValuesFromEntries,
   type FindingsEntry,
   type StoredFindingsEntry,
-} from '../checklistEntries';
+} from '../../../features/inspections/checklistEntries';
 import {
   AIR_CHECKLIST_DAO_2004_26,
   AIR_CHECKLIST_DAO_2000_81,

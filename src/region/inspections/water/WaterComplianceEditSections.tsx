@@ -21,8 +21,8 @@ import {
 } from '../../../components/form';
 import type { DynamicRow, ChecklistValue } from '../../../components/form';
 import { AddRowButton } from '../../../components/AddRowButton';
-import { SectionEditActions } from '../components/SectionEditActions';
-import { useEditableSection } from '../hooks/useEditableSection';
+import { SectionEditActions } from '../../../features/inspections/components/SectionEditActions';
+import { useEditableSection } from '../../../features/inspections/hooks/useEditableSection';
 import {
   SimpleTable,
   DetailCard,
@@ -31,8 +31,8 @@ import {
   DocumentsChips,
   YnBadge,
   styles as sharedStyles,
-} from '../components/ComplianceReadPrimitives';
-import type { WaterComplianceView as WaterComplianceData } from '../../../region';
+} from '../../../features/inspections/components/ComplianceReadPrimitives';
+import type { WaterComplianceView as WaterComplianceData } from '../..';
 import {
   WATER_FINDINGS_CHECKLIST,
   DOCUMENTS_REVIEWED_OPTIONS,
@@ -87,9 +87,9 @@ import {
   StoredFindingsEntry,
   previousInspectionForSave,
 } from './waterTypes';
-import type { ComplianceWater } from '../../../region/db';
+import type { ComplianceWater } from '../../db';
 import type { WaterMainTabDef } from './waterReportTabs';
-import { getWaterbodyGroups, WATERBODY_NOT_LISTED } from '../../../constants/waterbodies';
+import { getWaterbodyGroups, WATERBODY_NOT_LISTED } from '../../data/waterbodies';
 
 const YES_NO = [
   { label: 'Yes', value: 'yes' },

@@ -4,7 +4,7 @@ import { WaterExtraSectionsView } from './WaterComplianceEditSections';
 import { WaterExtraFormSectionsView } from './WaterExtraFormSections';
 import { buildWaterReportTabs } from './waterReportTabs';
 import { emptyWaterComplianceForm } from './waterTypes';
-import type { WaterComplianceView } from '../../../region';
+import type { WaterComplianceView } from '../..';
 
 // See dpConditionsVisibility.test.tsx for why these mocks are needed.
 jest.mock('../../../db/database', () => ({ database: {}, collections: {} }));
