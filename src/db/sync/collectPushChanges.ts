@@ -80,7 +80,7 @@ export async function collectPushChanges(
 
 type EntityChanges = { created: Record<string, unknown>[]; updated: Record<string, unknown>[]; deleted: string[] };
 
-interface ParentDependency {
+export interface ParentDependency {
   childEntity: SyncEntityName;
   parentEntity: SyncEntityName;
   // Backend field name on the child DTO holding the parent's id, e.g.
@@ -104,7 +104,7 @@ interface ParentDependency {
 // against an already-correct parent). If no local record exists at all for
 // the id, this can't help — that's a genuinely orphaned local reference, a
 // different problem this can't repair.
-const PARENT_DEPENDENCIES: ParentDependency[] = [
+export const PARENT_DEPENDENCIES: ParentDependency[] = [
   { childEntity: 'purpose_of_inspection', parentEntity: 'establishments', foreignKeyField: 'estab_id' },
   { childEntity: 'inspection_reports', parentEntity: 'establishments', foreignKeyField: 'estab_id' },
   { childEntity: 'inspection_reports', parentEntity: 'purpose_of_inspection', foreignKeyField: 'purpose_id' },
