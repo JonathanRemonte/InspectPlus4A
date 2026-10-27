@@ -27,6 +27,9 @@ async function errorsFor(filePath: string, specifier: string): Promise<string[]>
 }
 
 describe('region boundary', () => {
+  // The first lint loads ESLint and the TS parser, which can exceed Jest's 5s default.
+  beforeAll(() => errorsFor('src/features/example.ts', '../region'), 60000);
+
   it.each(['../region', '../region/db', '../region/modules'])('lets foundation import the entry point %s', async spec => {
     expect(await errorsFor('src/features/example.ts', spec)).toEqual([]);
   });
