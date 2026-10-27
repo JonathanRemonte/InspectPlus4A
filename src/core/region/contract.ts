@@ -16,5 +16,26 @@ export interface RegionIdentity {
 export interface RegionIndex {
   region: {
     identity: RegionIdentity;
+    locations: RegionLocations;
   };
+}
+
+/** One simplified barangay polygon, as scripts/build-barangay-boundaries.js emits it. */
+export interface BoundaryEntry {
+  p: string; // province
+  c: string; // city/municipality
+  b: string; // barangay
+  bbox: [number, number, number, number]; // west, south, east, north
+  rings: number[][];
+}
+
+export interface RegionLocations {
+  /** province -> city/municipality -> barangays, bundled for offline address entry. */
+  locations: Record<string, Record<string, string[]>>;
+  /** Where the map picker opens with no pin and no GPS fix. */
+  overview: { center: [number, number]; zoom: number };
+  /** The barangay boundary polygons. Large: call lazily, never at module scope. */
+  loadBoundaries(): BoundaryEntry[];
+  /** Shown when a pin falls outside every boundary. */
+  outsideBoundariesLabel: string;
 }

@@ -1,15 +1,13 @@
 import { OfflineManager, type LngLat } from '@maplibre/maplibre-react-native';
+import { region } from '../../region';
 
 // OpenFreeMap: free, keyless vector tiles. One constant so the basemap can
 // be swapped (e.g. to a self-hosted style) without touching the picker.
 export const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 
 // Where the picker opens when it has nothing better — no field values and
-// no last GPS fix. Wide enough to show all five MIMAROPA provinces.
-export const MIMAROPA_OVERVIEW: { center: LngLat; zoom: number } = {
-  center: [120.5, 12.0],
-  zoom: 7,
-};
+// no last GPS fix. Set per region in src/region/locations.ts.
+export const REGION_OVERVIEW: { center: LngLat; zoom: number } = region.locations.overview;
 
 // Street level: a compound's buildings are distinguishable, which is what
 // an inspector needs to drop the pin on the right gate.

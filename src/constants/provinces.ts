@@ -1,10 +1,11 @@
-// EMB Region 4-B provinces, plus their cities/municipalities and barangays —
-// the region every sample fixture and constant in this app is scoped to (see
-// supabase/tests and the "EMB Region 4-B" copy throughout the home screen).
-// Not an exhaustive PH province list. Backed by the bundled dataset in
-// src/data/mimaropaLocations.ts so address entry can cascade Province ->
-// City/Municipality -> Barangay while staying fully offline.
-import { LOCATIONS } from '../data/mimaropaLocations';
+// The current region's provinces, cities/municipalities and barangays (see
+// src/region/locations.ts) — the region every sample fixture and constant in
+// this app is scoped to. Not an exhaustive PH province list. Backed by the
+// bundled dataset so address entry can cascade Province -> City/Municipality
+// -> Barangay while staying fully offline.
+import { region } from '../region';
+
+const LOCATIONS = region.locations.locations;
 
 export const PROVINCE_OPTIONS = Object.keys(LOCATIONS);
 

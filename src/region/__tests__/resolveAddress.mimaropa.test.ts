@@ -1,9 +1,10 @@
-import { formatResolvedAddress, resolveAddress } from './resolveAddress';
-import { pointInPolygon } from './pointInPolygon';
+import { formatResolvedAddress, resolveAddress } from '../../features/location/resolveAddress';
+import { pointInPolygon } from '../../features/location/pointInPolygon';
+import { region } from '..';
 
 type Entry = { p: string; c: string; b: string; bbox: number[]; rings: number[][] };
-// Same lazy require the module uses; typed loosely on purpose.
-const entries = require('../../data/mimaropaBoundaries.json') as Entry[];
+// Same loader the module uses; typed loosely on purpose.
+const entries = region.locations.loadBoundaries() as Entry[];
 
 describe('resolveAddress', () => {
   it('resolves a point inside Brgy. Cabigaan, Aborlan, Palawan', () => {

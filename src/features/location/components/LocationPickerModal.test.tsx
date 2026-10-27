@@ -7,7 +7,8 @@ import { Camera, Map as MapLibreMap, UserLocation } from '@maplibre/maplibre-rea
 import { LocationPickerModal } from './LocationPickerModal';
 import { cacheAreaAroundPin } from '../offlinePacks';
 import { resolveAddress } from '../resolveAddress';
-import { MIMAROPA_OVERVIEW, PIN_ZOOM } from '../mapConfig';
+import { REGION_OVERVIEW, PIN_ZOOM } from '../mapConfig';
+import { region } from '../../../region';
 
 jest.mock('../offlinePacks', () => ({ cacheAreaAroundPin: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('../resolveAddress', () => {
@@ -99,13 +100,13 @@ describe('LocationPickerModal — initial camera', () => {
     mockLocation.getForegroundPermissionsAsync.mockResolvedValue({ status: 'granted' });
     mockLocation.getLastKnownPositionAsync.mockResolvedValue({ coords: { latitude: 12.5, longitude: 121.1 } });
     const r = await render(<LocationPickerModal {...baseProps} />);
-    expect(r.root.findByType(Camera).props.initialViewState).toEqual(MIMAROPA_OVERVIEW);
+    expect(r.root.findByType(Camera).props.initialViewState).toEqual(REGION_OVERVIEW);
     expect(cameraJumpTo).toHaveBeenCalledWith({ center: [121.1, 12.5], zoom: PIN_ZOOM });
   });
 
   it('stays on the overview when there is no last known fix', async () => {
     const r = await render(<LocationPickerModal {...baseProps} />);
-    expect(r.root.findByType(Camera).props.initialViewState).toEqual(MIMAROPA_OVERVIEW);
+    expect(r.root.findByType(Camera).props.initialViewState).toEqual(REGION_OVERVIEW);
     expect(cameraJumpTo).not.toHaveBeenCalled();
   });
 
@@ -257,7 +258,7 @@ describe('LocationPickerModal — confirm / cancel', () => {
 describe('LocationPickerModal — resolved address', () => {
   it('shows the outside note when the pin resolves to nothing', async () => {
     const r = await render(<LocationPickerModal {...baseProps} initialLat="12.0" initialLng="120.5" />);
-    expect(addressReadout(r)).toBe('Outside MIMAROPA barangay boundaries');
+    expect(addressReadout(r)).toBe(region.locations.outsideBoundariesLabel);
   });
 
   it('resolves live as the map settles', async () => {

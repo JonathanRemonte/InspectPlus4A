@@ -1,17 +1,11 @@
+import type { BoundaryEntry } from '../../core/region/contract';
+import { region } from '../../region';
 import { pointInPolygon } from './pointInPolygon';
 
 export interface ResolvedAddress {
   province: string;
   city: string;
   barangay: string;
-}
-
-interface BoundaryEntry {
-  p: string;
-  c: string;
-  b: string;
-  bbox: [number, number, number, number]; // west, south, east, north
-  rings: number[][];
 }
 
 let entries: BoundaryEntry[] | null = null;
@@ -23,7 +17,7 @@ let entries: BoundaryEntry[] | null = null;
 function loadEntries(): BoundaryEntry[] {
   if (entries) return entries;
   try {
-    entries = require('../../data/mimaropaBoundaries.json') as BoundaryEntry[];
+    entries = region.locations.loadBoundaries();
   } catch (err) {
     console.warn('[resolveAddress] boundary bundle unavailable', err);
     entries = [];
@@ -69,6 +63,6 @@ export function resolveAddress(lat: number, lng: number): ResolvedAddress | null
 }
 
 export function formatResolvedAddress(address: ResolvedAddress | null): string {
-  if (!address) return 'Outside MIMAROPA barangay boundaries';
+  if (!address) return region.locations.outsideBoundariesLabel;
   return `Brgy. ${address.barangay}, ${address.city}, ${address.province}`;
 }

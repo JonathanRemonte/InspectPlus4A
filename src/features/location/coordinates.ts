@@ -1,5 +1,5 @@
 import type { LngLat } from '@maplibre/maplibre-react-native';
-import { MIMAROPA_OVERVIEW, PIN_ZOOM } from './mapConfig';
+import { REGION_OVERVIEW, PIN_ZOOM } from './mapConfig';
 
 // Every form keeps lat/lng as the strings the inspector typed (see
 // GeneralInfoFormState.geoLat/geoLng); these are the only places that
@@ -55,5 +55,5 @@ export function resolveInitialCamera({ lat, lng, lastFix }: ResolveInitialCamera
   if (lastFix && isValidLatLng(lastFix.lat, lastFix.lng)) {
     return { center: [lastFix.lng, lastFix.lat], zoom: PIN_ZOOM };
   }
-  return MIMAROPA_OVERVIEW;
+  return REGION_OVERVIEW;
 }

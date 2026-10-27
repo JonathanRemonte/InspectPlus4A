@@ -28,7 +28,7 @@ module.exports = {
           {
             patterns: [
               {
-                group: ['**/region/**', '!**/region/db', '!**/region/modules'],
+                group: ['**/region/**', '!**/region/db', '!**/region/modules', '!**/core/region/**'],
                 message: 'Import region code only through src/region, src/region/db or src/region/modules (docs/upstream-merge.md).',
               },
             ],

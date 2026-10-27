@@ -1,12 +1,13 @@
 import { OfflineManager } from '@maplibre/maplibre-react-native';
-import { AMBIENT_CACHE_BYTES, MAP_STYLE_URL, MIMAROPA_OVERVIEW, initMapCache } from './mapConfig';
+import { AMBIENT_CACHE_BYTES, MAP_STYLE_URL, REGION_OVERVIEW, initMapCache } from './mapConfig';
+import { region } from '../../region';
 
 describe('mapConfig', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('points at the OpenFreeMap Liberty style and a MIMAROPA overview camera', () => {
     expect(MAP_STYLE_URL).toBe('https://tiles.openfreemap.org/styles/liberty');
-    expect(MIMAROPA_OVERVIEW).toEqual({ center: [120.5, 12.0], zoom: 7 });
+    expect(REGION_OVERVIEW).toBe(region.locations.overview);
   });
 
   it('raises the ambient cache ceiling to 200 MB', async () => {

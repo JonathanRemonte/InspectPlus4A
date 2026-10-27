@@ -6,7 +6,7 @@ import {
   resolveInitialCamera,
   roundCoordinate,
 } from './coordinates';
-import { MIMAROPA_OVERVIEW, PIN_ZOOM } from './mapConfig';
+import { REGION_OVERVIEW, PIN_ZOOM } from './mapConfig';
 
 describe('parseCoordinate', () => {
   it('parses a decimal string with surrounding whitespace', () => {
@@ -73,6 +73,6 @@ describe('resolveInitialCamera', () => {
     });
   });
   it('falls back to the MIMAROPA overview when nothing else is available', () => {
-    expect(resolveInitialCamera({ lat: '', lng: '', lastFix: null })).toEqual(MIMAROPA_OVERVIEW);
+    expect(resolveInitialCamera({ lat: '', lng: '', lastFix: null })).toEqual(REGION_OVERVIEW);
   });
 });
