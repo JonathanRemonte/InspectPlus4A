@@ -68,6 +68,31 @@ The current synced entities are:
 
 ---
 
+## Server Registry
+
+The server does not hardcode the entity list inside `push_changes` / `pull_changes`. Each synced entity is a row in `public.sync_tables`:
+
+| Column | Meaning |
+| --- | --- |
+| `table_name` | entity name, as it appears under `changes` |
+| `sync_order` | processing order (ascending) for both push and pull |
+| `push_handler` | `regproc` of `push_<table>` |
+| `pull_handler` | `regproc` of `pull_<table>` |
+| `owner` | `'core'` or `'region'` |
+
+Handler signatures:
+
+```sql
+push_<table>(p_changes jsonb) returns text[]       -- ids of conflicting rows
+pull_<table>(last_pulled_at bigint) returns jsonb  -- {created, updated, deleted}
+```
+
+`push_changes` and `pull_changes` iterate the registry by `sync_order` and assemble the same payload and response shapes described below; the registry changes nothing for clients. `pull_changes` is declared `STABLE`, so every table is read from one snapshot.
+
+Core entities use `sync_order` 10 (`establishments`), 20 (`purpose_of_inspection`), 30 (`inspection_reports`), 40 (`survey_reports`) and 900 (`attachments`). The band 100-899 is reserved for region tables (EMB4B: `compliance_air` 100, `compliance_water` 110, `compliance_hazwaste` 120, `compliance_eia` 130). Handlers are granted to `authenticated` only and are also callable directly through PostgREST `/rpc` under the same RLS. See [`upstream-merge.md`](upstream-merge.md) for how regions add tables.
+
+---
+
 ## Pull Changes Contract
 
 ## Function

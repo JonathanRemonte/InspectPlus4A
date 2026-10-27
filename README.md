@@ -16,6 +16,7 @@ src/
   app/          # Expo Router screens/routes
   features/     # Feature modules (establishments, inspections, auth, home, ...)
     export/     # .docx export: mappers, docxtemplater render, share
+  region/       # region-owned code (EMB4B) — see docs/upstream-merge.md
   components/   # Shared UI components (incl. form primitives)
   db/           # WatermelonDB schema, models, and sync helpers
   services/     # External integrations (Supabase client, sync push/pull)
@@ -27,7 +28,7 @@ supabase/       # Migrations, RPCs, RLS tests, seeds
 docs/           # Architecture and contract docs
 ```
 
-Each feature under `src/features/<name>` groups its own `components/`, `hooks/`, and `types/` as needed — see `src/features/inspections/water` for the reference implementation of a report type.
+Each feature under `src/features/<name>` groups its own `components/`, `hooks/`, and `types/` as needed — see `src/region/inspections/water` for the reference implementation of a report type.
 
 The mobile ↔ backend sync contract (pull/push RPC shapes, conflict behavior) is documented in [`docs/sync-contract.md`](docs/sync-contract.md).
 
@@ -87,7 +88,7 @@ npm test           # jest
 
 ## Exporting reports to .docx
 
-The Export tab fills the official EMB forms on the device. Templates are the tagged copies under `assets/templates/` (`water-monitoring.docx`, `air-monitoring.docx`, `eia.docx`, `hazardous-waste-generators.docx`, `survey.docx`, each with a matching `*.tags.md`), generated from the untagged originals under `assets/templates/originals/` by `npm run tag-templates` using the recipes in `assets/templates/recipes/` (see `scripts/docx-tag.js` for the recipe format and each `*.tags.md` for the tag list). Template file names must stay space-free — the Metro dev-client asset URL breaks on spaces. When EMB revises a form: drop the new original into `assets/templates/originals/`, fix the coordinates in its recipe (`node scripts/docx-grid.js <file>` prints them), rerun `npm run tag-templates`, and let `templateContract.test.ts` tell you what's missing.
+The Export tab fills the official EMB forms on the device. The template registry is `src/region/templates.ts`. Templates are the tagged copies under `assets/templates/` (`water-monitoring.docx`, `air-monitoring.docx`, `eia.docx`, `hazardous-waste-generators.docx`, `survey.docx`, each with a matching `*.tags.md`), generated from the untagged originals under `assets/templates/originals/` by `npm run tag-templates` using the recipes in `assets/templates/recipes/` (see `scripts/docx-tag.js` for the recipe format and each `*.tags.md` for the tag list). Template file names must stay space-free — the Metro dev-client asset URL breaks on spaces. When EMB revises a form: drop the new original into `assets/templates/originals/`, fix the coordinates in its recipe (`node scripts/docx-grid.js <file>` prints them), rerun `npm run tag-templates`, and let `templateContract.test.ts` tell you what's missing.
 
 **Building and verifying on a device.** Android builds from automated/tool shells on this project's Windows machine fail with a JDK loopback-socket error unless `JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=D:\tmp` is set in the same shell invocation as the Gradle/Expo command. After editing `metro.config.js` or renaming a template asset, restart Metro with `npx expo start --dev-client --clear` — otherwise the running dev client keeps a stale asset graph and won't see the change.
 
