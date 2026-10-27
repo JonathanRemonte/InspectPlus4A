@@ -1,7 +1,7 @@
 import { stepsForMigration } from '@nozbe/watermelondb/Schema/migrations/stepsForMigration';
-import { schema } from './schema';
+import { schema } from '../../db/schema';
 import { migrations } from './migrations';
-import { assertMigrationsCoverSchema } from './migrationGuard';
+import { assertMigrationsCoverSchema } from '../../db/migrationGuard';
 
 // What these protect: an inspector's unsynced establishments and reports.
 //

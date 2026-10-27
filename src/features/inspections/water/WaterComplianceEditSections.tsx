@@ -87,7 +87,7 @@ import {
   StoredFindingsEntry,
   previousInspectionForSave,
 } from './waterTypes';
-import type { ComplianceWater } from '../../../db/models';
+import type { ComplianceWater } from '../../../region/db';
 import type { WaterMainTabDef } from './waterReportTabs';
 import { getWaterbodyGroups, WATERBODY_NOT_LISTED } from '../../../constants/waterbodies';
 

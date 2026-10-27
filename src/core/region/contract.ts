@@ -1,4 +1,6 @@
 import type React from 'react';
+import type { Database, Model, TableSchema } from '@nozbe/watermelondb';
+import type { SchemaMigrations } from '@nozbe/watermelondb/Schema/migrations';
 import type { SvgProps } from 'react-native-svg';
 import type { Ionicons } from '@expo/vector-icons';
 
@@ -28,6 +30,7 @@ export interface RegionIndex {
   DATA_KEY_TO_CREATE_KEY: Partial<Record<string, string>>;
   COMPLIANCE_TAGS: ComplianceTagEntry[];
   SURVEY_COMPLIANCE_TAG: string;
+  COMPLIANCE_COLLECTIONS: Partial<Record<string, string>>;
 }
 
 /** One simplified barangay polygon, as scripts/build-barangay-boundaries.js emits it. */
@@ -85,4 +88,18 @@ export interface ComplianceTagEntry<K extends string = string, D extends string 
   tag: T;
   dataKey: D | null;
   createKey: K;
+}
+
+/** The `src/region/db` entry point: a leaf — it must not import src/db/database. */
+export interface RegionDbIndex {
+  regionDb: {
+    /** WatermelonDB schema version. Region-owned: bump it for core or region table changes. */
+    schemaVersion: number;
+    /** Region tables only; src/db/schema.ts adds the foundation's. */
+    tables: TableSchema[];
+    /** The full migration history, foundation steps included (see docs/upstream-merge.md). */
+    migrations: SchemaMigrations;
+    modelClasses: (typeof Model)[];
+  };
+  regionCollectionsFor(database: Database): Record<string, unknown>;
 }

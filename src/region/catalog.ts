@@ -1,5 +1,6 @@
 import type { ComplianceTagEntry, ReportType, ReportTypeDisplay } from '../core/region/contract';
 import { Colors } from '../design/colors';
+import type { RegionCollections } from './db';
 
 // ── Create entries ───────────────────────────────────────────────────────────
 export type ReportTypeKey = 'air' | 'water' | 'hazwaste_generator' | 'hazwaste_tsd' | 'eia' | 'survey';
@@ -187,3 +188,12 @@ export const COMPLIANCE_TAGS: ComplianceTagEntry<ReportTypeKey, ReportDataKey, C
   { tag: 'EIA', dataKey: 'eia', createKey: 'eia' },
   { tag: SURVEY_COMPLIANCE_TAG, dataKey: null, createKey: 'survey' },
 ];
+
+// Which compliance collection holds each stored report type's row; deleting
+// a report also removes it. Report types without one have no entry.
+export const COMPLIANCE_COLLECTIONS: Partial<Record<ReportDataKey, keyof RegionCollections>> = {
+  air_monitoring: 'complianceAir',
+  water_monitoring: 'complianceWater',
+  hazardous_waste: 'complianceHazwaste',
+  eia: 'complianceEia',
+};

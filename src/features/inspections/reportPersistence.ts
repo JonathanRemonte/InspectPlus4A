@@ -1,13 +1,7 @@
 import { Q } from '@nozbe/watermelondb';
 import { database, collections } from '../../db/database';
 import { notifySyncDataChanged } from '../../services/sync/syncEvents';
-
-const REPORT_TYPE_TO_COMPLIANCE_COLLECTION: Partial<Record<string, keyof typeof collections>> = {
-  air_monitoring: 'complianceAir',
-  water_monitoring: 'complianceWater',
-  hazardous_waste: 'complianceHazwaste',
-  eia: 'complianceEia',
-};
+import { COMPLIANCE_COLLECTIONS, type ReportDataKey } from '../../region';
 
 // Marks a local inspection report as pending_delete. The sync pipeline
 // already treats inspection_reports as a soft-delete entity end-to-end
@@ -33,7 +27,7 @@ export async function deleteInspectionReportRecord(reportId: string): Promise<vo
     const reportRecord = await collections.inspectionReports.find(reportId);
 
     if (reportRecord.syncState === 'pending_create') {
-      const complianceCollectionKey = REPORT_TYPE_TO_COMPLIANCE_COLLECTION[reportRecord.reportType];
+      const complianceCollectionKey = COMPLIANCE_COLLECTIONS[reportRecord.reportType as ReportDataKey];
       if (complianceCollectionKey) {
         const complianceRows = await collections[complianceCollectionKey]
           .query(Q.where('reportId', reportId))
