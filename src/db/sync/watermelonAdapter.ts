@@ -1,5 +1,5 @@
 import { Q, Model, Collection } from '@nozbe/watermelondb';
-import { database, collections } from '../database';
+import { database } from '../database';
 import { syncSchema, SyncEntityName } from '../../services/sync/syncSchema';
 import { LocalSyncRecord } from '../../services/sync/syncMappers';
 import { PushChangesPayload } from '../../services/sync/syncTypes';
@@ -10,27 +10,9 @@ import { notifySyncDataChanged } from '../../services/sync/syncEvents';
 
 const PENDING_SYNC_STATES = ['pending_create', 'pending_update', 'pending_delete'];
 
+// Every sync entity name is its WatermelonDB table name (see syncSchema.ts).
 function collectionFor(entity: SyncEntityName): Collection<Model> {
-  switch (entity) {
-    case 'establishments':
-      return collections.establishments as unknown as Collection<Model>;
-    case 'purpose_of_inspection':
-      return collections.purposeOfInspection as unknown as Collection<Model>;
-    case 'inspection_reports':
-      return collections.inspectionReports as unknown as Collection<Model>;
-    case 'survey_reports':
-      return collections.surveyReports as unknown as Collection<Model>;
-    case 'compliance_air':
-      return collections.complianceAir as unknown as Collection<Model>;
-    case 'compliance_water':
-      return collections.complianceWater as unknown as Collection<Model>;
-    case 'compliance_hazwaste':
-      return collections.complianceHazwaste as unknown as Collection<Model>;
-    case 'compliance_eia':
-      return collections.complianceEia as unknown as Collection<Model>;
-    case 'attachments':
-      return collections.attachments as unknown as Collection<Model>;
-  }
+  return database.collections.get<Model>(entity);
 }
 
 async function findById(entity: SyncEntityName, id: string): Promise<Model | null> {

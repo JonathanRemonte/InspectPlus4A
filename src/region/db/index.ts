@@ -9,6 +9,9 @@ import { ComplianceWater } from './models/ComplianceWater';
 import { regionTables } from './tables';
 
 export { ComplianceAir, ComplianceEia, ComplianceHazwaste, ComplianceWater };
+export { regionParentDependencies, regionSyncEntities } from './sync';
+export type { RegionDtoMap, RegionSyncEntityName } from './sync';
+export type { ComplianceAirDTO, ComplianceEiaDTO, ComplianceHazwasteDTO, ComplianceWaterDTO } from './sync';
 
 export const regionDb = {
   schemaVersion: 16,

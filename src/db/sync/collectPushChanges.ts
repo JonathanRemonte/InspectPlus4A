@@ -10,6 +10,7 @@ import {
 } from '../../services/sync/syncMappers';
 
 import { PushChangesPayload } from '../../services/sync/syncTypes';
+import { regionParentDependencies } from '../../region/db';
 
 export interface LocalPendingRecords {
   created: LocalSyncRecord[];
@@ -109,10 +110,7 @@ export const PARENT_DEPENDENCIES: ParentDependency[] = [
   { childEntity: 'inspection_reports', parentEntity: 'establishments', foreignKeyField: 'estab_id' },
   { childEntity: 'inspection_reports', parentEntity: 'purpose_of_inspection', foreignKeyField: 'purpose_id' },
   { childEntity: 'survey_reports', parentEntity: 'establishments', foreignKeyField: 'estab_id' },
-  { childEntity: 'compliance_air', parentEntity: 'inspection_reports', foreignKeyField: 'report_id' },
-  { childEntity: 'compliance_water', parentEntity: 'inspection_reports', foreignKeyField: 'report_id' },
-  { childEntity: 'compliance_hazwaste', parentEntity: 'inspection_reports', foreignKeyField: 'report_id' },
-  { childEntity: 'compliance_eia', parentEntity: 'inspection_reports', foreignKeyField: 'report_id' },
+  ...regionParentDependencies,
   { childEntity: 'attachments', parentEntity: 'inspection_reports', foreignKeyField: 'inspection_report_id' },
   { childEntity: 'attachments', parentEntity: 'survey_reports', foreignKeyField: 'survey_report_id' },
 ];

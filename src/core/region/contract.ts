@@ -102,4 +102,6 @@ export interface RegionDbIndex {
     modelClasses: (typeof Model)[];
   };
   regionCollectionsFor(database: Database): Record<string, unknown>;
+  regionSyncEntities: Record<string, unknown>;
+  regionParentDependencies: { childEntity: string; parentEntity: string; foreignKeyField: string }[];
 }
