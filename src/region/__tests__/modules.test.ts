@@ -15,9 +15,11 @@ describe('EMB4B report data modules', () => {
   it('gives water its own detail tabs and every other type the flat compliance view', () => {
     expect(reportDataModules.water_monitoring?.detailTabs?.().map(t => t.key)).toContain('watersupply');
     expect(reportDataModules.water_monitoring?.renderDetailTab).toEqual(expect.any(Function));
+    expect(reportDataModules.water_monitoring?.permitsInDetailTabs).toBe(true);
     for (const key of ['air_monitoring', 'hazardous_waste', 'eia'] as const) {
       expect(reportDataModules[key]?.ComplianceView).toBeDefined();
       expect(reportDataModules[key]?.detailTabs).toBeUndefined();
+      expect(reportDataModules[key]?.permitsInDetailTabs).toBeUndefined();
     }
   });
 });

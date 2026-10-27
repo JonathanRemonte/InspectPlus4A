@@ -130,6 +130,8 @@ export interface ReportDataModule {
    * attachments). Return null for tabs this type doesn't render.
    */
   renderDetailTab?(props: DetailTabProps): React.ReactNode;
+  /** True when this type renders the DENR permits section in its own detail tabs, so General Information omits it. */
+  permitsInDetailTabs?: boolean;
 }
 
 /** The `src/region/modules` entry point. */

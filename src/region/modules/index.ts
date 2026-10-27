@@ -13,6 +13,7 @@ export const reportDataModules: Partial<Record<ReportDataKey, ReportDataModule>>
     loadCompliance: loadWaterCompliance,
     detailTabs: waterDetailTabs,
     renderDetailTab: renderWaterDetailTab,
+    permitsInDetailTabs: true,
   },
   air_monitoring: { loadCompliance: loadAirCompliance, ComplianceView: AirComplianceSection },
   hazardous_waste: { loadCompliance: loadHazwasteCompliance, ComplianceView: HazwasteComplianceSection },

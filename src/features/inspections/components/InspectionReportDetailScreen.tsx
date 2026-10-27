@@ -192,7 +192,7 @@ try {
               onSaved={refetch}
               liveEstablishment={liveEstablishment}
               liveEstablishmentLoading={liveEstablishmentLoading}
-              showPermits={!dataModule?.renderDetailTab}
+              showPermits={!dataModule?.permitsInDetailTabs}
             />
           )}
           {activeMainTab.key === 'purpose' &&
