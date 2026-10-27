@@ -41,6 +41,10 @@ describe('region boundary', () => {
     },
   );
 
+  it('lets foundation import the foundation-owned region contract', async () => {
+    expect(await errorsFor('src/features/example.ts', '../core/region/contract')).toEqual([]);
+  });
+
   it('lets region code import its own internals', async () => {
     expect(await errorsFor('src/region/modules/example.ts', '../inspections/water/Form')).toEqual([]);
   });
