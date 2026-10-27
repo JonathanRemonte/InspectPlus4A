@@ -1,6 +1,6 @@
 import type { YnValue } from '../../../components/form';
 import { formatReportDate } from '../../../utils/formatReportDate';
-import type { WaterComplianceView } from '../../inspections/hooks/useInspectionReport';
+import type { WaterComplianceView } from '../../../region';
 import { WATER_FINDINGS_CHECKLIST, WWTP_TYPE_OTHERS, WWTP_CONDITION_OTHERS } from '../../inspections/water/waterChecklistData';
 import { decodeWwtpComponent, describeNonWwtpTreatment, findingsValuesFromEntries } from '../../inspections/water/waterTypes';
 import { ROW_MINIMUMS } from '../rowMinimums';

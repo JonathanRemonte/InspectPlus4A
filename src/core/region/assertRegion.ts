@@ -2,7 +2,9 @@
 // repo's region entry points stop satisfying the foundation contract.
 import * as regionIndex from '../../region';
 import * as regionDbIndex from '../../region/db';
-import type { RegionDbIndex, RegionIndex } from './contract';
+import * as regionModulesIndex from '../../region/modules';
+import type { RegionDbIndex, RegionIndex, RegionModulesIndex } from './contract';
 
 export const regionIndexCheck: RegionIndex = regionIndex;
 export const regionDbIndexCheck: RegionDbIndex = regionDbIndex;
+export const regionModulesIndexCheck: RegionModulesIndex = regionModulesIndex;

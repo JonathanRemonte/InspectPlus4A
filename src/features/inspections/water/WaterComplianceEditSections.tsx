@@ -32,7 +32,7 @@ import {
   YnBadge,
   styles as sharedStyles,
 } from '../components/ComplianceReadPrimitives';
-import type { WaterComplianceView as WaterComplianceData } from '../hooks/useInspectionReport';
+import type { WaterComplianceView as WaterComplianceData } from '../../../region';
 import {
   WATER_FINDINGS_CHECKLIST,
   DOCUMENTS_REVIEWED_OPTIONS,

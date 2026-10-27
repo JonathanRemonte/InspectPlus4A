@@ -16,15 +16,11 @@ import { InspectionReportHeader, DEFAULT_REPORT_DETAIL_TABS } from './Inspection
 import { GeneralInformationView } from './GeneralInformationView';
 import { PurposeOfInspectionView } from './PurposeOfInspectionView';
 import { ComplianceStatusView } from './ComplianceStatusView';
-import { DenrPermitsSection } from './DenrPermitsSection';
-import { patchPermitsSnapshot } from '../permitsSnapshotPersistence';
 import { useHeaderScroll } from '../../home/context/HeaderScrollContext';
-import { WaterExtraSectionsView } from '../water/WaterComplianceEditSections';
 import { ReportThemeProvider } from '../../../core/providers/ReportThemeProvider';
-import { buildWaterReportTabs, establishmentHasDischargePermit } from '../water/waterReportTabs';
 import { AttachmentsSection } from '../../attachments/components/AttachmentsSection';
-
-const WATER_REPORT_TYPE = 'water_monitoring';
+import { reportDataModules } from '../../../region/modules';
+import type { ReportDataKey } from '../../../region';
 
 interface InspectionReportDetailScreenProps {
   reportId: string;
@@ -126,15 +122,11 @@ try {
     province: report.establishmentSnapshot.province,
   });
 
-  // Water reports get the full 1-6 section/subsection tab menu from the
-  // report template; every other report kind keeps the original 3-tab
-  // layout — see waterReportTabs.ts and DEFAULT_REPORT_DETAIL_TABS.
-  const isWater = report.reportType === WATER_REPORT_TYPE;
-  const hasDp = establishmentHasDischargePermit(report.permitsSnapshot);
-  const waterTabs = buildWaterReportTabs({ includeAttachments: true });
-  const tabs = isWater ? waterTabs : DEFAULT_REPORT_DETAIL_TABS;
+  // A report type may bring its own tab menu (EMB4B water's 1-6 sections);
+  // everything else keeps DEFAULT_REPORT_DETAIL_TABS. See src/region/modules.
+  const dataModule = reportDataModules[report.reportType as ReportDataKey];
+  const tabs = dataModule?.detailTabs?.() ?? DEFAULT_REPORT_DETAIL_TABS;
   const activeMainTab = tabs.find(t => t.key === activeMain) ?? tabs[0];
-  const activeWaterMainTab = waterTabs.find(t => t.key === activeMain) ?? waterTabs[0];
 
   return (
     <ReportThemeProvider reportType={report.reportType}>
@@ -200,7 +192,7 @@ try {
               onSaved={refetch}
               liveEstablishment={liveEstablishment}
               liveEstablishmentLoading={liveEstablishmentLoading}
-              showPermits={!isWater}
+              showPermits={!dataModule?.renderDetailTab}
             />
           )}
           {activeMainTab.key === 'purpose' &&
@@ -214,27 +206,11 @@ try {
             ) : (
               <Text style={styles.stateText}>No purpose of inspection recorded for this report.</Text>
             ))}
-          {activeMainTab.key === 'compliance' &&
-            (isWater ? (
-              <DenrPermitsSection
-                permits={report.permitsSnapshot}
-                canEdit={canEdit}
-                onSave={next => patchPermitsSnapshot(report.reportId, next)}
-                onSaved={refetch}
-              />
-            ) : (
-              <ComplianceStatusView compliance={compliance} />
-            ))}
-          {isWater && compliance.kind === 'water' && (activeMainTab.key === 'watersupply' || activeMainTab.key === 'wastewaterpollution' || activeMainTab.key === 'samplingfindings') && (
-            <WaterExtraSectionsView
-              compliance={compliance}
-              canEdit={canEdit}
-              onSaved={refetch}
-              mainTab={activeWaterMainTab}
-              hasDp={hasDp}
-              province={report.establishmentSnapshot.province}
-            />
-          )}
+          {dataModule?.renderDetailTab
+            ? dataModule.renderDetailTab({ report, compliance, tabKey: activeMainTab.key, canEdit, refetch })
+            : activeMainTab.key === 'compliance' && (
+                <ComplianceStatusView compliance={compliance} reportType={report.reportType} />
+              )}
           {activeMainTab.key === 'attachments' && (
             <AttachmentsSection parentType="inspection" parentId={report.reportId} canEdit={canEdit} />
           )}

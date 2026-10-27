@@ -1,33 +1,15 @@
 import React from 'react';
-import { View, Text } from 'react-native';
-import { FormSection, TextField } from '../../../components/form';
-import type { ComplianceView, ChecklistGroup } from '../hooks/useInspectionReport';
-import {
-  SimpleTable,
-  ChecklistList,
-  ConditionsList,
-  NarrativeAndDocuments,
-  styles,
-} from './ComplianceReadPrimitives';
+import { Text } from 'react-native';
+import { FormSection } from '../../../components/form';
+import type { ReportDataKey } from '../../../region';
+import { reportDataModules } from '../../../region/modules';
+import type { ComplianceView } from '../hooks/useInspectionReport';
+import { styles } from './ComplianceReadPrimitives';
 
 interface ComplianceStatusViewProps {
   compliance: ComplianceView;
+  reportType: string;
 }
-
-const ChecklistGroups: React.FC<{ groups: ChecklistGroup[] }> = ({ groups }) => {
-  const populated = groups.filter(g => g.items.length > 0);
-  if (populated.length === 0) return <Text style={styles.emptyText}>No checklist entries recorded.</Text>;
-  return (
-    <View>
-      {populated.map(group => (
-        <View key={group.title} style={styles.checklistGroup}>
-          <Text style={styles.checklistGroupTitle}>{group.title}</Text>
-          <ChecklistList items={group.items} />
-        </View>
-      ))}
-    </View>
-  );
-};
 
 // ── Empty state ─────────────────────────────────────────────────────────────
 
@@ -37,105 +19,11 @@ const EmptyCompliance: React.FC = () => (
   </FormSection>
 );
 
-// ── Type-specific views ──────────────────────────────────────────────────────
-
-const HazwasteComplianceView: React.FC<{ c: Extract<ComplianceView, { kind: 'hazwaste' }> }> = ({ c }) => (
-  <View>
-    <FormSection icon="warning-outline" title="Hazardous Waste Generator">
-      <View style={styles.row}>
-        <TextField label="Hazardous Waste ID No." value={c.hazwasteGeneratorId || '—'} readOnly />
-        <TextField label="Date Issued" value={c.hazwasteIdDateIssued || '—'} readOnly />
-      </View>
-    </FormSection>
-
-    <FormSection icon="cube-outline" title="Waste Types Generated">
-      <SimpleTable
-        columns={[
-          { key: 'waste_generating_process', label: 'Generating Process' },
-          { key: 'type_of_hazardous_waste', label: 'Type of Waste' },
-          { key: 'quantity', label: 'Quantity' },
-          { key: 'unit', label: 'Unit' },
-        ]}
-        rows={c.wasteTypesGenerated}
-      />
-    </FormSection>
-
-    <FormSection icon="checkbox-outline" title="Compliance Checklists — DAO 2013-22">
-      <ChecklistGroups groups={c.checklists} />
-    </FormSection>
-
-    <FormSection icon="document-text-outline" title="HWID Conditions">
-      <ConditionsList items={c.hwidConditions} />
-    </FormSection>
-
-    <NarrativeAndDocuments
-      otherObservations={c.otherObservations}
-      remarksRecommendations={c.remarksRecommendations}
-      documentsReviewed={c.documentsReviewed}
-    />
-  </View>
-);
-
-const AirComplianceView: React.FC<{ c: Extract<ComplianceView, { kind: 'air' }> }> = ({ c }) => (
-  <View>
-    <FormSection icon="partly-sunny-outline" title="Emission Sources">
-      <SimpleTable
-        columns={[
-          { key: 'source_no', label: 'Source No.' },
-          { key: 'type', label: 'Type' },
-          { key: 'fuel_type', label: 'Fuel Type' },
-          { key: 'rated_capacity', label: 'Rated Capacity' },
-        ]}
-        rows={c.emissionSources}
-      />
-    </FormSection>
-
-    <FormSection icon="checkbox-outline" title="Compliance Checklists">
-      <ChecklistGroups groups={c.checklists} />
-    </FormSection>
-
-    <FormSection icon="document-text-outline" title="Permit to Operate Conditions">
-      <ConditionsList items={c.ptoConditions} />
-    </FormSection>
-
-    <NarrativeAndDocuments
-      otherObservations={c.otherObservations}
-      remarksRecommendations={c.remarksRecommendations}
-      documentsReviewed={c.documentsReviewed}
-    />
-  </View>
-);
-
-const EiaComplianceView: React.FC<{ c: Extract<ComplianceView, { kind: 'eia' }> }> = ({ c }) => (
-  <View>
-    <FormSection icon="list-outline" title="Checklist — Revised DAO 2003-30">
-      <ChecklistList items={c.checklistDao200330} />
-    </FormSection>
-
-    <FormSection icon="document-text-outline" title="ECC / EMP Conditions">
-      <ConditionsList items={c.eccEmpConditions} />
-    </FormSection>
-
-    <NarrativeAndDocuments
-      otherObservations={c.otherObservations}
-      remarksRecommendations={c.remarksRecommendations}
-      documentsReviewed={c.documentsReviewed}
-    />
-  </View>
-);
-
-// Water reports don't reach this component at all — InspectionReportDetailScreen
-// gives them their own 1-6 tab structure (see waterReportTabs.ts) instead of the
-// single flat "Compliance Status" tab every other report kind still uses here.
-export const ComplianceStatusView: React.FC<ComplianceStatusViewProps> = ({ compliance }) => {
-  switch (compliance.kind) {
-    case 'hazwaste':
-      return <HazwasteComplianceView c={compliance} />;
-    case 'air':
-      return <AirComplianceView c={compliance} />;
-    case 'eia':
-      return <EiaComplianceView c={compliance} />;
-    default:
-      return <EmptyCompliance />;
-  }
+// The flat "Compliance Status" tab. Each report type's view is region-owned
+// (src/region/modules); types that render their own compliance tabs, like
+// EMB4B water, never reach this component.
+export const ComplianceStatusView: React.FC<ComplianceStatusViewProps> = ({ compliance, reportType }) => {
+  if (compliance.kind === 'none') return <EmptyCompliance />;
+  const Section = reportDataModules[reportType as ReportDataKey]?.ComplianceView;
+  return Section ? <Section compliance={compliance} /> : <EmptyCompliance />;
 };

@@ -57,3 +57,11 @@ jest.mock('expo-location', () => ({
   getLastKnownPositionAsync: jest.fn().mockResolvedValue(null),
   reverseGeocodeAsync: jest.fn().mockResolvedValue([]),
 }));
+
+// react-native-keyboard-controller's JS entry binds a native module at import
+// time. Foundation hosts that import the region modules (which render form
+// sections) would otherwise fail to load under Jest; its own Jest mock is the
+// package's documented stand-in. Per-file mocks still win.
+jest.mock('react-native-keyboard-controller', () =>
+  require('react-native-keyboard-controller/jest')
+);

@@ -9,3 +9,10 @@ export const region = {
 };
 
 export * from './catalog';
+export type {
+  AirComplianceView,
+  EiaComplianceView,
+  HazwasteComplianceView,
+  RegionComplianceView,
+  WaterComplianceView,
+} from './complianceViews';

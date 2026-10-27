@@ -3,6 +3,8 @@ import type { Database, Model, TableSchema } from '@nozbe/watermelondb';
 import type { SchemaMigrations } from '@nozbe/watermelondb/Schema/migrations';
 import type { SvgProps } from 'react-native-svg';
 import type { Ionicons } from '@expo/vector-icons';
+import type { TwoRowMainTabDef } from '../../features/inspections/components/TwoRowTabs';
+import type { ComplianceView, InspectionReportSummary } from '../../features/inspections/hooks/useInspectionReport';
 
 // What the foundation needs from a region. Each region repo (EMB4B, EMB4A)
 // implements it through three entry points — src/region, src/region/db and
@@ -104,4 +106,33 @@ export interface RegionDbIndex {
   regionCollectionsFor(database: Database): Record<string, unknown>;
   regionSyncEntities: Record<string, unknown>;
   regionParentDependencies: { childEntity: string; parentEntity: string; foreignKeyField: string }[];
+}
+
+/** What the report detail screen hands a region-owned tab. */
+export interface DetailTabProps {
+  report: InspectionReportSummary;
+  compliance: ComplianceView;
+  tabKey: string;
+  canEdit: boolean;
+  refetch: () => void;
+}
+
+/** Everything type-specific about one stored report type (inspection_reports.report_type). */
+export interface ReportDataModule {
+  /** Reads the report's compliance row; null when none exists yet. */
+  loadCompliance(reportId: string): Promise<Exclude<ComplianceView, { kind: 'none' }> | null>;
+  /** The flat "Compliance Status" read view. Omit when renderDetailTab owns the compliance tab. */
+  ComplianceView?: React.ComponentType<{ compliance: Exclude<ComplianceView, { kind: 'none' }> }>;
+  /** Replaces DEFAULT_REPORT_DETAIL_TABS for this type. */
+  detailTabs?(): TwoRowMainTabDef[];
+  /**
+   * Renders any tab the foundation doesn't own (it owns general, purpose and
+   * attachments). Return null for tabs this type doesn't render.
+   */
+  renderDetailTab?(props: DetailTabProps): React.ReactNode;
+}
+
+/** The `src/region/modules` entry point. */
+export interface RegionModulesIndex {
+  reportDataModules: Partial<Record<string, ReportDataModule>>;
 }
