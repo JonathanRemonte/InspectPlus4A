@@ -31,9 +31,13 @@ begin
 end;
 $$;
 
+-- stable: a non-volatile function reads every table from the calling query's
+-- one snapshot, like the old single-statement body (volatile would take a
+-- fresh snapshot per EXECUTE, so a mid-pull push could split parent/child rows).
 create or replace function public.pull_changes(last_pulled_at bigint default 0)
 returns jsonb
 language plpgsql
+stable
 set search_path = public
 as $$
 declare
