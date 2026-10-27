@@ -7,6 +7,7 @@ import { toDisplaySyncStatus } from '../types';
 import { resolveInspectorNames } from '../../../services/inspectorNames';
 import { useAuthContext } from '../../../core/providers/AuthProvider';
 import { REPORT_TYPE_DISPLAY } from '../../../constants/reportTypeDisplay';
+import { COMPLIANCE_TAGS, SURVEY_COMPLIANCE_TAG } from '../../../region';
 import { summarizeDueReports } from '../../../utils/reportUrgency';
 
 // ── Jurisdiction visibility ─────────────────────────────────────────────────
@@ -69,14 +70,11 @@ function useJurisdiction(): { myUid: string; myProvince: string; myRole: string;
 }
 
 // ── Report type → compliance tag mapping ──────────────────────────────────────
-// 'air_monitoring' | 'water_monitoring' | 'hazardous_waste' | 'eia'
-// + survey_reports as a separate entity
-const REPORT_TYPE_TO_TAG: Record<string, ComplianceTag> = {
-  air_monitoring:   'Air Monitoring',
-  water_monitoring: 'Water Monitoring',
-  hazardous_waste:  'Hazwaste',
-  eia:              'EIA',
-};
+// Report type → establishment compliance tag; survey_reports add
+// SURVEY_COMPLIANCE_TAG separately (see below). Region-owned vocabulary.
+const REPORT_TYPE_TO_TAG: Record<string, ComplianceTag> = Object.fromEntries(
+  COMPLIANCE_TAGS.filter(t => t.dataKey !== null).map(t => [t.dataKey, t.tag]),
+);
 
 // Local-only sync states (never sent to the backend as-is — see
 // collectPushChanges.ts's withBackendSyncStatus) that mean "this row still
@@ -194,7 +192,7 @@ async function modelToDTO(model: Establishment): Promise<EstablishmentDTO> {
     const tag = REPORT_TYPE_TO_TAG[r.reportType];
     if (tag) tagSet.add(tag);
   });
-  if (surveyReports.length > 0) tagSet.add('Survey');
+  if (surveyReports.length > 0) tagSet.add(SURVEY_COMPLIANCE_TAG);
 
   // The establishment's due indicator counts exactly what its own report list
   // flags, so both kinds of report are included — and surveys get the same

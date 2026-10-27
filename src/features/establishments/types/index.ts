@@ -5,6 +5,7 @@ import type {
   PermitSnapshotItem,
   ProductLineItem,
 } from '../../../services/sync/syncTypes';
+import type { ComplianceTag } from '../../../region';
 import type { DueReportsSummary } from '../../../utils/reportUrgency';
 
 export type { PermitSnapshotItem, ProductLineItem };
@@ -30,12 +31,7 @@ export function toDisplaySyncStatus(syncState: string | null | undefined): SyncS
 
 // ── Compliance tag — derived from report types ────────────────────────────────
 // Used for display badges on EstablishmentCard
-export type ComplianceTag =
-  | 'Air Monitoring'
-  | 'Water Monitoring'
-  | 'Hazwaste'
-  | 'EIA'
-  | 'Survey';
+export type { ComplianceTag } from '../../../region';
 
 // ── Full Establishment DTO — mirrors the establishments table ─────────────────
 export interface EstablishmentDTO {

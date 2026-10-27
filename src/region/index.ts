@@ -7,3 +7,5 @@ export const region = {
   identity,
   locations,
 };
+
+export * from './catalog';

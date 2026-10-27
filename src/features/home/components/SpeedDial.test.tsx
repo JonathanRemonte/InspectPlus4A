@@ -421,7 +421,7 @@ describe('SpeedDial', () => {
   });
 
   // Guards the hoist in problem 3: ENABLED_TYPES must live in exactly one
-  // place (constants/reportTypes.ts) so that enabling a report type for one
+  // place (region/catalog.ts, re-exported by constants/reportTypes.ts) so that enabling a report type for one
   // surface (the dial, AddReportSplitPanel) can't be done without the other
   // — a stale duplicate would silently disagree with this file's own
   // ENABLED_TYPE/UNAVAILABLE_TYPES constants above.
@@ -431,7 +431,7 @@ describe('SpeedDial', () => {
       /import\s*\{[^}]*\bENABLED_TYPES\b[^}]*\}\s*from\s*['"][^'"]*constants\/reportTypes['"]/.test(source);
 
     const constantsSource = fs.readFileSync(
-      path.join(__dirname, '../../../constants/reportTypes.ts'),
+      path.join(__dirname, '../../../region/catalog.ts'),
       'utf8',
     );
     const speedDialSource = fs.readFileSync(path.join(__dirname, 'SpeedDial.tsx'), 'utf8');
@@ -440,7 +440,7 @@ describe('SpeedDial', () => {
       'utf8',
     );
 
-    it('is declared exactly once, in constants/reportTypes.ts', () => {
+    it('is declared exactly once, in region/catalog.ts', () => {
       expect(constantsSource.match(declarationPattern)?.length ?? 0).toBe(1);
       expect(speedDialSource.match(declarationPattern)).toBeNull();
       expect(splitPanelSource.match(declarationPattern)).toBeNull();

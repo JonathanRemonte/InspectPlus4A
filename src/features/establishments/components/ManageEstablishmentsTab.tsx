@@ -12,6 +12,7 @@ import { Type } from '../../../design/typography';
 import { useGuardedPress } from '../../../utils/useGuardedPress';
 import { useAuthContext } from '../../../core/providers/AuthProvider';
 import { SelectField } from '../../../components/form';
+import { COMPLIANCE_TAGS } from '../../../region';
 import { EstablishmentCard } from './EstablishmentCard';
 import { archiveEstablishmentRecord } from '../../inspections/establishmentPersistence';
 import {
@@ -24,13 +25,7 @@ import type { EstablishmentDTO, ComplianceTag } from '../types';
 
 const PAGE_SIZE = 5;
 const ALL_OPTION = 'All';
-const COMPLIANCE_TAG_OPTIONS: ComplianceTag[] = [
-  'Air Monitoring',
-  'Water Monitoring',
-  'Hazwaste',
-  'EIA',
-  'Survey',
-];
+const COMPLIANCE_TAG_OPTIONS: ComplianceTag[] = COMPLIANCE_TAGS.map(t => t.tag);
 
 export interface ManageEstablishmentsTabHandle {
   refresh: () => Promise<void>;

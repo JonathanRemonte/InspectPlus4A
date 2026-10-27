@@ -287,13 +287,7 @@ const baseItem: AllReportItem = {
 
 const noop = () => {};
 
-const ALL_DATA_KEYS: ReportDataKey[] = [
-  'air_monitoring',
-  'water_monitoring',
-  'hazardous_waste',
-  'eia',
-  'survey',
-];
+const ALL_DATA_KEYS = Object.keys(REPORT_TYPE_DISPLAY) as ReportDataKey[];
 
 describe('ReportListCard report-type icon', () => {
   it.each(ALL_DATA_KEYS)(

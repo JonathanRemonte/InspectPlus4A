@@ -16,6 +16,7 @@ import { Spacing } from '../../../design/spacing';
 import { Type } from '../../../design/typography';
 import { formatEstablishmentLocation } from '../../../utils/establishmentLocation';
 import { REPORT_TYPES, ReportTypeKey } from '../../../constants/reportTypes';
+import { COMPLIANCE_TAGS } from '../../../region';
 import { confirmResolveConflict } from '../../../services/sync/syncConflictResolution';
 import type { EstablishmentDTO, ComplianceTag } from '../types';
 
@@ -33,13 +34,9 @@ interface EstablishmentCardProps {
 // lookup here instead of a second, separately-hardcoded style map means a
 // tag's law/colors/icon can never drift from what the report screens show
 // for that same type, and a new report type only ever needs adding once.
-const TAG_TO_REPORT_TYPE_KEY: Record<ComplianceTag, ReportTypeKey> = {
-  'Air Monitoring': 'air',
-  'Water Monitoring': 'water',
-  'Hazwaste': 'hazwaste_generator',
-  'EIA': 'eia',
-  'Survey': 'survey',
-};
+const TAG_TO_REPORT_TYPE_KEY: Record<ComplianceTag, ReportTypeKey> = Object.fromEntries(
+  COMPLIANCE_TAGS.map(t => [t.tag, t.createKey]),
+) as Record<ComplianceTag, ReportTypeKey>;
 
 function getTagMeta(tag: ComplianceTag) {
   const found = REPORT_TYPES.find(t => t.key === TAG_TO_REPORT_TYPE_KEY[tag]);

@@ -260,13 +260,7 @@ describe('EstablishmentReportsSection report row token resolution', () => {
     expect(style.borderRadius).toBe(Radius.md);
   });
 
-  const ALL_DATA_KEYS: ReportDataKey[] = [
-    'air_monitoring',
-    'water_monitoring',
-    'hazardous_waste',
-    'eia',
-    'survey',
-  ];
+  const ALL_DATA_KEYS = Object.keys(REPORT_TYPE_DISPLAY) as ReportDataKey[];
 
   it.each(ALL_DATA_KEYS)(
     'resolves %s icon and background/color from REPORT_TYPE_DISPLAY, not a hardcoded water treatment',
