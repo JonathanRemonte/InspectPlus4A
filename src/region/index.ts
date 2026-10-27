@@ -9,6 +9,7 @@ export const region = {
 };
 
 export * from './catalog';
+export * from './templates';
 export { DOCUMENTS_REVIEWED_OPTIONS } from './inspections/water/waterChecklistData';
 export type {
   AirComplianceView,

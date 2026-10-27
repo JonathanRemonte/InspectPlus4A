@@ -1,5 +1,5 @@
 import { COMPLIANCE_COLLECTIONS } from '..';
-import { reportDataModules, reportForms } from '../modules';
+import { mapSurveyBundle, reportDataModules, reportForms } from '../modules';
 
 // Hoisted above the imports by babel-plugin-jest-hoist; written after them
 // to satisfy eslint's import/first rule.
@@ -28,5 +28,12 @@ describe('EMB4B report data modules', () => {
     expect(reportForms.water?.NewFormScreen).toBeDefined();
     expect(reportForms.water?.FormShell).toBeDefined();
     expect(Object.keys(reportForms)).toEqual(['water']);
+  });
+
+  it('can export every report type that has a template', () => {
+    for (const key of ['water_monitoring', 'air_monitoring', 'hazardous_waste', 'eia'] as const) {
+      expect(reportDataModules[key]?.mapExport).toEqual(expect.any(Function));
+    }
+    expect(mapSurveyBundle).toEqual(expect.any(Function));
   });
 });

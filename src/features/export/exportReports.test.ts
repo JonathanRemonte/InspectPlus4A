@@ -2,6 +2,11 @@ import { exportReports, ExportPorts, ExportItem } from './exportReports';
 import { RenderError } from './render/renderDocx';
 import { fullWaterBundle, signatories } from './mappers/fixtures';
 
+// Hoisted above the imports by babel-plugin-jest-hoist; written after them
+// to satisfy eslint's import/first rule. The region modules reach the DB.
+jest.mock('../../db/database', () => ({ collections: {}, database: {} }));
+jest.mock('../../services/supabase/client', () => ({ supabase: {} }));
+
 jest.mock('./templates', () => ({
   templateFor: (kind: string, type: string) => (type === 'water_monitoring' || kind === 'survey' ? { label: type === 'water_monitoring' ? 'Water Monitoring' : 'Survey', file: 'x', module: 0 } : null),
 }));

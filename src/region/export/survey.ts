@@ -1,7 +1,7 @@
-import { formatReportDate } from '../../../utils/formatReportDate';
-import type { MapContext, SurveyBundle, TemplateData } from '../types';
-import { mapPhotos, mapSignatures } from './common';
-import { cb, normalizeLabel, numberText, text } from './primitives';
+import { formatReportDate } from '../../utils/formatReportDate';
+import type { MapContext, SurveyBundle, TemplateData } from '../../features/export/types';
+import { mapPhotos, mapSignatures } from '../../features/export/mappers/common';
+import { cb, normalizeLabel, numberText, text } from '../../features/export/mappers/primitives';
 
 // Site Inspection Report header block. The survey form doesn't exist in the
 // app yet, so this reads only the survey_reports columns; the site

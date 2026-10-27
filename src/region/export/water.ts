@@ -1,14 +1,12 @@
-import type { YnValue } from '../../../components/form';
-import { formatReportDate } from '../../../utils/formatReportDate';
-import type { WaterComplianceView } from '../../../region';
-// eslint-disable-next-line no-restricted-imports -- mapper moves to src/region/export in Task 9
-import { WATER_FINDINGS_CHECKLIST, WWTP_TYPE_OTHERS, WWTP_CONDITION_OTHERS } from '../../../region/inspections/water/waterChecklistData';
-// eslint-disable-next-line no-restricted-imports -- mapper moves to src/region/export in Task 9
-import { decodeWwtpComponent, describeNonWwtpTreatment, findingsValuesFromEntries } from '../../../region/inspections/water/waterTypes';
-import { ROW_MINIMUMS } from '../rowMinimums';
-import type { InspectionBundle, MapContext, TemplateData } from '../types';
-import { mapCommon } from './common';
-import { asArray, cb, joinNonEmpty, normalizeLabel, padRows, text } from './primitives';
+import type { YnValue } from '../../components/form';
+import { formatReportDate } from '../../utils/formatReportDate';
+import type { WaterComplianceView } from '..';
+import { WATER_FINDINGS_CHECKLIST, WWTP_TYPE_OTHERS, WWTP_CONDITION_OTHERS } from '../inspections/water/waterChecklistData';
+import { decodeWwtpComponent, describeNonWwtpTreatment, findingsValuesFromEntries } from '../inspections/water/waterTypes';
+import { ROW_MINIMUMS } from '../../features/export/rowMinimums';
+import type { InspectionBundle, MapContext, TemplateData } from '../../features/export/types';
+import { mapCommon } from '../../features/export/mappers/common';
+import { asArray, cb, joinNonEmpty, normalizeLabel, padRows, text } from '../../features/export/mappers/primitives';
 
 // Water Quality Management form, sections 4–6 and III. Everything here reads
 // the compliance_water row through WaterComplianceView; the shared sections

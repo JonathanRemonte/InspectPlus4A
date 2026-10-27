@@ -3,6 +3,8 @@ import type { Database, Model, TableSchema } from '@nozbe/watermelondb';
 import type { SchemaMigrations } from '@nozbe/watermelondb/Schema/migrations';
 import type { SvgProps } from 'react-native-svg';
 import type { Ionicons } from '@expo/vector-icons';
+import type { Approvers, TemplateEntry } from '../../features/export/templates';
+import type { InspectionBundle, MapContext, SurveyBundle, TemplateData } from '../../features/export/types';
 import type { TwoRowMainTabDef } from '../../features/inspections/components/TwoRowTabs';
 import type { ComplianceView, InspectionReportSummary } from '../../features/inspections/hooks/useInspectionReport';
 import type { GeneralInfoFormState, PurposeFormState } from '../../features/inspections/types';
@@ -34,6 +36,10 @@ export interface RegionIndex {
   COMPLIANCE_TAGS: ComplianceTagEntry[];
   SURVEY_COMPLIANCE_TAG: string;
   COMPLIANCE_COLLECTIONS: Partial<Record<string, string>>;
+  TEMPLATES: Partial<Record<string, TemplateEntry>>;
+  UNUSED_CHECKBOXES: Record<string, number>;
+  SURVEY_TEMPLATE_KEY: string;
+  FALLBACK_APPROVERS: Approvers;
 }
 
 /** One simplified barangay polygon, as scripts/build-barangay-boundaries.js emits it. */
@@ -133,9 +139,10 @@ export interface ReportDataModule {
   renderDetailTab?(props: DetailTabProps): React.ReactNode;
   /** True when this type renders the DENR permits section in its own detail tabs, so General Information omits it. */
   permitsInDetailTabs?: boolean;
+  /** Maps a recorded report to the tags of its .docx template. Omit and the type can't be exported. */
+  mapExport?(bundle: InspectionBundle, ctx: MapContext): TemplateData;
 }
 
-/** The `src/region/modules` entry point. */
 /** What the Add Report panel already collected when it opens a type's form. */
 export interface ShellStart {
   estabId: string | null; // null when creating a brand-new establishment
@@ -153,7 +160,9 @@ export interface ReportFormModule {
   FormShell?: React.ComponentType<{ start: ShellStart }>;
 }
 
+/** The `src/region/modules` entry point. */
 export interface RegionModulesIndex {
   reportDataModules: Partial<Record<string, ReportDataModule>>;
   reportForms: Partial<Record<string, ReportFormModule>>;
+  mapSurveyBundle?: (bundle: SurveyBundle, ctx: MapContext) => TemplateData;
 }
