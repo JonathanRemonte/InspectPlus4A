@@ -2,6 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '../constants/colors';
 import { Logo } from './Logo';
+import { region } from '../region';
 
 // The wordmark's font-size isn't fixed — it starts at this base size, then
 // gets scaled at runtime so its rendered width matches the subtitle's
@@ -40,7 +41,7 @@ export const BrandLockup: React.FC = () => {
           subtitleWidth.current = e.nativeEvent.layout.width;
           fit();
         }}>
-        EMB4B INSPECTION & MONITORING SYSTEM
+        {region.identity.systemName}
       </Text>
     </View>
   );

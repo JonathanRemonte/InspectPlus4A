@@ -19,6 +19,7 @@ import { UpdateRequiredError } from '../../../services/sync/appVersionGate';
 import { subscribeToUpdateRequired } from '../../../services/sync/syncEvents';
 import { showUpdateRequiredAlert } from '../../updates/updateRequiredAlert';
 import { SyncOptionsModal, SyncDirection } from './SyncOptionsModal';
+import { region } from '../../../region';
 
 interface HomeHeaderProps {
   // Hide the avatar/logout control on pages with no active session (e.g. login).
@@ -218,7 +219,7 @@ Your unsynced entries are still on this phone and nothing was removed.`,
           </View>
           <Reanimated.View style={[styles.subtitleWrap, subtitleStyle]}>
             <Text style={styles.subtitle} numberOfLines={1}>
-              EMB4B INSPECTION & MONITORING SYSTEM
+              {region.identity.systemName}
             </Text>
           </Reanimated.View>
         </View>
