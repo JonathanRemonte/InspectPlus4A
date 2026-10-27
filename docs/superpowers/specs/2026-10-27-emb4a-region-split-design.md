@@ -66,9 +66,18 @@ Before the fork, 4B is restructured so every file is either foundation
 (identical in both apps, edited only in 4B and merged downstream) or region
 (owned by each app).
 
+Foundation code is **not moved** (amended 2026-10-27 while planning Phase
+0): foundation is everything outside `src/region/`. An ESLint import rule
+lets foundation reach region code only through three entry points —
+`src/region` (light data: identity, locations, report-type catalog,
+template registry, view types), `src/region/db` (a leaf: tables, models,
+migrations, sync entities) and `src/region/modules` (per-type UI and
+logic) — and `src/core/region/assertRegion.ts` fails `tsc` when a region's
+entry points drift from `src/core/region/contract.ts`.
+
 | Foundation | Region |
 |---|---|
-| `src/foundation/`: auth, sync engine, WatermelonDB core models (establishments, inspection reports, attachments, approvals), export render engines (docx, xlsx), location engine, UI kit and form primitives, `ChecklistSection`, approval workflow, DAO 2013-22 waste-class catalog | `src/region/`: `region.config.ts` (app name, letterhead data, control-number format, default signatories, approval chain, map bounds), location data, report-type catalog, form screens, checklist data, export mappers, compliance models, purpose-of-inspection model |
+| Everything outside `src/region/`: auth, sync engine, WatermelonDB core models (establishments, inspection reports, attachments, approvals), export render engines (docx, xlsx), location engine, UI kit and form primitives, `ChecklistSection`, approval workflow, DAO 2013-22 waste-class catalog, the region contract | `src/region/`: identity (app strings), location data and map overview, report-type catalog, form screens, checklist data, export templates and mappers, compliance models and views; later letterhead data, control-number format, default signatories, approval chain, purpose-of-inspection model |
 | Core Supabase migrations (`*_core_*.sql`) | Region Supabase migrations (`*_region_*.sql`), seeds, RLS tests for region tables |
 | `scripts/docx-tag.js`, `scripts/docx-grid.js`, CI job templates | `assets/templates/`, icons, `app.json`, `eas.json`, `.env` |
 
@@ -175,9 +184,12 @@ reviewer can **return** with a required comment, moving the report to
 - New Supabase project with its own URL, keys and buckets (`attachments`,
   `signatures`). 4A inherits 4B's migrations up to the fork; after the
   registry refactor, a 4A region migration drops the 4B-only tables
-  (`compliance_water`, `compliance_air`, `compliance_eia`,
-  `survey_reports`) and creates 4A's (`compliance_ra6969`,
-  `compliance_trc`, `compliance_tsd`, `lgu_facilities`, `pdsf_reports`).
+  (`compliance_water`, `compliance_air`, `compliance_eia`) and creates
+  4A's (`compliance_ra6969`, `compliance_trc`, `compliance_tsd`,
+  `lgu_facilities`, `pdsf_reports`). `survey_reports` stays, empty, until
+  Phase 2 makes non-establishment report kinds pluggable; 4A leaves survey
+  out of its catalog. 4A also redefines the
+  `inspection_reports.report_type` check constraint for its own types.
   Core migrations arrive by upstream merge in timestamp order.
 - Access matches 4B: assignment to CALABARZON provinces/municipalities
   scopes establishments and LGU facilities; developer/admin see all.
@@ -199,7 +211,7 @@ reviewer can **return** with a required comment, moving the report to
 |---|---|---|---|
 | 0. Split | 4B | Foundation/region restructure; `sync_tables` registry RPCs; schema assembled from core + region tables; `docs/upstream-merge.md` | 4B unchanged in behavior: lint, typecheck, jest and RLS tests green; device smoke test without a local DB reset |
 | 1. Bootstrap 4A | 4A | Fork with `upstream`; package id, name, icon, EAS project; Supabase project; CALABARZON location data; region config | A 4A test inspector logs in, adds an establishment, syncs it to the 4A backend; both apps installed side by side |
-| 2. Foundation features | 4B → merged into 4A | Approval workflow, RPC and queue UI; signatures and signed export; waste-class catalog; `ChecklistSection`; xlsx fill engine | State-machine and RLS tests pass; a report goes draft → approved with signatures in both apps |
+| 2. Foundation features | 4B → merged into 4A | Approval workflow, RPC and queue UI; signatures and signed export; waste-class catalog; `ChecklistSection`; xlsx fill engine; pluggable purpose-of-inspection and non-establishment report kinds (survey, PDSF) — both stay foundation in Phase 0 | State-machine and RLS tests pass; a report goes draft → approved with signatures in both apps |
 | 3. 4A forms | 4A | RA 6969 form (HWG/Toxic Chem/HC) and export → TRC + memo → TSD + memo → PDSF → establishment and LGU import | Each template has a contract test; exports match the sample PDFs field for field |
 | 4. Later | both | Web review dashboard; further 4A sections | — |
 
