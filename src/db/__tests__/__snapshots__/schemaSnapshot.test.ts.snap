@@ -1,0 +1,918 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`local schema keeps every table and column 1`] = `
+[
+  {
+    "columns": [
+      {
+        "name": "attachmentId",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "inspectionReportId",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "surveyReportId",
+        "type": "string",
+      },
+      {
+        "name": "inspectorUid",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "storagePath",
+        "type": "string",
+      },
+      {
+        "name": "fileName",
+        "type": "string",
+      },
+      {
+        "name": "mimeType",
+        "type": "string",
+      },
+      {
+        "name": "fileSize",
+        "type": "number",
+      },
+      {
+        "isOptional": true,
+        "name": "geoLat",
+        "type": "number",
+      },
+      {
+        "isOptional": true,
+        "name": "geoLng",
+        "type": "number",
+      },
+      {
+        "name": "capturedAt",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "caption",
+        "type": "string",
+      },
+      {
+        "name": "deviceId",
+        "type": "string",
+      },
+      {
+        "name": "createdAt",
+        "type": "string",
+      },
+      {
+        "name": "updatedAt",
+        "type": "string",
+      },
+      {
+        "name": "updated_at",
+        "type": "number",
+      },
+      {
+        "isOptional": true,
+        "name": "deletedAt",
+        "type": "string",
+      },
+      {
+        "name": "syncState",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "localUri",
+        "type": "string",
+      },
+      {
+        "name": "uploadStatus",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "uploadError",
+        "type": "string",
+      },
+    ],
+    "name": "attachments",
+  },
+  {
+    "columns": [
+      {
+        "name": "complianceId",
+        "type": "string",
+      },
+      {
+        "name": "reportId",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "emissionSources",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistDao200426",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistDao200081",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistEmbMc",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistAppendixF",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistConsentAgreement",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "ptoConditions",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "otherObservations",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "remarksRecommendations",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "documentsReviewed",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "syncState",
+        "type": "string",
+      },
+    ],
+    "name": "compliance_air",
+  },
+  {
+    "columns": [
+      {
+        "name": "complianceId",
+        "type": "string",
+      },
+      {
+        "name": "reportId",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistDao200330",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "eccEmpConditions",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "otherObservations",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "remarksRecommendations",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "documentsReviewed",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "syncState",
+        "type": "string",
+      },
+    ],
+    "name": "compliance_eia",
+  },
+  {
+    "columns": [
+      {
+        "name": "complianceId",
+        "type": "string",
+      },
+      {
+        "name": "reportId",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "hazwasteGeneratorId",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "hazwasteIdDateIssued",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "wasteTypesGenerated",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistRegistration",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistStorage",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistPackaging",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistLabeling",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistTransport",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistEmergency",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistPersonnelTraining",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistManifestSystem",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "hwidConditions",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "otherObservations",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "remarksRecommendations",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "documentsReviewed",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "syncState",
+        "type": "string",
+      },
+    ],
+    "name": "compliance_hazwaste",
+  },
+  {
+    "columns": [
+      {
+        "name": "complianceId",
+        "type": "string",
+      },
+      {
+        "name": "reportId",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "waterSources",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "wastewaterSources",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "abstractedWaterQuality",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "hasWwtp",
+        "type": "boolean",
+      },
+      {
+        "isOptional": true,
+        "name": "nonWwtpTreatment",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "wwtpType",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "wwtpTypeOther",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "wwtpDetails",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "wwtpComponents",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "wwtpCondition",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "wwtpUnderConstruction",
+        "type": "boolean",
+      },
+      {
+        "isOptional": true,
+        "name": "wwtpConditionOther",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "wwtpConstructionReported",
+        "type": "boolean",
+      },
+      {
+        "isOptional": true,
+        "name": "wwtpConstructionUnits",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "wwtpConstructionCompletionDate",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "wwtpTreatmentUnitsUtilized",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "samplingConducted",
+        "type": "boolean",
+      },
+      {
+        "isOptional": true,
+        "name": "samplingClassification",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "samplingPoints",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "previousInspectionSummary",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "checklistDao200510",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "dpConditions",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "otherObservations",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "remarksRecommendations",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "documentsReviewed",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "syncState",
+        "type": "string",
+      },
+    ],
+    "name": "compliance_water",
+  },
+  {
+    "columns": [
+      {
+        "name": "estabId",
+        "type": "string",
+      },
+      {
+        "name": "inspectorUid",
+        "type": "string",
+      },
+      {
+        "name": "name",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "formerName",
+        "type": "string",
+      },
+      {
+        "name": "addressLine",
+        "type": "string",
+      },
+      {
+        "name": "barangay",
+        "type": "string",
+      },
+      {
+        "name": "city",
+        "type": "string",
+      },
+      {
+        "name": "province",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "geoLat",
+        "type": "number",
+      },
+      {
+        "isOptional": true,
+        "name": "geoLng",
+        "type": "number",
+      },
+      {
+        "name": "natureOfBusiness",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "psicCode",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "product",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "yearEstablished",
+        "type": "number",
+      },
+      {
+        "name": "operatingStatus",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "operatingHoursDay",
+        "type": "number",
+      },
+      {
+        "isOptional": true,
+        "name": "operatingDaysWeek",
+        "type": "number",
+      },
+      {
+        "isOptional": true,
+        "name": "operatingDaysYear",
+        "type": "number",
+      },
+      {
+        "isOptional": true,
+        "name": "operatingStatusSince",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "productLines",
+        "type": "string",
+      },
+      {
+        "name": "ownerName",
+        "type": "string",
+      },
+      {
+        "name": "managingHeadName",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "pcoName",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "pcoAccreditationNo",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "pcoEffectivity",
+        "type": "string",
+      },
+      {
+        "name": "phoneFax",
+        "type": "string",
+      },
+      {
+        "name": "email",
+        "type": "string",
+      },
+      {
+        "name": "contactPersonName",
+        "type": "string",
+      },
+      {
+        "name": "contactPersonPosition",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "denrPermits",
+        "type": "string",
+      },
+      {
+        "name": "deviceId",
+        "type": "string",
+      },
+      {
+        "name": "createdAt",
+        "type": "string",
+      },
+      {
+        "name": "updatedAt",
+        "type": "string",
+      },
+      {
+        "name": "updated_at",
+        "type": "number",
+      },
+      {
+        "name": "syncState",
+        "type": "string",
+      },
+      {
+        "name": "isArchived",
+        "type": "boolean",
+      },
+      {
+        "isOptional": true,
+        "name": "lastSyncedSnapshot",
+        "type": "string",
+      },
+    ],
+    "name": "establishments",
+  },
+  {
+    "columns": [
+      {
+        "name": "reportId",
+        "type": "string",
+      },
+      {
+        "name": "estabId",
+        "type": "string",
+      },
+      {
+        "name": "inspectorUid",
+        "type": "string",
+      },
+      {
+        "name": "purposeId",
+        "type": "string",
+      },
+      {
+        "name": "reportType",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "reportControlNo",
+        "type": "string",
+      },
+      {
+        "name": "inspectionDate",
+        "type": "string",
+      },
+      {
+        "name": "establishmentSnapshot",
+        "type": "string",
+      },
+      {
+        "name": "permitsSnapshot",
+        "type": "string",
+      },
+      {
+        "name": "isArchived",
+        "type": "boolean",
+      },
+      {
+        "name": "deviceId",
+        "type": "string",
+      },
+      {
+        "name": "createdAt",
+        "type": "string",
+      },
+      {
+        "name": "updatedAt",
+        "type": "string",
+      },
+      {
+        "name": "updated_at",
+        "type": "number",
+      },
+      {
+        "isOptional": true,
+        "name": "deletedAt",
+        "type": "string",
+      },
+      {
+        "name": "syncState",
+        "type": "string",
+      },
+      {
+        "name": "reportStatus",
+        "type": "string",
+      },
+    ],
+    "name": "inspection_reports",
+  },
+  {
+    "columns": [
+      {
+        "name": "purposeId",
+        "type": "string",
+      },
+      {
+        "name": "estabId",
+        "type": "string",
+      },
+      {
+        "name": "inspectorUid",
+        "type": "string",
+      },
+      {
+        "name": "inspectionDate",
+        "type": "string",
+      },
+      {
+        "name": "verifyInfo",
+        "type": "boolean",
+      },
+      {
+        "isOptional": true,
+        "name": "verifyInfoList",
+        "type": "string",
+      },
+      {
+        "name": "determineCompliance",
+        "type": "boolean",
+      },
+      {
+        "name": "investigateComplaints",
+        "type": "boolean",
+      },
+      {
+        "name": "checkCommitments",
+        "type": "boolean",
+      },
+      {
+        "isOptional": true,
+        "name": "checkCommitmentsList",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "others",
+        "type": "string",
+      },
+      {
+        "name": "deviceId",
+        "type": "string",
+      },
+      {
+        "name": "createdAt",
+        "type": "string",
+      },
+      {
+        "name": "updatedAt",
+        "type": "string",
+      },
+      {
+        "name": "updated_at",
+        "type": "number",
+      },
+      {
+        "name": "syncState",
+        "type": "string",
+      },
+    ],
+    "name": "purpose_of_inspection",
+  },
+  {
+    "columns": [
+      {
+        "name": "surveyId",
+        "type": "string",
+      },
+      {
+        "name": "estabId",
+        "type": "string",
+      },
+      {
+        "name": "inspectorUid",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "reportControlNumber",
+        "type": "string",
+      },
+      {
+        "name": "inspectionDate",
+        "type": "string",
+      },
+      {
+        "name": "projectName",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "referenceCode",
+        "type": "string",
+      },
+      {
+        "name": "proponentName",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "contactPerson",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "contactPosition",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "contactNumber",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "email",
+        "type": "string",
+      },
+      {
+        "name": "projectLocation",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "geoLat",
+        "type": "number",
+      },
+      {
+        "isOptional": true,
+        "name": "geoLng",
+        "type": "number",
+      },
+      {
+        "isOptional": true,
+        "name": "areaSize",
+        "type": "number",
+      },
+      {
+        "name": "purpose",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "documentType",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "projectStatus",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "physicalParameters",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "biologicalParameters",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "socioeconomicParameters",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "otherFindings",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "remarksRecommendations",
+        "type": "string",
+      },
+      {
+        "name": "createdAt",
+        "type": "string",
+      },
+      {
+        "name": "updatedAt",
+        "type": "string",
+      },
+      {
+        "name": "updated_at",
+        "type": "number",
+      },
+      {
+        "isOptional": true,
+        "name": "deletedAt",
+        "type": "string",
+      },
+      {
+        "name": "isArchived",
+        "type": "boolean",
+      },
+      {
+        "name": "syncState",
+        "type": "string",
+      },
+      {
+        "name": "deviceId",
+        "type": "string",
+      },
+      {
+        "isOptional": true,
+        "name": "reportStatus",
+        "type": "string",
+      },
+    ],
+    "name": "survey_reports",
+  },
+]
+`;
