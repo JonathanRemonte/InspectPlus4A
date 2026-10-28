@@ -21,6 +21,10 @@ export interface RegionIdentity {
   systemName: string;
   /** The home footer line. */
   copyrightLine: string;
+  /** The region as the home greeting names it, e.g. 'EMB Region 4-B'. */
+  regionLabel: string;
+  /** "owner/name" of the GitHub repo whose Releases carry this app's APKs. */
+  releaseRepo: string;
 }
 
 /** The `src/region` entry point. */
@@ -40,7 +44,14 @@ export interface RegionIndex {
   UNUSED_CHECKBOXES: Record<string, number>;
   SURVEY_TEMPLATE_KEY: string;
   FALLBACK_APPROVERS: Approvers;
+  /** Document names offered in the "documents reviewed" checklist. */
+  DOCUMENTS_REVIEWED_OPTIONS: string[];
 }
+
+// Type exports foundation also imports by name from `src/region` (checked in
+// assertRegion.ts, since interfaces can't express them): ReportTypeKey,
+// ReportDataKey, ComplianceTag, RegionComplianceView, WaterComplianceView.
+// From `src/region/db`: RegionSyncEntityName, RegionDtoMap, RegionCollections.
 
 /** One simplified barangay polygon, as scripts/build-barangay-boundaries.js emits it. */
 export interface BoundaryEntry {
@@ -111,6 +122,10 @@ export interface RegionDbIndex {
     modelClasses: (typeof Model)[];
   };
   regionCollectionsFor(database: Database): Record<string, unknown>;
+  /**
+   * Keys must equal the entity's WatermelonDB table name: watermelonAdapter's
+   * collectionFor looks the collection up by sync entity name.
+   */
   regionSyncEntities: Record<string, unknown>;
   regionParentDependencies: { childEntity: string; parentEntity: string; foreignKeyField: string }[];
 }

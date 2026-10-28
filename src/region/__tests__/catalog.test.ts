@@ -26,6 +26,11 @@ describe('EMB4B report-type catalog', () => {
     });
   });
 
+  it('points every compliance tag at a create entry that exists', () => {
+    const keys = REPORT_TYPES.map(t => t.key);
+    for (const t of COMPLIANCE_TAGS) expect(keys).toContain(t.createKey);
+  });
+
   it('keeps the establishment compliance-tag vocabulary', () => {
     expect(COMPLIANCE_TAGS.map(t => t.tag)).toEqual(['Air Monitoring', 'Water Monitoring', 'Hazwaste', 'EIA', 'Survey']);
     expect(SURVEY_COMPLIANCE_TAG).toBe('Survey');
