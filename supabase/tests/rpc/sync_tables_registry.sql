@@ -1,6 +1,6 @@
 begin;
 
-select plan(6);
+select plan(8);
 
 select is(
   (select array_agg(table_name order by sync_order) from public.sync_tables),
@@ -16,6 +16,20 @@ select is(
 );
 
 select is(has_table_privilege('anon', 'public.sync_tables', 'SELECT'), false, 'anon cannot read sync_tables');
+
+select is(
+  has_table_privilege('authenticated', 'public.sync_tables', 'SELECT'),
+  true,
+  'authenticated can read sync_tables'
+);
+
+select is(
+  (select count(*)::int from public.sync_tables t
+    where not has_function_privilege('authenticated', t.push_handler::oid, 'EXECUTE')
+       or not has_function_privilege('authenticated', t.pull_handler::oid, 'EXECUTE')),
+  0,
+  'authenticated can execute every registered push and pull handler'
+);
 
 select is(
   has_function_privilege('anon', 'public.push_compliance_air(jsonb)', 'EXECUTE'),

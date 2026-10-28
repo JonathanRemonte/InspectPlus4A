@@ -19,6 +19,11 @@ import { syncSchema, SyncEntityName } from './syncSchema';
 describe('syncSchema matches the local WatermelonDB schema', () => {
   const entities = Object.keys(syncSchema) as SyncEntityName[];
 
+  // watermelonAdapter.collectionFor looks collections up by sync entity name.
+  it('every sync entity name is a WatermelonDB table name', () => {
+    for (const entity of entities) expect(Object.keys(schema.tables)).toContain(entity);
+  });
+
   it.each(entities)('%s: every local field name is a real column', entity => {
     const entitySchema = syncSchema[entity];
     const table = schema.tables[entity];
