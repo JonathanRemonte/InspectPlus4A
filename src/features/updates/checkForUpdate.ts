@@ -1,3 +1,4 @@
+import { region } from '../../region';
 import { compareVersions, getCurrentAppVersion } from '../../utils/version';
 
 // The app is distributed as a sideloaded APK attached to GitHub Releases
@@ -5,7 +6,7 @@ import { compareVersions, getCurrentAppVersion } from '../../utils/version';
 // question for the GitHub API rather than a store. The repo is public, so
 // this needs no token — 60 requests/hour/IP, which useUpdateCheck's
 // throttle keeps well clear of.
-const REPO = 'emb4b/InspectPlus';
+const REPO = region.identity.releaseRepo;
 export const LATEST_RELEASE_API = `https://api.github.com/repos/${REPO}/releases/latest`;
 // Stable link that always resolves to the newest full release's APK —
 // safe to print anywhere without knowing the version.

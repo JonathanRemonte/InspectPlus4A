@@ -104,7 +104,7 @@ export type ReportDataKey = 'air_monitoring' | 'water_monitoring' | 'hazardous_w
 
 // How an ALREADY-RECORDED report of a given type is labeled and colored.
 // The data layer only distinguishes five types: both create-flow hazwaste
-// entries (generator and TSD — see ReportTypeKey in reportTypes.ts) store
+// entries (generator and TSD — see ReportTypeKey above) store
 // 'hazardous_waste', because the distinction only matters while choosing
 // which form to open.
 //

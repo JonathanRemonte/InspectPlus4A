@@ -6,6 +6,8 @@ describe('EMB4B region', () => {
       id: 'emb4b',
       systemName: 'EMB4B INSPECTION & MONITORING SYSTEM',
       copyrightLine: '© 2026 EMB - Environmental Management Bureau, Region 4-B',
+      regionLabel: 'EMB Region 4-B',
+      releaseRepo: 'emb4b/InspectPlus',
     });
   });
 
