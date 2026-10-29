@@ -72,7 +72,7 @@ describe('resolveInitialCamera', () => {
       zoom: PIN_ZOOM,
     });
   });
-  it('falls back to the MIMAROPA overview when nothing else is available', () => {
+  it('falls back to the region overview when nothing else is available', () => {
     expect(resolveInitialCamera({ lat: '', lng: '', lastFix: null })).toEqual(REGION_OVERVIEW);
   });
 });

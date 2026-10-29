@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { asyncStorageSignatoryProvider, emptySignatories, SIGNATORIES_STORAGE_KEY } from './signatories';
-import { defaultApproversFor } from './templates';
+import { asyncStorageSignatoryProvider, emptySignatories, SIGNATORIES_STORAGE_KEY } from '../../features/export/signatories';
+import { defaultApproversFor } from '../../features/export/templates';
 
 const WATER_APPROVERS = defaultApproversFor('inspection', 'water_monitoring');
 const HAZWASTE_APPROVERS = defaultApproversFor('inspection', 'hazardous_waste');

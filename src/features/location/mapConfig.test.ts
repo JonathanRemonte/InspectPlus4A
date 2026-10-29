@@ -5,7 +5,7 @@ import { region } from '../../region';
 describe('mapConfig', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('points at the OpenFreeMap Liberty style and a MIMAROPA overview camera', () => {
+  it('points at the OpenFreeMap Liberty style and the region overview camera', () => {
     expect(MAP_STYLE_URL).toBe('https://tiles.openfreemap.org/styles/liberty');
     expect(REGION_OVERVIEW).toBe(region.locations.overview);
   });

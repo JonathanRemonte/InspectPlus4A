@@ -1,5 +1,5 @@
-import { REPORT_TYPE_DISPLAY, ReportDataKey } from './reportTypeDisplay';
-import { Colors } from '../design/colors';
+import { REPORT_TYPE_DISPLAY, ReportDataKey } from '../../constants/reportTypeDisplay';
+import { Colors } from '../../design/colors';
 
 // All five recorded-report buckets the data layer actually stores.
 const ALL_DATA_KEYS: ReportDataKey[] = [

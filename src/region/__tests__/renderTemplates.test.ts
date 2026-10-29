@@ -1,22 +1,22 @@
 import fs from 'fs';
 import path from 'path';
 import PizZip from 'pizzip';
-import { renderDocx } from './renderDocx';
-import { mapBundle } from '../mappers';
-import { emptyWaterBundle, fullSurveyBundle, fullWaterBundle, signatories } from '../mappers/fixtures';
-import { TICKED } from '../mappers/primitives';
+import { renderDocx } from '../../features/export/render/renderDocx';
+import { mapBundle } from '../../features/export/mappers';
+import { emptyWaterBundle, fullSurveyBundle, fullWaterBundle, signatories } from '../../features/export/mappers/fixtures';
+import { TICKED } from '../../features/export/mappers/primitives';
 
 // Hoisted above the imports by babel-plugin-jest-hoist; written after them
 // to satisfy eslint's import/first rule. The region modules reach the DB.
-jest.mock('../../../db/database', () => ({ collections: {}, database: {} }));
-jest.mock('../../../services/supabase/client', () => ({ supabase: {} }));
+jest.mock('../../db/database', () => ({ collections: {}, database: {} }));
+jest.mock('../../services/supabase/client', () => ({ supabase: {} }));
 // scripts/docx-tag.js is a plain Node script, not part of the app bundle —
 // Jest transpiles it like any other CommonJS module, and templates/index.ts
 // already imports the sibling .docx assets the same require()-based way.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { assertWellFormed } = require('../../../../scripts/docx-tag');
+const { assertWellFormed } = require('../../../scripts/docx-tag');
 
-const TEMPLATES_DIR = path.join(__dirname, '..', '..', '..', '..', 'assets', 'templates');
+const TEMPLATES_DIR = path.join(__dirname, '..', '..', '..', 'assets', 'templates');
 const ctx = { signatories };
 const load = (file: string) => new Uint8Array(fs.readFileSync(path.join(TEMPLATES_DIR, file)));
 const docXml = (bytes: Uint8Array) => new PizZip(bytes).file('word/document.xml')!.asText();

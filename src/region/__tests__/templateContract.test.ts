@@ -1,16 +1,16 @@
 import fs from 'fs';
 import path from 'path';
 import PizZip from 'pizzip';
-import { mapBundle } from '../mappers';
-import { fullSurveyBundle, fullWaterBundle, signatories } from '../mappers/fixtures';
-import type { TemplateData } from '../types';
+import { mapBundle } from '../../features/export/mappers';
+import { fullSurveyBundle, fullWaterBundle, signatories } from '../../features/export/mappers/fixtures';
+import type { TemplateData } from '../../features/export/types';
 
 // Hoisted above the imports by babel-plugin-jest-hoist; written after them
 // to satisfy eslint's import/first rule. The region modules reach the DB.
-jest.mock('../../../db/database', () => ({ collections: {}, database: {} }));
-jest.mock('../../../services/supabase/client', () => ({ supabase: {} }));
+jest.mock('../../db/database', () => ({ collections: {}, database: {} }));
+jest.mock('../../services/supabase/client', () => ({ supabase: {} }));
 
-const TEMPLATES_DIR = path.join(__dirname, '..', '..', '..', '..', 'assets', 'templates');
+const TEMPLATES_DIR = path.join(__dirname, '..', '..', '..', 'assets', 'templates');
 const ctx = { signatories };
 
 // Every template's tags must be exactly the keys its mapper produces — a

@@ -1,6 +1,6 @@
-import { REPORT_TYPES, ReportType, ReportTypeKey } from './reportTypes';
-import { REPORT_TYPE_DISPLAY, ReportDataKey } from './reportTypeDisplay';
-import { Colors } from '../design/colors';
+import { REPORT_TYPES, ReportType, ReportTypeKey } from '../../constants/reportTypes';
+import { REPORT_TYPE_DISPLAY, ReportDataKey } from '../../constants/reportTypeDisplay';
+import { Colors } from '../../design/colors';
 
 // Locate a create-flow entry by its key. Throws instead of silently
 // returning undefined if the key is missing or (impossibly, given the
