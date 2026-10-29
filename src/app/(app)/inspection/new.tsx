@@ -3,15 +3,17 @@ import Animated from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Colors } from '../../../constants/colors';
-import { WaterInspectionFormScreen } from '../../../features/inspections/water/WaterInspectionFormScreen';
+import { reportForms } from '../../../region/modules';
+import type { ReportTypeKey } from '../../../region';
 import { useHeaderScroll } from '../../../features/home/context/HeaderScrollContext';
 
 export default function NewInspectionScreen() {
   const { type } = useLocalSearchParams<{ type?: string }>();
   const { onScroll } = useHeaderScroll();
 
-  if (type === 'water') {
-    return <WaterInspectionFormScreen />;
+  const form = type ? reportForms[type as ReportTypeKey] : undefined;
+  if (form?.NewFormScreen) {
+    return <form.NewFormScreen />;
   }
 
   return (

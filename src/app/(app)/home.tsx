@@ -16,6 +16,7 @@ import { Radius } from '../../design/radius';
 import { Spacing } from '../../design/spacing';
 import { Type } from '../../design/typography';
 import { useAuthContext } from '../../core/providers/AuthProvider';
+import { region } from '../../region';
 import { Skeleton } from '../../components/Skeleton';
 import { HomeTabs, HomeTab, HOME_TAB_ORDER } from '../../features/home/components/HomeTabs';
 import {
@@ -201,7 +202,7 @@ export default function HomeScreen() {
       <View style={styles.welcomeWrap}>
         <Text style={styles.welcomeText}>Welcome back, {firstName}!</Text>
         <Text style={styles.dateText}>
-          {getFormattedDate()} · {currentTime} · EMB Region 4-B
+          {getFormattedDate()} · {currentTime} · {region.identity.regionLabel}
         </Text>
       </View>
 

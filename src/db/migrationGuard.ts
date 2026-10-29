@@ -19,7 +19,7 @@ export function assertMigrationsCoverSchema(schema: AppSchema, migrations: Schem
     throw new Error(
       `[WatermelonDB] Refusing to open the database: schema version ${schema.version} but migrations only reach ${migrations.maxVersion}. ` +
         'Opening would reset the store and destroy unsynced records. Add a migration to version ' +
-        `${schema.version} in src/db/migrations.ts.`,
+        `${schema.version} in src/region/db/migrations.ts.`,
     );
   }
 }

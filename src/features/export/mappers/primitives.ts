@@ -2,11 +2,21 @@
 // ReportBundle into strings a template can print, and never to throw on
 // data — so each helper here accepts `unknown` and blanks what it can't use.
 
+import type { TemplateData } from '../types';
+
 export const TICKED = '☒'; // ☒
 export const UNTICKED = '☐'; // ☐
 
 export function cb(on: boolean): string {
   return on ? TICKED : UNTICKED;
+}
+
+// Fills the template's pre-existing ☐ glyphs that no field maps to
+// (unused_1 … unused_N) so they print unticked.
+export function unusedBoxes(count: number): TemplateData {
+  const out: TemplateData = {};
+  for (let i = 1; i <= count; i += 1) out[`unused_${i}`] = UNTICKED;
+  return out;
 }
 
 export function text(value: unknown): string {

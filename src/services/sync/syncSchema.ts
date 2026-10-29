@@ -1,13 +1,13 @@
-export type SyncEntityName =
+import { regionSyncEntities, type RegionSyncEntityName } from '../../region/db';
+
+export type FoundationSyncEntityName =
   | 'establishments'
   | 'purpose_of_inspection'
   | 'inspection_reports'
   | 'survey_reports'
-  | 'compliance_air'
-  | 'compliance_water'
-  | 'compliance_hazwaste'
-  | 'compliance_eia'
   | 'attachments';
+
+export type SyncEntityName = FoundationSyncEntityName | RegionSyncEntityName;
 
 export interface SyncEntitySchema {
   entity: SyncEntityName;
@@ -21,7 +21,7 @@ export interface SyncEntitySchema {
   fields: Record<string, string>;
 }
 
-export const syncSchema: Record<SyncEntityName, SyncEntitySchema> = {
+const foundationSyncSchema: Record<FoundationSyncEntityName, SyncEntitySchema> = {
   establishments: {
     entity: 'establishments',
     primaryKey: 'estab_id',
@@ -176,119 +176,6 @@ export const syncSchema: Record<SyncEntityName, SyncEntitySchema> = {
     },
   },
 
-  compliance_air: {
-    entity: 'compliance_air',
-    primaryKey: 'compliance_id',
-    localPrimaryKey: 'complianceId',
-    updatedAtField: null,
-    deletedAtField: null,
-    softDelete: false,
-    pushEnabled: true,
-    pullEnabled: true,
-    fields: {
-      compliance_id:           'complianceId',
-      report_id:               'reportId',
-      emission_sources:        'emissionSources',
-      checklist_dao_2004_26:   'checklistDao200426',
-      checklist_dao_2000_81:   'checklistDao200081',
-      checklist_emb_mc:        'checklistEmbMc',
-      pto_conditions:          'ptoConditions',
-      other_observations:      'otherObservations',
-      remarks_recommendations: 'remarksRecommendations',
-      documents_reviewed:      'documentsReviewed',
-    },
-  },
-
-  compliance_water: {
-    entity: 'compliance_water',
-    primaryKey: 'compliance_id',
-    localPrimaryKey: 'complianceId',
-    updatedAtField: null,
-    deletedAtField: null,
-    softDelete: false,
-    pushEnabled: true,
-    pullEnabled: true,
-    fields: {
-      compliance_id:               'complianceId',
-      report_id:                   'reportId',
-      water_sources:               'waterSources',
-      wastewater_sources:          'wastewaterSources',
-      abstracted_water_quality:    'abstractedWaterQuality',
-      has_wwtp:                    'hasWwtp',
-      non_wwtp_treatment:          'nonWwtpTreatment',
-      wwtp_type:                   'wwtpType',
-      wwtp_type_other:             'wwtpTypeOther',
-      wwtp_details:                'wwtpDetails',
-      wwtp_components:             'wwtpComponents',
-      wwtp_condition:              'wwtpCondition',
-      wwtp_condition_other:        'wwtpConditionOther',
-      wwtp_under_construction:     'wwtpUnderConstruction',
-      wwtp_construction_reported:  'wwtpConstructionReported',
-      wwtp_construction_units:     'wwtpConstructionUnits',
-      wwtp_construction_completion_date: 'wwtpConstructionCompletionDate',
-      wwtp_treatment_units_utilized: 'wwtpTreatmentUnitsUtilized',
-      sampling_conducted:          'samplingConducted',
-      sampling_classification:     'samplingClassification',
-      sampling_points:             'samplingPoints',
-      previous_inspection_summary: 'previousInspectionSummary',
-      checklist_dao_2005_10:       'checklistDao200510',
-      dp_conditions:               'dpConditions',
-      other_observations:          'otherObservations',
-      remarks_recommendations:     'remarksRecommendations',
-      documents_reviewed:          'documentsReviewed',
-    },
-  },
-
-  compliance_hazwaste: {
-    entity: 'compliance_hazwaste',
-    primaryKey: 'compliance_id',
-    localPrimaryKey: 'complianceId',
-    updatedAtField: null,
-    deletedAtField: null,
-    softDelete: false,
-    pushEnabled: true,
-    pullEnabled: true,
-    fields: {
-      compliance_id:               'complianceId',
-      report_id:                   'reportId',
-      hazwaste_generator_id:       'hazwasteGeneratorId',
-      hazwaste_id_date_issued:     'hazwasteIdDateIssued',
-      waste_types_generated:       'wasteTypesGenerated',
-      checklist_registration:      'checklistRegistration',
-      checklist_storage:           'checklistStorage',
-      checklist_packaging:         'checklistPackaging',
-      checklist_labeling:          'checklistLabeling',
-      checklist_transport:         'checklistTransport',
-      checklist_emergency:         'checklistEmergency',
-      checklist_personnel_training:'checklistPersonnelTraining',
-      checklist_manifest_system:   'checklistManifestSystem',
-      hwid_conditions:             'hwidConditions',
-      other_observations:          'otherObservations',
-      remarks_recommendations:     'remarksRecommendations',
-      documents_reviewed:          'documentsReviewed',
-    },
-  },
-
-  compliance_eia: {
-    entity: 'compliance_eia',
-    primaryKey: 'compliance_id',
-    localPrimaryKey: 'complianceId',
-    updatedAtField: null,
-    deletedAtField: null,
-    softDelete: false,
-    pushEnabled: true,
-    pullEnabled: true,
-    fields: {
-      compliance_id:           'complianceId',
-      report_id:               'reportId',
-      checklist_dao_2003_30:   'checklistDao200330',
-      ecc_emp_conditions:      'eccEmpConditions',
-      other_observations:      'otherObservations',
-      remarks_recommendations: 'remarksRecommendations',
-      documents_reviewed:      'documentsReviewed',
-    },
-  },
-
   // localUri, uploadStatus and uploadError are deliberately absent from
   // `fields` below — mapLocalToBackend (syncMappers.ts) only emits keys
   // present in this map, so those local-only columns never reach the push
@@ -347,3 +234,12 @@ export function getLocalFieldMap(entity: SyncEntityName): Record<string, string>
     ])
   );
 }
+
+// Attachments go last: they can reference a row of any other table.
+const { attachments, ...foundationParents } = foundationSyncSchema;
+
+export const syncSchema: Record<SyncEntityName, SyncEntitySchema> = {
+  ...foundationParents,
+  ...regionSyncEntities,
+  attachments,
+};

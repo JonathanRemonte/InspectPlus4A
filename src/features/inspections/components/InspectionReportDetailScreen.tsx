@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native';
+import { showPrompt } from '../../../services/prompt/promptService';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import type { KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,14 +16,11 @@ import { InspectionReportHeader, DEFAULT_REPORT_DETAIL_TABS } from './Inspection
 import { GeneralInformationView } from './GeneralInformationView';
 import { PurposeOfInspectionView } from './PurposeOfInspectionView';
 import { ComplianceStatusView } from './ComplianceStatusView';
-import { DenrPermitsSection } from './DenrPermitsSection';
 import { useHeaderScroll } from '../../home/context/HeaderScrollContext';
-import { WaterExtraSectionsView } from '../water/WaterComplianceEditSections';
 import { ReportThemeProvider } from '../../../core/providers/ReportThemeProvider';
-import { buildWaterReportTabs, establishmentHasDischargePermit } from '../water/waterReportTabs';
 import { AttachmentsSection } from '../../attachments/components/AttachmentsSection';
-
-const WATER_REPORT_TYPE = 'water_monitoring';
+import { reportDataModules } from '../../../region/modules';
+import type { ReportDataKey } from '../../../region';
 
 interface InspectionReportDetailScreenProps {
   reportId: string;
@@ -60,28 +58,25 @@ export const InspectionReportDetailScreen: React.FC<InspectionReportDetailScreen
 
   // Delete, unlike edit, isn't restricted to drafts — matches the "own
   // record" delete RLS policy on the backend, which only checks ownership.
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (!report) return;
-    Alert.alert(
-      'Delete report?',
-      `This ${INSPECTION_TYPE_LABELS[report.reportType] ?? report.reportType} report will be removed.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteInspectionReportRecord(report.reportId);
-              router.back();
-            } catch (err) {
-              console.error('[InspectionReportDetailScreen] Failed to delete report:', err);
-              Alert.alert('Delete failed', err instanceof Error ? err.message : 'Something went wrong.');
-            }
-          },
-        },
+    const choice = await showPrompt({
+      title: 'Delete report?',
+      message: `This ${INSPECTION_TYPE_LABELS[report.reportType] ?? report.reportType} report will be removed.`,
+      tone: 'danger',
+      actions: [
+        { id: 'cancel', label: 'Cancel', variant: 'cancel' },
+        { id: 'delete', label: 'Delete', variant: 'danger' },
       ],
-    );
+    });
+    if (choice !== 'delete') return;
+try {
+          await deleteInspectionReportRecord(report.reportId);
+          router.back();
+        } catch (err) {
+          console.error('[InspectionReportDetailScreen] Failed to delete report:', err);
+          void showPrompt({ title: 'Delete failed', message: err instanceof Error ? err.message : 'Something went wrong.', tone: 'danger' });
+        }
   }, [report]);
 
   if (loading) {
@@ -127,15 +122,11 @@ export const InspectionReportDetailScreen: React.FC<InspectionReportDetailScreen
     province: report.establishmentSnapshot.province,
   });
 
-  // Water reports get the full 1-6 section/subsection tab menu from the
-  // report template; every other report kind keeps the original 3-tab
-  // layout — see waterReportTabs.ts and DEFAULT_REPORT_DETAIL_TABS.
-  const isWater = report.reportType === WATER_REPORT_TYPE;
-  const hasDp = establishmentHasDischargePermit(report.permitsSnapshot);
-  const waterTabs = buildWaterReportTabs({ includeAttachments: true });
-  const tabs = isWater ? waterTabs : DEFAULT_REPORT_DETAIL_TABS;
+  // A report type may bring its own tab menu (EMB4B water's 1-6 sections);
+  // everything else keeps DEFAULT_REPORT_DETAIL_TABS. See src/region/modules.
+  const dataModule = reportDataModules[report.reportType as ReportDataKey];
+  const tabs = dataModule?.detailTabs?.() ?? DEFAULT_REPORT_DETAIL_TABS;
   const activeMainTab = tabs.find(t => t.key === activeMain) ?? tabs[0];
-  const activeWaterMainTab = waterTabs.find(t => t.key === activeMain) ?? waterTabs[0];
 
   return (
     <ReportThemeProvider reportType={report.reportType}>
@@ -201,7 +192,7 @@ export const InspectionReportDetailScreen: React.FC<InspectionReportDetailScreen
               onSaved={refetch}
               liveEstablishment={liveEstablishment}
               liveEstablishmentLoading={liveEstablishmentLoading}
-              showPermits={!isWater}
+              showPermits={!dataModule?.permitsInDetailTabs}
             />
           )}
           {activeMainTab.key === 'purpose' &&
@@ -215,27 +206,11 @@ export const InspectionReportDetailScreen: React.FC<InspectionReportDetailScreen
             ) : (
               <Text style={styles.stateText}>No purpose of inspection recorded for this report.</Text>
             ))}
-          {activeMainTab.key === 'compliance' &&
-            (isWater ? (
-              <DenrPermitsSection
-                reportId={report.reportId}
-                permits={report.permitsSnapshot}
-                canEdit={canEdit}
-                onSaved={refetch}
-              />
-            ) : (
-              <ComplianceStatusView compliance={compliance} />
-            ))}
-          {isWater && compliance.kind === 'water' && (activeMainTab.key === 'watersupply' || activeMainTab.key === 'wastewaterpollution' || activeMainTab.key === 'samplingfindings') && (
-            <WaterExtraSectionsView
-              compliance={compliance}
-              canEdit={canEdit}
-              onSaved={refetch}
-              mainTab={activeWaterMainTab}
-              hasDp={hasDp}
-              province={report.establishmentSnapshot.province}
-            />
-          )}
+          {dataModule?.renderDetailTab
+            ? dataModule.renderDetailTab({ report, compliance, tabKey: activeMainTab.key, canEdit, refetch })
+            : activeMainTab.key === 'compliance' && (
+                <ComplianceStatusView compliance={compliance} reportType={report.reportType} />
+              )}
           {activeMainTab.key === 'attachments' && (
             <AttachmentsSection parentType="inspection" parentId={report.reportId} canEdit={canEdit} />
           )}

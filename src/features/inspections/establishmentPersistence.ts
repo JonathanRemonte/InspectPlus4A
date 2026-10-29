@@ -177,8 +177,10 @@ interface PatchEstablishmentArgs {
 // Used by every independently-editable FormSection on the establishment
 // detail screen (see useEditableSection) — patches only the fields that
 // section owns, so saving one section can never clobber an in-flight edit
-// on another. geoLat/geoLng/denrPermits/isArchived/deviceId/inspectorUid/
-// createdAt are never among `fields`; no section currently edits them.
+// on another. denrPermits/isArchived/deviceId/inspectorUid/createdAt are
+// never among `fields`; no section currently edits them. geoLat/geoLng
+// arrive from the Details section as numbers (or null) — see
+// EstablishmentInfoSections' fromDetailsFields.
 // Opens its own database.write and notifies other screens the same way
 // archiveEstablishmentRecord does, since this is always called standalone
 // from a section's Save button rather than composed into a larger

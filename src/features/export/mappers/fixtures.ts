@@ -1,5 +1,5 @@
 import type { InspectionBundle, SurveyBundle, Signatories, ExportPhoto } from '../types';
-import type { WaterComplianceView } from '../../inspections/hooks/useInspectionReport';
+import type { WaterComplianceView } from '../../../region';
 
 export const signatories: Signatories = {
   inspectorName: 'Juan Dela Cruz',

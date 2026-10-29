@@ -1,6 +1,11 @@
 import { mapBundle } from './index';
 import { fullWaterBundle, fullSurveyBundle, signatories } from './fixtures';
 
+// Hoisted above the imports by babel-plugin-jest-hoist; written after them
+// to satisfy eslint's import/first rule. The region modules reach the DB.
+jest.mock('../../../db/database', () => ({ collections: {}, database: {} }));
+jest.mock('../../../services/supabase/client', () => ({ supabase: {} }));
+
 const ctx = { signatories };
 
 describe('mapBundle', () => {

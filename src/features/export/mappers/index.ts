@@ -1,32 +1,14 @@
-import { UNUSED_CHECKBOXES } from '../templates';
+import { mapSurveyBundle, reportDataModules } from '../../../region/modules';
+import type { ReportDataKey } from '../../../region';
 import type { MapContext, ReportBundle, TemplateData } from '../types';
-import { mapCommon } from './common';
-import { UNTICKED } from './primitives';
-import { mapSurvey } from './survey';
-import { mapWater } from './water';
 
-// Air, hazwaste and EIA's recipes name every checkbox glyph in their
-// type-specific checklists `unused_1..N` (in document order) so the
-// checkbox-count guard in docx-tag.js still passes; they need a value or
-// nullGetter would blank them to '' and erase the printed box.
-function unusedBoxes(count: number): TemplateData {
-  const out: TemplateData = {};
-  for (let i = 1; i <= count; i += 1) out[`unused_${i}`] = UNTICKED;
-  return out;
-}
-
-// inspection_reports.report_type → mapper. Air, hazwaste and EIA print only
-// the shared block until their forms exist (see the design spec).
+// Each report type's mapper is region-owned (src/region/modules).
 export function mapBundle(bundle: ReportBundle, ctx: MapContext): TemplateData {
-  if (bundle.kind === 'survey') return mapSurvey(bundle, ctx);
-  switch (bundle.report.reportType) {
-    case 'water_monitoring':
-      return mapWater(bundle, ctx);
-    case 'air_monitoring':
-    case 'hazardous_waste':
-    case 'eia':
-      return { ...mapCommon(bundle, ctx), ...unusedBoxes(UNUSED_CHECKBOXES[bundle.report.reportType] ?? 0) };
-    default:
-      throw new Error(`No mapper for report type ${bundle.report.reportType}`);
+  if (bundle.kind === 'survey') {
+    if (!mapSurveyBundle) throw new Error('No mapper for survey reports');
+    return mapSurveyBundle(bundle, ctx);
   }
+  const mapExport = reportDataModules[bundle.report.reportType as ReportDataKey]?.mapExport;
+  if (!mapExport) throw new Error(`No mapper for report type ${bundle.report.reportType}`);
+  return mapExport(bundle, ctx);
 }

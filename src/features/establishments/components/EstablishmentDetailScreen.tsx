@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
-import { View, Text, ActivityIndicator, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native';
+import { showPrompt } from '../../../services/prompt/promptService';
 import Animated from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
@@ -80,11 +81,6 @@ export const EstablishmentDetailScreen: React.FC<EstablishmentDetailScreenProps>
     });
   }, [refetch, refetchReports]);
 
-  const handleUpdatePermits = useCallback(() => {
-    // TODO: navigate to permits edit flow
-    console.log('[EstablishmentDetail] Update permits:', estabId);
-  }, [estabId]);
-
   const handleOpenReport = useGuardedPress((item: EstablishmentReportItem) => {
     if (item.kind === 'inspection') {
       router.push({ pathname: '/inspection/[id]', params: { id: item.reportId } });
@@ -100,28 +96,25 @@ export const EstablishmentDetailScreen: React.FC<EstablishmentDetailScreenProps>
   // there), so reaching this with a disallowed item shouldn't happen, but
   // the guard keeps it safe if a future caller wires the callback
   // differently.
-  const handleDeleteReport = useCallback((item: EstablishmentReportItem) => {
+  const handleDeleteReport = useCallback(async (item: EstablishmentReportItem) => {
     if (item.kind !== 'inspection' || !(item.inspectorUid === currentUid || isDeveloper)) return;
-    Alert.alert(
-      'Delete report?',
-      `This ${INSPECTION_TYPE_LABELS[item.reportType] ?? item.reportType} report will be removed.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteInspectionReportRecord(item.reportId);
-              refetchReports();
-            } catch (err) {
-              console.error('[EstablishmentDetail] Failed to delete report:', err);
-              Alert.alert('Delete failed', err instanceof Error ? err.message : 'Something went wrong.');
-            }
-          },
-        },
+    const choice = await showPrompt({
+      title: 'Delete report?',
+      message: `This ${INSPECTION_TYPE_LABELS[item.reportType] ?? item.reportType} report will be removed.`,
+      tone: 'danger',
+      actions: [
+        { id: 'cancel', label: 'Cancel', variant: 'cancel' },
+        { id: 'delete', label: 'Delete', variant: 'danger' },
       ],
-    );
+    });
+    if (choice !== 'delete') return;
+try {
+          await deleteInspectionReportRecord(item.reportId);
+          refetchReports();
+        } catch (err) {
+          console.error('[EstablishmentDetail] Failed to delete report:', err);
+          void showPrompt({ title: 'Delete failed', message: err instanceof Error ? err.message : 'Something went wrong.', tone: 'danger' });
+        }
   }, [currentUid, isDeveloper, refetchReports]);
 
   if (loading) {
@@ -180,7 +173,6 @@ export const EstablishmentDetailScreen: React.FC<EstablishmentDetailScreenProps>
           establishment={establishment}
           canEdit={canManageEstablishment}
           onSaved={refetch}
-          onUpdatePermits={canManageEstablishment ? handleUpdatePermits : undefined}
         />
 
         <EstablishmentReportsSection

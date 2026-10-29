@@ -10,6 +10,7 @@ import {
 } from '../../services/sync/syncMappers';
 
 import { PushChangesPayload } from '../../services/sync/syncTypes';
+import { regionParentDependencies } from '../../region/db';
 
 export interface LocalPendingRecords {
   created: LocalSyncRecord[];
@@ -80,7 +81,7 @@ export async function collectPushChanges(
 
 type EntityChanges = { created: Record<string, unknown>[]; updated: Record<string, unknown>[]; deleted: string[] };
 
-interface ParentDependency {
+export interface ParentDependency {
   childEntity: SyncEntityName;
   parentEntity: SyncEntityName;
   // Backend field name on the child DTO holding the parent's id, e.g.
@@ -104,15 +105,12 @@ interface ParentDependency {
 // against an already-correct parent). If no local record exists at all for
 // the id, this can't help — that's a genuinely orphaned local reference, a
 // different problem this can't repair.
-const PARENT_DEPENDENCIES: ParentDependency[] = [
+export const PARENT_DEPENDENCIES: ParentDependency[] = [
   { childEntity: 'purpose_of_inspection', parentEntity: 'establishments', foreignKeyField: 'estab_id' },
   { childEntity: 'inspection_reports', parentEntity: 'establishments', foreignKeyField: 'estab_id' },
   { childEntity: 'inspection_reports', parentEntity: 'purpose_of_inspection', foreignKeyField: 'purpose_id' },
   { childEntity: 'survey_reports', parentEntity: 'establishments', foreignKeyField: 'estab_id' },
-  { childEntity: 'compliance_air', parentEntity: 'inspection_reports', foreignKeyField: 'report_id' },
-  { childEntity: 'compliance_water', parentEntity: 'inspection_reports', foreignKeyField: 'report_id' },
-  { childEntity: 'compliance_hazwaste', parentEntity: 'inspection_reports', foreignKeyField: 'report_id' },
-  { childEntity: 'compliance_eia', parentEntity: 'inspection_reports', foreignKeyField: 'report_id' },
+  ...regionParentDependencies,
   { childEntity: 'attachments', parentEntity: 'inspection_reports', foreignKeyField: 'inspection_report_id' },
   { childEntity: 'attachments', parentEntity: 'survey_reports', foreignKeyField: 'survey_report_id' },
 ];

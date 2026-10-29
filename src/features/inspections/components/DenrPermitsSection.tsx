@@ -2,24 +2,13 @@ import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../constants/colors';
-import { database, collections } from '../../../db/database';
-import { FormSection, TextField, DateField, focusInput } from '../../../components/form';
+import { ENVIRONMENTAL_LAWS, getPermitTypeOptions } from '../../../constants/denrPermits';
+import { FormSection, TextField, SelectField, DateField, focusInput } from '../../../components/form';
 import { AppText } from '../../../components/AppText';
 import { AddRowButton } from '../../../components/AddRowButton';
 import { SectionEditActions } from './SectionEditActions';
 import { useEditableSection } from '../hooks/useEditableSection';
 import type { PermitSnapshotItem } from '../../../services/sync/syncTypes';
-
-async function patchPermitsSnapshot(reportId: string, permits: PermitSnapshotItem[]) {
-  await database.write(async () => {
-    const rec = await collections.inspectionReports.find(reportId);
-    await rec.update(r => {
-      r.permitsSnapshot = permits;
-      r.updatedAt = new Date().toISOString();
-      r.syncState = 'pending_update';
-    });
-  });
-}
 
 const emptyPermit = (): PermitSnapshotItem => ({
   envi_law: '',
@@ -70,8 +59,6 @@ const EditablePermitCard = React.memo(function EditablePermitCard({
   onChange,
   onRemove,
 }: EditablePermitCardProps) {
-  const enviLawRef = useRef<TextInput>(null);
-  const permitTypeRef = useRef<TextInput>(null);
   const serialRef = useRef<TextInput>(null);
   const issuedRef = useRef<TextInput>(null);
   const expiryRef = useRef<TextInput>(null);
@@ -85,27 +72,25 @@ const EditablePermitCard = React.memo(function EditablePermitCard({
         </TouchableOpacity>
       </View>
       <View style={styles.row}>
-        <TextField
-          ref={enviLawRef}
+        <SelectField
           label="Environmental Law"
           value={permit.envi_law}
-          onChangeText={envi_law => onChange({ ...permit, envi_law })}
-          placeholder="e.g. RA 8749"
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => focusInput(permitTypeRef.current)}
+          options={[...ENVIRONMENTAL_LAWS]}
+          // Changing the law clears the permit type: the old value belongs
+          // to the old law's list and would otherwise linger unselectable.
+          onSelect={envi_law =>
+            onChange(envi_law === permit.envi_law ? permit : { ...permit, envi_law, permit_type: '' })
+          }
         />
-        <TextField
-          ref={permitTypeRef}
+        <SelectField
           label="Permit Type"
           value={permit.permit_type}
-          onChangeText={permit_type => onChange({ ...permit, permit_type })}
-          placeholder="e.g. Permit to Operate"
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => focusInput(serialRef.current)}
+          options={getPermitTypeOptions(permit.envi_law)}
+          onSelect={permit_type => onChange({ ...permit, permit_type })}
+          placeholder={permit.envi_law ? 'Select…' : 'Select law first'}
+          disabled={!permit.envi_law}
         />
-      </View>
+</View>
       <View style={styles.row}>
         <TextField
           ref={serialRef}
@@ -142,21 +127,26 @@ const EditablePermitCard = React.memo(function EditablePermitCard({
 });
 
 interface DenrPermitsSectionProps {
-  reportId: string;
   permits: PermitSnapshotItem[];
   canEdit: boolean;
+  // How this caller persists the edited list. The report screens write the
+  // report's own permits snapshot; the establishment screen writes the
+  // establishment's denrPermits. The section itself stays ignorant of both,
+  // which is what lets one component serve both.
+  onSave: (next: PermitSnapshotItem[]) => Promise<void>;
   onSaved: () => void;
 }
 
-// The "3. Compliance Status" tab's content for water reports (and General
-// Information's own permits section for every other report type) — see
-// waterReportTabs.ts for why water reports show this under its own tab
-// instead of inside General Information.
-export const DenrPermitsSection: React.FC<DenrPermitsSectionProps> = ({ reportId, permits, canEdit, onSaved }) => {
+// The permits list, editable in place, shared by the report screens and the
+// establishment detail screen. For water reports it is the "3. Compliance
+// Status" tab's content; for every other report type it sits inside General
+// Information (see waterReportTabs.ts); on an establishment it is the last
+// section of EstablishmentInfoSections.
+export const DenrPermitsSection: React.FC<DenrPermitsSectionProps> = ({ permits, canEdit, onSave, onSaved }) => {
   const permitsSection = useEditableSection<PermitSnapshotItem[]>({
     value: permits,
     onSave: async next => {
-      await patchPermitsSnapshot(reportId, next);
+      await onSave(next);
       onSaved();
     },
   });

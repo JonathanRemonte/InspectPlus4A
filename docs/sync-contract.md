@@ -68,6 +68,31 @@ The current synced entities are:
 
 ---
 
+## Server Registry
+
+The server does not hardcode the entity list inside `push_changes` / `pull_changes`. Each synced entity is a row in `public.sync_tables`:
+
+| Column | Meaning |
+| --- | --- |
+| `table_name` | entity name, as it appears under `changes` |
+| `sync_order` | processing order (ascending) for both push and pull |
+| `push_handler` | `regproc` of `push_<table>` |
+| `pull_handler` | `regproc` of `pull_<table>` |
+| `owner` | `'core'` or `'region'` |
+
+Handler signatures:
+
+```sql
+push_<table>(p_changes jsonb) returns text[]       -- ids of conflicting rows
+pull_<table>(last_pulled_at bigint) returns jsonb  -- {created, updated, deleted}
+```
+
+`push_changes` and `pull_changes` iterate the registry by `sync_order` and assemble the same payload and response shapes described below; the registry changes nothing for clients. `pull_changes` is declared `STABLE`, so every table is read from one snapshot.
+
+Core entities use `sync_order` 10 (`establishments`), 20 (`purpose_of_inspection`), 30 (`inspection_reports`), 40 (`survey_reports`) and 900 (`attachments`). The band 100-899 is reserved for region tables (EMB4B: `compliance_air` 100, `compliance_water` 110, `compliance_hazwaste` 120, `compliance_eia` 130). Handlers are granted to `authenticated` only and are also callable directly through PostgREST `/rpc` under the same RLS. See [`upstream-merge.md`](upstream-merge.md) for how regions add tables.
+
+---
+
 ## Pull Changes Contract
 
 ## Function
@@ -447,9 +472,36 @@ report-creation time. Deliberately excludes `product`, `year_established`,
 
 ### Important fields
 - `emission_sources`
-- `checklist_dao_2004_26`
-- `checklist_dao_2000_81`
-- `checklist_emb_mc`
+- `checklist_dao_2004_26` — jsonb array, the printed Air Monitoring form's
+  "DAO 2004-26" checklist group (Table 7). Each item is `{ key, legal_ref,
+  requirement, compliant, remarks }`; `key` identifies the question and is
+  what the client matches on when reading — written by the same helper
+  (`airChecklistsForSave` in `src/features/inspections/air/airTypes.ts`) as
+  `checklist_dao_2000_81` and `checklist_emb_mc` below. One item, keyed
+  `dao2004-26-r19-s12-quarterly-smr`, additionally carries `quarters` — an
+  array of `'Q1' | 'Q2' | 'Q3' | 'Q4'` recording which quarterly
+  self-monitoring reports were submitted, the four tick boxes the printed
+  form asks beside that question. `quarters` is kept whatever the
+  `compliant` answer is: ticks alongside an `N` is a coherent record — it
+  says which quarters arrived and that the obligation was still not met —
+  deliberately unlike `compliance_water`'s rule (below) of dropping text
+  stranded by an untick. A reader reconstructing entries field-by-field must
+  carry `quarters` through itself, or it is silently dropped.
+- `checklist_dao_2000_81` — jsonb array, the printed form's "DAO 2000-81"
+  checklist group. Same keyed entry shape as `checklist_dao_2004_26` above,
+  written by the same helper.
+- `checklist_emb_mc` — jsonb array, the printed form's "EMB Memorandum
+  Circulars" checklist group. Same keyed entry shape, same helper.
+- `checklist_appendix_f` — jsonb array, the printed form's "Appendix F
+  (Quality Assurance Procedures)" group: the CEMS quality-assurance
+  questions citing 40 CFR 60 Appendix F. Same keyed entry shape —
+  `{ key, legal_ref, requirement, compliant, remarks }`, matched on `key`
+  when read. Additive — `NULL` on rows written before the column existed,
+  which the client reads as `[]`.
+- `checklist_consent_agreement` — jsonb array, the printed form's "For
+  Facilities Engaged with Consent Agreement" group (two questions citing
+  DAO 2000-81 Part 7 Rule 25 Section 9). Same keyed entry shape as
+  `checklist_appendix_f`, same additive note.
 - `pto_conditions`
 - `other_observations`
 - `remarks_recommendations`

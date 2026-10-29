@@ -6,6 +6,8 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { ActivityIndicator, View } from 'react-native';
 import { AuthProvider, useAuthContext } from '../core/providers/AuthProvider';
 import { DatabaseProvider } from '../core/providers/DatabaseProvider';
+import { PromptProvider } from '../core/providers/PromptProvider';
+import { initMapCache } from '../features/location/mapConfig';
 import { Colors } from '../constants/colors';
 
 // ── Root navigator — drives routing based on live auth session ────────────────
@@ -53,16 +55,28 @@ function RootNavigator() {
 //   AuthProvider            — manages session state
 //   DatabaseProvider        — mounts WatermelonDB (needs to be inside auth
 //                             so it can eventually be seeded per-user)
+//   PromptProvider          — the app's single confirm/notice surface, so
+//                             showPrompt() works from anywhere, including
+//                             plain modules
 //   RootNavigator           — consumes auth state to drive routing
 // ─────────────────────────────────────────────────────────────────────────────
 export default function RootLayout() {
+  // Raises MapLibre's ambient tile cache once per app launch — see
+  // features/location/mapConfig.ts. Fire-and-forget; nothing renders
+  // differently while it runs.
+  useEffect(() => {
+    void initMapCache();
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
         <SafeAreaProvider>
           <AuthProvider>
             <DatabaseProvider>
-              <RootNavigator />
+              <PromptProvider>
+                <RootNavigator />
+              </PromptProvider>
             </DatabaseProvider>
           </AuthProvider>
         </SafeAreaProvider>

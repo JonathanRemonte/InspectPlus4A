@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Alert } from 'react-native';
+import {  } from 'react-native';
+import { showPrompt } from '../../../services/prompt/promptService';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useAuthContext } from '../../../core/providers/AuthProvider';
@@ -70,18 +71,19 @@ export type StampStage = 'locating' | 'geocoding' | 'stamping' | 'saving' | null
 // This is the single control for the whole geotag pipeline (metadata capture
 // + visual stamp together): declining means no location is even attempted,
 // not just "no visible stamp".
-function confirmEmbedGeotag(): Promise<boolean> {
-  return new Promise(resolve => {
-    Alert.alert(
-      'Embed geotag on this photo?',
+async function confirmEmbedGeotag(): Promise<boolean> {
+  // Dismissing (backdrop, close, hardware back) resolves null, which means
+  // no stamp - the same answer the cancellable Alert gave.
+  const choice = await showPrompt({
+    title: 'Embed geotag on this photo?',
+    message:
       'Adds the date, time, coordinates, and the DENR seal directly onto the photo. The place name is only included when it can be resolved online at the moment you take the photo.',
-      [
-        { text: "Don't Embed", style: 'cancel', onPress: () => resolve(false) },
-        { text: 'Embed Geotag', onPress: () => resolve(true) },
-      ],
-      { cancelable: true, onDismiss: () => resolve(false) }
-    );
+    actions: [
+      { id: 'no', label: "Don't Embed", variant: 'cancel' },
+      { id: 'yes', label: 'Embed Geotag', variant: 'default' },
+    ],
   });
+  return choice === 'yes';
 }
 
 // Follows the same fetch-once + tick-refetch shape as useInspectionReport.ts

@@ -76,7 +76,7 @@ export const ExportReportsTab = forwardRef<ExportReportsTabHandle, ExportReports
   // The initial value here is never actually shown — sheetOpen starts
   // false, and openSheet always overwrites it (resolved for the right
   // report type) before the sheet opens.
-  const [signatories, setSignatories] = useState<Signatories>(() => emptySignatories(fullName, 'inspection', 'water_monitoring'));
+  const [signatories, setSignatories] = useState<Signatories>(() => emptySignatories(fullName, 'inspection', ''));
   // Set once, in openSheet — NOT re-derived from whatever items a later
   // retry passes runExport, which may be a filtered subset of a mixed
   // selection (e.g. only the Air report out of a Water+Air run, once the

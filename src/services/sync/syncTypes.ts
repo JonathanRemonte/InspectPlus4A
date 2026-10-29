@@ -1,3 +1,5 @@
+import type { RegionDtoMap } from '../../region/db';
+
 export type SyncStatus =
   | 'pending'
   | 'pending_create'
@@ -16,32 +18,22 @@ export interface SyncEntityChanges<TCreated = unknown, TUpdated = TCreated> {
   deleted: string[];
 }
 
+interface FoundationDtoMap {
+  establishments: EstablishmentDTO;
+  purpose_of_inspection: PurposeOfInspectionDTO;
+  inspection_reports: InspectionReportDTO;
+  survey_reports: SurveyReportDTO;
+  attachments: AttachmentDTO;
+}
+
+type SyncDtoMap = FoundationDtoMap & RegionDtoMap;
+
 export interface PullChangesResponse {
-  changes: {
-    establishments: SyncEntityChanges<EstablishmentDTO>;
-    purpose_of_inspection: SyncEntityChanges<PurposeOfInspectionDTO>;
-    inspection_reports: SyncEntityChanges<InspectionReportDTO>;
-    survey_reports: SyncEntityChanges<SurveyReportDTO>;
-    compliance_air: SyncEntityChanges<ComplianceAirDTO>;
-    compliance_water: SyncEntityChanges<ComplianceWaterDTO>;
-    compliance_hazwaste: SyncEntityChanges<ComplianceHazwasteDTO>;
-    compliance_eia: SyncEntityChanges<ComplianceEiaDTO>;
-    attachments: SyncEntityChanges<AttachmentDTO>;
-  };
+  changes: { [K in keyof SyncDtoMap]: SyncEntityChanges<SyncDtoMap[K]> };
   timestamp: number;
 }
 
-export interface PushChangesPayload {
-  establishments?: SyncEntityChanges<EstablishmentDTO>;
-  purpose_of_inspection?: SyncEntityChanges<PurposeOfInspectionDTO>;
-  inspection_reports?: SyncEntityChanges<InspectionReportDTO>;
-  survey_reports?: SyncEntityChanges<SurveyReportDTO>;
-  compliance_air?: SyncEntityChanges<ComplianceAirDTO>;
-  compliance_water?: SyncEntityChanges<ComplianceWaterDTO>;
-  compliance_hazwaste?: SyncEntityChanges<ComplianceHazwasteDTO>;
-  compliance_eia?: SyncEntityChanges<ComplianceEiaDTO>;
-  attachments?: SyncEntityChanges<AttachmentDTO>;
-}
+export type PushChangesPayload = { [K in keyof SyncDtoMap]?: SyncEntityChanges<SyncDtoMap[K]> };
 
 export interface PushChangesResponse {
   status: 'ok';
@@ -245,77 +237,6 @@ export interface SurveyReportDTO {
   device_id?: string | null;
   // Mobile-only for now — no matching Supabase column yet.
   report_status?: 'draft' | 'submitted';
-}
-
-export interface ComplianceAirDTO {
-  compliance_id: string;
-  report_id: string;
-  emission_sources?: JsonArray;
-  checklist_dao_2004_26?: JsonArray;
-  checklist_dao_2000_81?: JsonArray;
-  checklist_emb_mc?: JsonArray;
-  pto_conditions?: JsonArray;
-  other_observations?: string | null;
-  remarks_recommendations?: string | null;
-  documents_reviewed?: JsonArray;
-}
-
-export interface ComplianceWaterDTO {
-  compliance_id: string;
-  report_id: string;
-  water_sources?: JsonArray;
-  wastewater_sources?: JsonArray;
-  abstracted_water_quality?: JsonArray;
-  has_wwtp?: boolean;
-  wwtp_type?: string | null;
-  wwtp_details?: JsonArray;
-  wwtp_components?: JsonArray;
-  wwtp_condition?: string | null;
-  wwtp_condition_other?: string | null;
-  wwtp_under_construction?: boolean;
-  wwtp_construction_reported?: boolean | null;
-  wwtp_construction_units?: string | null;
-  wwtp_construction_completion_date?: ISODateString | null;
-  wwtp_treatment_units_utilized?: string | null;
-  sampling_conducted?: boolean | null;
-  sampling_classification?: string | null;
-  sampling_points?: JsonArray;
-  previous_inspection_summary?: JsonObject;
-  checklist_dao_2005_10?: JsonArray;
-  dp_conditions?: JsonArray;
-  other_observations?: string | null;
-  remarks_recommendations?: string | null;
-  documents_reviewed?: JsonArray;
-}
-
-export interface ComplianceHazwasteDTO {
-  compliance_id: string;
-  report_id: string;
-  hazwaste_generator_id?: string | null;
-  hazwaste_id_date_issued?: ISODateString | null;
-  waste_types_generated?: JsonArray;
-  checklist_registration?: JsonArray;
-  checklist_storage?: JsonArray;
-  checklist_packaging?: JsonArray;
-  checklist_labeling?: JsonArray;
-  checklist_transport?: JsonArray;
-  checklist_emergency?: JsonArray;
-  checklist_personnel_training?: JsonArray;
-  checklist_manifest_system?: JsonArray;
-  hwid_conditions?: JsonArray;
-  other_observations?: string | null;
-  remarks_recommendations?: string | null;
-  documents_reviewed?: JsonArray;
-}
-
-export interface ComplianceEiaDTO {
-  compliance_id: string;
-  report_id: string;
-  checklist_dao_2003_30?: JsonArray;
-  ecc_emp_conditions?: JsonArray;
-  other_observations?: string | null;
-  remarks_recommendations?: string | null;
-  documents_reviewed?: JsonArray;
 }
 
 export interface AttachmentDTO {

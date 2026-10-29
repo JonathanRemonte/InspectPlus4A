@@ -109,3 +109,12 @@ window_dump.xml
 
 # Subagent-driven-development scratch (ledgers, briefs, review packages)
 .superpowers/
+
+# graphify knowledge graph - regenerated locally by the post-commit/post-checkout
+# hooks (graphify-out/.graphify_root, cache/, graph.json, graph.html); keeping it
+# out of git avoids multi-MB diffs on every commit
+graphify-out/
+
+# Claude Code personal settings (the shared file is .claude/settings.json;
+# this one holds machine-specific paths and stays local)
+.claude/settings.local.json

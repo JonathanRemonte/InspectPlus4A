@@ -103,3 +103,36 @@ describe('resolveEstablishmentContentEdit', () => {
     expect(result).toEqual({ syncState: 'synced', isDirty: false });
   });
 });
+
+// denrPermits is the first array field edited through this path (the
+// establishment's permits section). Dirtiness must follow the array's
+// contents, not its identity: a fresh array holding the same permits is
+// not an edit, and a changed permit is - even though every such edit
+// arrives as a brand-new array from the editor's draft state.
+describe('resolveEstablishmentContentEdit with the permits array', () => {
+  const permit = (serial: string) => ({
+    envi_law: 'RA 9275',
+    permit_type: 'Discharge Permit',
+    permit_serial: serial,
+    issued_date: '2026-01-01',
+    expiry_date: '2027-01-01',
+  });
+
+  it('treats a new array holding identical permits as no edit at all', () => {
+    const record = { ...syncedRecord(), denrPermits: [permit('DP-1')] };
+    const result = resolveEstablishmentContentEdit(record, { denrPermits: [permit('DP-1')] });
+    expect(result.isDirty).toBe(false);
+  });
+
+  it('marks the record dirty when a permit field changes', () => {
+    const record = { ...syncedRecord(), denrPermits: [permit('DP-1')] };
+    const result = resolveEstablishmentContentEdit(record, { denrPermits: [permit('DP-2')] });
+    expect(result).toEqual({ syncState: 'pending_update', isDirty: true });
+  });
+
+  it('marks the record dirty when a permit is added or removed', () => {
+    const record = { ...syncedRecord(), denrPermits: [permit('DP-1')] };
+    expect(resolveEstablishmentContentEdit(record, { denrPermits: [permit('DP-1'), permit('DP-2')] }).isDirty).toBe(true);
+    expect(resolveEstablishmentContentEdit(record, { denrPermits: [] }).isDirty).toBe(true);
+  });
+});

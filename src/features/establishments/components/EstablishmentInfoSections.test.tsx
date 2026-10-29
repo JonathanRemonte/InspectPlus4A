@@ -2,7 +2,8 @@ import React from 'react';
 import { Text, TextInput, TouchableOpacity } from 'react-native';
 import TestRenderer from 'react-test-renderer';
 import { EstablishmentInfoSections } from './EstablishmentInfoSections';
-import { FormSection } from '../../../components/form';
+import { FormSection, SelectField } from '../../../components/form';
+import { LocationPickerModal } from '../../location/components/LocationPickerModal';
 import { patchEstablishmentRecord } from '../../inspections/establishmentPersistence';
 import type { EstablishmentDTO } from '../types';
 
@@ -27,28 +28,6 @@ const render = (element: React.ReactElement) => {
   let r!: Renderer;
   TestRenderer.act(() => { r = TestRenderer.create(element); });
   return r;
-};
-
-const flattenStyle = (style: unknown): Record<string, unknown> =>
-  Object.assign({}, ...([style].flat(Infinity).filter(Boolean) as Record<string, unknown>[]));
-
-// react-native's own TouchableOpacity module is a thin wrapper that spreads
-// every prop it receives onto an inner, unexported class component of the
-// same displayName, so a props-only predicate double-matches: once on the
-// outer wrapper fiber, once on the inner one. Anchoring on
-// `n.type === TouchableOpacity` narrows a find to the outer fiber only —
-// same convention as EstablishmentReportsSection.test.tsx / EstablishmentCard.test.tsx.
-const findButtonByLabel = (r: Renderer, label: string) => {
-  const matches = r.root.findAll(
-    (n) => n.type === TouchableOpacity && n.props?.accessibilityLabel === label,
-  );
-  if (matches.length === 0) {
-    throw new Error(`No button found with accessibilityLabel === "${label}"`);
-  }
-  if (matches.length > 1) {
-    throw new Error(`Expected 1 "${label}" button but found ${matches.length}; the locator is not sufficiently specific`);
-  }
-  return matches[0];
 };
 
 // Every editable section renders its own "Edit"/"Save"/"Cancel" via
@@ -122,57 +101,15 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-// The DENR Permits section header used to read "Update Permits", which
-// doubled the word "Permits" against the section title right above it
-// ("DENR Permits, Licenses & Clearances") and made the control noticeably
-// wider than the matching "Edit" on the Establishment Details section. It
-// now reads "Edit" like every other section-header action, at `sm` `outline`
-// per the button hierarchy this task establishes. canEdit is false in these
-// three so the other four sections' own "Edit" controls don't also render,
-// keeping the DENR section's the only one in the tree.
-describe('EstablishmentInfoSections DENR permits action', () => {
-  it('reads "Edit", not "Update Permits", and renders at sm/outline', () => {
-    const r = render(
-      <EstablishmentInfoSections establishment={baseEstablishment} canEdit={false} onSaved={noop} onUpdatePermits={noop} />,
-    );
-    expect(
-      r.root.findAll((n) => n.type === TouchableOpacity && n.props?.accessibilityLabel === 'Update Permits'),
-    ).toHaveLength(0);
-    const button = findButtonByLabel(r, 'Edit');
-    expect(flattenStyle(button.props.style).minHeight).toBe(32); // sm
-  });
-
-  it('calls onUpdatePermits when the Edit action is pressed', () => {
-    const onUpdatePermits = jest.fn();
-    const r = render(
-      <EstablishmentInfoSections establishment={baseEstablishment} canEdit={false} onSaved={noop} onUpdatePermits={onUpdatePermits} />,
-    );
-    TestRenderer.act(() => {
-      findButtonByLabel(r, 'Edit').props.onPress();
-    });
-    expect(onUpdatePermits).toHaveBeenCalledTimes(1);
-  });
-
-  it('omits the action entirely when onUpdatePermits is not provided', () => {
-    const r = render(<EstablishmentInfoSections establishment={baseEstablishment} canEdit={false} onSaved={noop} />);
-    expect(
-      r.root.findAll((n) => n.type === TouchableOpacity && n.props?.accessibilityLabel === 'Edit'),
-    ).toHaveLength(0);
-  });
-});
-
-// canEdit now gates the other four sections independently of onUpdatePermits
-// (which only ever gates the DENR Permits stub) — this is the affordance the
-// establishment editing convergence adds. See docs/superpowers/specs/
-// 2026-09-05-establishment-editing-convergence-decision.md.
 describe('EstablishmentInfoSections canEdit gating', () => {
   it('renders an Edit control on every content section when canEdit is true', () => {
     const r = render(<EstablishmentInfoSections establishment={baseEstablishment} canEdit onSaved={noop} />);
-    // Details, Key Personnel, Pollution Control Officer, Product Lines —
-    // DENR Permits is excluded here since onUpdatePermits is omitted.
+    // Details, Key Personnel, Pollution Control Officer, Product Lines and
+    // DENR Permits - permits became the fifth editable section when it
+    // stopped being read-only behind a stub.
     expect(
       r.root.findAll((n) => n.type === TouchableOpacity && n.props?.accessibilityLabel === 'Edit'),
-    ).toHaveLength(4);
+    ).toHaveLength(5);
   });
 
   it('renders no Edit control on any content section when canEdit is false', () => {
@@ -257,5 +194,153 @@ describe('EstablishmentInfoSections Establishment Details validation', () => {
     expect(callArgs.fields).not.toHaveProperty('pcoName');
     expect(callArgs.fields).not.toHaveProperty('productLines');
     expect(onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the coordinates read-only with no Pin on map button until editing starts', () => {
+    const r = render(
+      <EstablishmentInfoSections establishment={{ ...baseEstablishment, geoLat: 11.144, geoLng: 119.395 }} canEdit onSaved={jest.fn()} />,
+    );
+    const section = findSection(r, DETAILS_TITLE);
+    const values = section.findAll((n) => n.type === Text).map((n) => n.props.children);
+    expect(values).toEqual(expect.arrayContaining(['11.144', '119.395']));
+    expect(section.findAll((n) => n.type === TouchableOpacity && n.props?.accessibilityLabel === 'Pin on map')).toHaveLength(0);
+  });
+
+  it('patches edited coordinates as numbers, and empty ones as null', async () => {
+    const onSaved = jest.fn();
+    const r = render(<EstablishmentInfoSections establishment={baseEstablishment} canEdit onSaved={onSaved} />);
+    let section = startEditingDetails(r);
+    expect(section.findAll((n) => n.type === TouchableOpacity && n.props?.accessibilityLabel === 'Pin on map')).toHaveLength(1);
+
+    const latInput = section.findAll((n) => n.type === TextInput && n.props.placeholder === 'e.g. 11.144')[0];
+    TestRenderer.act(() => {
+      latInput.props.onChangeText('11.144988');
+    });
+    section = findSection(r, DETAILS_TITLE);
+    await TestRenderer.act(async () => {
+      findButtonByLabelWithin(section, 'Save').props.onPress();
+    });
+
+    expect(patchEstablishmentRecord).toHaveBeenCalledWith({
+      estabId: 'estab-1',
+      fields: expect.objectContaining({ geoLat: 11.144988, geoLng: null }),
+    });
+    expect(onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it('fills Province, City and Barangay from a confirmed pin and leaves the address line alone', async () => {
+    const onSaved = jest.fn();
+    const r = render(
+      <EstablishmentInfoSections
+        establishment={{ ...baseEstablishment, addressLine: '2713 Zamora St.', province: 'Romblon', city: 'Odiongan', barangay: 'Dapawan' }}
+        canEdit
+        onSaved={onSaved}
+      />,
+    );
+    let section = startEditingDetails(r);
+    await TestRenderer.act(async () => {
+      section.findByType(LocationPickerModal).props.onConfirm({
+        lat: 9.45777,
+        lng: 118.47504,
+        address: { province: 'Palawan', city: 'Aborlan', barangay: 'Cabigaan' },
+      });
+    });
+    section = findSection(r, DETAILS_TITLE);
+    const selectValues = Object.fromEntries(section.findAllByType(SelectField).map(n => [n.props.label, n.props.value]));
+    expect(selectValues).toMatchObject({ Province: 'Palawan', 'City / Municipality': 'Aborlan', Barangay: 'Cabigaan' });
+    const addressInput = section.findAll(n => n.type === TextInput && n.props.placeholder === 'Street / building / lot no. (if known)')[0];
+    expect(addressInput.props.value).toBe('2713 Zamora St.');
+
+    await TestRenderer.act(async () => {
+      findButtonByLabelWithin(section, 'Save').props.onPress();
+    });
+    expect(patchEstablishmentRecord).toHaveBeenCalledWith({
+      estabId: 'estab-1',
+      fields: expect.objectContaining({
+        province: 'Palawan',
+        city: 'Aborlan',
+        barangay: 'Cabigaan',
+        geoLat: 9.45777,
+        geoLng: 118.47504,
+        addressLine: '2713 Zamora St.',
+      }),
+    });
+  });
+
+  it('keeps the dropdowns when the confirmed pin has no barangay', async () => {
+    const r = render(
+      <EstablishmentInfoSections establishment={{ ...baseEstablishment, province: 'Romblon', city: 'Odiongan', barangay: 'Dapawan' }} canEdit onSaved={jest.fn()} />,
+    );
+    let section = startEditingDetails(r);
+    await TestRenderer.act(async () => {
+      section.findByType(LocationPickerModal).props.onConfirm({ lat: 12, lng: 120.5, address: null });
+    });
+    section = findSection(r, DETAILS_TITLE);
+    const selectValues = Object.fromEntries(section.findAllByType(SelectField).map(n => [n.props.label, n.props.value]));
+    expect(selectValues).toMatchObject({ Province: 'Romblon', 'City / Municipality': 'Odiongan', Barangay: 'Dapawan' });
+  });
+});
+
+// Permits were the one section the 2026-09-05 convergence left read-only,
+// behind a stubbed Edit. They now edit in place like the other four,
+// writing the establishment's own denrPermits - which feeds reports created
+// afterwards, while reports already filed keep the permits they recorded.
+describe('EstablishmentInfoSections DENR permits editing', () => {
+  const PERMITS_TITLE = 'DENR Permits, Licenses & Clearances';
+
+  const withPermits = {
+    ...baseEstablishment,
+    denrPermits: [
+      {
+        envi_law: 'RA 9275',
+        permit_type: 'Discharge Permit',
+        permit_serial: 'DP-1',
+        issued_date: '2026-01-01',
+        expiry_date: '2027-01-01',
+      },
+    ],
+  };
+
+  it('offers an Edit control on the permits section when the viewer can edit', () => {
+    const r = render(<EstablishmentInfoSections establishment={withPermits} canEdit onSaved={jest.fn()} />);
+    expect(findButtonByLabelWithin(findSection(r, PERMITS_TITLE), 'Edit')).toBeDefined();
+  });
+
+  it('saves the permits onto the establishment, not onto any report', async () => {
+    const onSaved = jest.fn();
+    const r = render(<EstablishmentInfoSections establishment={withPermits} canEdit onSaved={onSaved} />);
+    let section = findSection(r, PERMITS_TITLE);
+    await TestRenderer.act(async () => {
+      findButtonByLabelWithin(section, 'Edit').props.onPress();
+    });
+    section = findSection(r, PERMITS_TITLE);
+    await TestRenderer.act(async () => {
+      findButtonByLabelWithin(section, 'Save').props.onPress();
+    });
+
+    expect(patchEstablishmentRecord).toHaveBeenCalledWith({
+      estabId: 'estab-1',
+      fields: { denrPermits: withPermits.denrPermits },
+    });
+    expect(onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it('adds a blank permit to the draft without saving it', async () => {
+    const r = render(<EstablishmentInfoSections establishment={withPermits} canEdit onSaved={jest.fn()} />);
+    let section = findSection(r, PERMITS_TITLE);
+    await TestRenderer.act(async () => {
+      findButtonByLabelWithin(section, 'Edit').props.onPress();
+    });
+    section = findSection(r, PERMITS_TITLE);
+    await TestRenderer.act(async () => {
+      findButtonByLabelWithin(section, 'Add Permit').props.onPress();
+    });
+    expect(patchEstablishmentRecord).not.toHaveBeenCalled();
+    section = findSection(r, PERMITS_TITLE);
+    await TestRenderer.act(async () => {
+      findButtonByLabelWithin(section, 'Save').props.onPress();
+    });
+    const [call] = (patchEstablishmentRecord as jest.Mock).mock.calls[0];
+    expect(call.fields.denrPermits).toHaveLength(2);
   });
 });

@@ -23,3 +23,22 @@ describe('ManageEstablishmentsTab filter sheet field layout', () => {
     expect(componentSource).toMatch(/style=\{styles\.filterField\}/);
   });
 });
+
+// The 2026-09-05 convergence retired /establishment/edit and moved editing
+// in-place into the detail screen's sections (which tapping a card already
+// reaches). This tab's Edit was never rewired: it called a stub that only
+// logged, so pressing it did nothing. Source-level, matching this file's
+// existing convention, because rendering the tab needs the database, the
+// router and three hooks mocked to assert one absent prop.
+describe('ManageEstablishmentsTab wires no dead Edit action', () => {
+  const source = () => fs.readFileSync(path.join(__dirname, 'ManageEstablishmentsTab.tsx'), 'utf-8');
+
+  it('passes no onEdit to its establishment cards', () => {
+    expect(source()).not.toMatch(/onEdit=/);
+  });
+
+  it('keeps no handler that only logs an unimplemented edit screen', () => {
+    expect(source()).not.toMatch(/TODO: navigate to establishment edit screen/);
+    expect(source()).not.toMatch(/handleEdit/);
+  });
+});

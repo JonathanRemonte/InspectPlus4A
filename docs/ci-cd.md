@@ -24,6 +24,17 @@
   - `development` — dev client, internal distribution
   - `preview` — internal distribution, used for `develop` builds
   - `production` — used for `main` builds, auto-incrementing build number
+- **Native dependencies.** `@maplibre/maplibre-react-native` (map picker,
+  since 2026-09-17) is autolinked at build time — nothing under `android/`
+  is hand-edited for it. Any branch that adds it needs a fresh APK before
+  Metro can load the app: an older APK fails at import with a
+  missing-native-module error.
+- **Barangay boundary bundle.** `src/data/mimaropaBoundaries.json` is
+  generated, not hand-edited: `node scripts/build-barangay-boundaries.js` downloads the PSGC
+  2023 medres files from `faeldon/philippines-json-maps` (MIT) and refuses
+  to write unless every polygon maps to exactly one dropdown barangay in
+  `src/data/mimaropaLocations.ts` and vice versa. Re-run it after changing
+  that dataset or `scripts/barangayNameMatch.js`.
 
 ## One-time manual setup (not automated — do these once)
 

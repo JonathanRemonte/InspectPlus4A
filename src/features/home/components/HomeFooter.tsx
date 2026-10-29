@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../../../constants/colors';
 import { describeAppVersion } from '../../../utils/version';
 import { schema } from '../../../db/schema';
+import { region } from '../../../region';
 
 interface HomeFooterProps {
   // Full credits line is only for non-authenticated pages (e.g. login).
@@ -37,7 +38,7 @@ export const HomeFooter: React.FC<HomeFooterProps> = ({ showCredits = false }) =
       {showCredits && (
         <>
           <Text style={styles.line}>
-            © 2026 EMB - Environmental Management Bureau, Region 4-B
+            {region.identity.copyrightLine}
           </Text>
           <Text style={styles.line}>
             Ideated by PEMU Oriental Mindoro, Abram Alexander Asi

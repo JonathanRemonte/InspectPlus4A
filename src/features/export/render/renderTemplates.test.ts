@@ -5,6 +5,11 @@ import { renderDocx } from './renderDocx';
 import { mapBundle } from '../mappers';
 import { emptyWaterBundle, fullSurveyBundle, fullWaterBundle, signatories } from '../mappers/fixtures';
 import { TICKED } from '../mappers/primitives';
+
+// Hoisted above the imports by babel-plugin-jest-hoist; written after them
+// to satisfy eslint's import/first rule. The region modules reach the DB.
+jest.mock('../../../db/database', () => ({ collections: {}, database: {} }));
+jest.mock('../../../services/supabase/client', () => ({ supabase: {} }));
 // scripts/docx-tag.js is a plain Node script, not part of the app bundle —
 // Jest transpiles it like any other CommonJS module, and templates/index.ts
 // already imports the sibling .docx assets the same require()-based way.

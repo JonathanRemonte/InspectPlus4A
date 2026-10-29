@@ -4,6 +4,8 @@ import type { Attachment } from '../../../db/models/Attachment';
 import { isEstablishmentVisible, isPrivilegedRole, reportSyncStatusWithAttachments } from '../../establishments/hooks/useEstablishment';
 import { buildPurposeFormFromModel, PurposeFormState } from '../types';
 import type { ComplianceView, InspectionReportSummary } from './useInspectionReport';
+import { reportDataModules } from '../../../region/modules';
+import type { ReportDataKey } from '../../../region';
 
 export interface Viewer {
   uid: string;
@@ -80,119 +82,10 @@ export async function loadInspectionReportDetail(
     .fetch();
   const purposeForm = purposeMatches[0] ? buildPurposeFormFromModel(purposeMatches[0]) : null;
 
-  let complianceView: ComplianceView = { kind: 'none' };
-
-  if (reportModel.reportType === 'water_monitoring') {
-    const rows = await collections.complianceWater
-      .query(Q.where('reportId', reportModel.reportId))
-      .fetch();
-    const c = rows[0];
-    if (c) {
-      complianceView = {
-        kind: 'water',
-        complianceId: c.complianceId,
-        waterSources: c.waterSources ?? [],
-        wastewaterSources: c.wastewaterSources ?? [],
-        abstractedWaterQuality: c.abstractedWaterQuality ?? [],
-        hasWwtp: c.hasWwtp,
-        nonWwtpTreatment: c.nonWwtpTreatment ?? {},
-        wwtpType: c.wwtpType,
-        wwtpTypeOther: c.wwtpTypeOther,
-        wwtpDetails: c.wwtpDetails ?? [],
-        wwtpComponents: c.wwtpComponents ?? [],
-        wwtpCondition: c.wwtpCondition,
-        wwtpConditionOther: c.wwtpConditionOther,
-        wwtpUnderConstruction: c.wwtpUnderConstruction,
-        wwtpConstructionReported: c.wwtpConstructionReported,
-        wwtpConstructionUnits: c.wwtpConstructionUnits,
-        wwtpConstructionCompletionDate: c.wwtpConstructionCompletionDate,
-        wwtpTreatmentUnitsUtilized: c.wwtpTreatmentUnitsUtilized,
-        samplingConducted: c.samplingConducted,
-        samplingClassification: c.samplingClassification,
-        samplingPoints: c.samplingPoints ?? [],
-        previousInspectionSummary: {
-          hasRecords:
-            c.previousInspectionSummary?.hasRecords === true
-              ? 'yes'
-              : c.previousInspectionSummary?.hasRecords === false
-                ? 'no'
-                : null,
-          dateOfSampling: c.previousInspectionSummary?.dateOfSampling ?? '',
-          samplingStation: c.previousInspectionSummary?.samplingStation ?? '',
-          samplingTime: c.previousInspectionSummary?.samplingTime ?? '',
-          typeOfSample: c.previousInspectionSummary?.typeOfSample ?? '',
-          parameters: c.previousInspectionSummary?.parameters ?? [],
-        },
-        checklistDao200510: c.checklistDao200510 ?? [],
-        dpConditions: c.dpConditions ?? [],
-        otherObservations: c.otherObservations,
-        remarksRecommendations: c.remarksRecommendations,
-        documentsReviewed: c.documentsReviewed ?? [],
-      };
-    }
-  } else if (reportModel.reportType === 'hazardous_waste') {
-    const rows = await collections.complianceHazwaste
-      .query(Q.where('reportId', reportModel.reportId))
-      .fetch();
-    const c = rows[0];
-    if (c) {
-      complianceView = {
-        kind: 'hazwaste',
-        hazwasteGeneratorId: c.hazwasteGeneratorId,
-        hazwasteIdDateIssued: c.hazwasteIdDateIssued,
-        wasteTypesGenerated: c.wasteTypesGenerated ?? [],
-        checklists: [
-          { title: 'Registration', items: c.checklistRegistration ?? [] },
-          { title: 'Storage', items: c.checklistStorage ?? [] },
-          { title: 'Packaging', items: c.checklistPackaging ?? [] },
-          { title: 'Labeling', items: c.checklistLabeling ?? [] },
-          { title: 'Transport', items: c.checklistTransport ?? [] },
-          { title: 'Emergency Preparedness', items: c.checklistEmergency ?? [] },
-          { title: 'Personnel Training', items: c.checklistPersonnelTraining ?? [] },
-          { title: 'Manifest System', items: c.checklistManifestSystem ?? [] },
-        ],
-        hwidConditions: c.hwidConditions ?? [],
-        otherObservations: c.otherObservations,
-        remarksRecommendations: c.remarksRecommendations,
-        documentsReviewed: c.documentsReviewed ?? [],
-      };
-    }
-  } else if (reportModel.reportType === 'air_monitoring') {
-    const rows = await collections.complianceAir
-      .query(Q.where('reportId', reportModel.reportId))
-      .fetch();
-    const c = rows[0];
-    if (c) {
-      complianceView = {
-        kind: 'air',
-        emissionSources: c.emissionSources ?? [],
-        checklists: [
-          { title: 'DAO 2000-81', items: c.checklistDao200081 ?? [] },
-          { title: 'DAO 2004-26', items: c.checklistDao200426 ?? [] },
-          { title: 'EMB Memorandum Circular', items: c.checklistEmbMc ?? [] },
-        ],
-        ptoConditions: c.ptoConditions ?? [],
-        otherObservations: c.otherObservations,
-        remarksRecommendations: c.remarksRecommendations,
-        documentsReviewed: c.documentsReviewed ?? [],
-      };
-    }
-  } else if (reportModel.reportType === 'eia') {
-    const rows = await collections.complianceEia
-      .query(Q.where('reportId', reportModel.reportId))
-      .fetch();
-    const c = rows[0];
-    if (c) {
-      complianceView = {
-        kind: 'eia',
-        checklistDao200330: c.checklistDao200330 ?? [],
-        eccEmpConditions: c.eccEmpConditions ?? [],
-        otherObservations: c.otherObservations,
-        remarksRecommendations: c.remarksRecommendations,
-        documentsReviewed: c.documentsReviewed ?? [],
-      };
-    }
-  }
+  // The compliance row is type-specific; the region module for this report
+  // type knows its table and shape (src/region/modules).
+  const dataModule = reportDataModules[reportModel.reportType as ReportDataKey];
+  const complianceView: ComplianceView = (await dataModule?.loadCompliance(reportModel.reportId)) ?? { kind: 'none' };
 
   return {
     report: summary,

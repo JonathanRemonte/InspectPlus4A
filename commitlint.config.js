@@ -19,7 +19,8 @@ module.exports = {
         'repo',
         'db',
         'supabase',
-        'router'
+        'router',
+        'region'
       ],
     ],
   },
