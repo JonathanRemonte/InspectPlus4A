@@ -93,7 +93,9 @@ foundation change, that change is made in 4B first and merged downstream.
 ## 4. Test accounts
 
 - Local seeds (`supabase/seeds/dev/`) create `inspector1@emb4a.test`
-  (Inspector, all five CALABARZON provinces) and one developer account.
+  (Inspector, province Laguna with three Laguna municipalities — an account
+  holds one province plus municipalities, so "all five provinces" is not
+  expressible) and `developer@emb4a.test` (Developer, sees every province).
 - The hosted project gets the same two accounts through a SQL script the
   developer runs once in the Supabase SQL editor; passwords are chosen then and
   never committed.
