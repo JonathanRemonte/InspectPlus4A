@@ -1,5 +1,23 @@
 import { schema } from '../../db/schema';
+import { regionSyncEntities } from '../../region/db';
 import { syncSchema, SyncEntityName } from './syncSchema';
+
+// Region-neutral order rule: the foundation's parent tables first, then the
+// region's entities in its own order, attachments last (they can reference a
+// row of any other table). The region's exact entity list is pinned in
+// src/region/__tests__/syncRegistry.test.ts.
+describe('syncSchema entity order', () => {
+  it('puts foundation parents first, region entities next and attachments last', () => {
+    expect(Object.keys(syncSchema)).toEqual([
+      'establishments',
+      'purpose_of_inspection',
+      'inspection_reports',
+      'survey_reports',
+      ...Object.keys(regionSyncEntities),
+      'attachments',
+    ]);
+  });
+});
 
 // syncSchema.fields is the map push/pull actually walks (mapLocalToBackend /
 // mapBackendToLocal in syncMappers.ts, and getPendingRecords /

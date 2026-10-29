@@ -421,27 +421,26 @@ describe('SpeedDial', () => {
   });
 
   // Guards the hoist in problem 3: ENABLED_TYPES must live in exactly one
-  // place (region/catalog.ts, re-exported by constants/reportTypes.ts) so that enabling a report type for one
-  // surface (the dial, AddReportSplitPanel) can't be done without the other
-  // — a stale duplicate would silently disagree with this file's own
-  // ENABLED_TYPE/UNAVAILABLE_TYPES constants above.
+  // place so that enabling a report type for one surface (the dial,
+  // AddReportSplitPanel) can't be done without the other — a stale duplicate
+  // would silently disagree with this file's own ENABLED_TYPE/UNAVAILABLE_TYPES
+  // constants above. The region declares it (src/region/__tests__/catalog.test.ts
+  // pins that); the foundation only re-exports it through constants/reportTypes.ts.
   describe('ENABLED_TYPES has exactly one definition, shared by both surfaces', () => {
     const declarationPattern = /\bconst\s+ENABLED_TYPES\s*[:=]/g;
     const importPattern = (source: string) =>
       /import\s*\{[^}]*\bENABLED_TYPES\b[^}]*\}\s*from\s*['"][^'"]*constants\/reportTypes['"]/.test(source);
 
-    const constantsSource = fs.readFileSync(
-      path.join(__dirname, '../../../region/catalog.ts'),
-      'utf8',
-    );
+    const facadeSource = fs.readFileSync(path.join(__dirname, '../../../constants/reportTypes.ts'), 'utf8');
     const speedDialSource = fs.readFileSync(path.join(__dirname, 'SpeedDial.tsx'), 'utf8');
     const splitPanelSource = fs.readFileSync(
       path.join(__dirname, '../../inspections/components/AddReportSplitPanel.tsx'),
       'utf8',
     );
 
-    it('is declared exactly once, in region/catalog.ts', () => {
-      expect(constantsSource.match(declarationPattern)?.length ?? 0).toBe(1);
+    it('is re-exported from the region by constants/reportTypes.ts, never declared in the foundation', () => {
+      expect(facadeSource.match(declarationPattern)).toBeNull();
+      expect(/export\s*\{[^}]*\bENABLED_TYPES\b[^}]*\}\s*from\s*['"]\.\.\/region['"]/.test(facadeSource)).toBe(true);
       expect(speedDialSource.match(declarationPattern)).toBeNull();
       expect(splitPanelSource.match(declarationPattern)).toBeNull();
     });

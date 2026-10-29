@@ -1,5 +1,5 @@
 import { PARENT_DEPENDENCIES } from '../../db/sync/collectPushChanges';
-import { syncSchema } from './syncSchema';
+import { syncSchema } from '../../services/sync/syncSchema';
 
 // Pins the client-side sync registry across the region split.
 describe('sync registry', () => {

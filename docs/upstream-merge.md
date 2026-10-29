@@ -43,7 +43,7 @@ npx supabase db reset && npx supabase test db
 
 `supabase db reset` needs a running local stack (`npx supabase start`, which needs Docker).
 
-Contract drift shows up at `typecheck`: update 4A's `src/region` to the new contract. `src/db/__tests__/schemaSnapshot.test.ts` and `src/services/sync/syncRegistry.test.ts` pin the assembled schema and sync registry; these are among the foundation tests listed in §7 that currently pin 4B data.
+Contract drift shows up at `typecheck`: update 4A's `src/region` to the new contract. The region's own tests pin its exact schema and sync registry (`src/region/__tests__/schemaSnapshot.test.ts`, `syncRegistry.test.ts`); 4A keeps its own versions of those. The foundation's tests (`src/db/__tests__/schema.test.ts`, `src/services/sync/syncSchema.test.ts`) check only region-neutral rules and must pass unchanged in both repos.
 
 ## 5. WatermelonDB versions
 
@@ -67,6 +67,6 @@ alter table public.inspection_reports
 ## 7. Known Phase 0 limits
 
 - `purpose_of_inspection` and `survey_reports` (tables, models, sync, UI) are still foundation; they become pluggable in Phase 2. Until then 4A keeps the `survey_reports` table empty and leaves `survey` out of its catalog.
-- Several foundation tests still pin 4B region data: `src/constants/reportTypes.test.ts`, `src/constants/reportTypeDisplay.test.ts`, `src/features/export/templates/index.test.ts`, `src/features/export/signatories.test.ts`, `src/db/__tests__/schemaSnapshot.test.ts`, `src/services/sync/syncRegistry.test.ts` and `src/features/home/components/SpeedDial.test.tsx`. They are scheduled to move into `src/region/__tests__` before the Phase 1 fork; until then a 4A merge will see them fail, and the fix is to move them, not to edit them in place.
-- The export render and contract tests (`src/features/export/render/*.test.ts`) and their fixtures (`src/features/export/mappers/fixtures.ts`) exercise 4B's templates with 4B sample data. A region that replaces the templates replaces those fixtures and expected tags in the same change.
+- Tests that pin 4B data live in `src/region/__tests__` and are region-owned: the catalog and display pins (`reportTypes`, `reportTypeDisplay`, `catalog`), the approver and signatory defaults (`templates`, `signatories`), the schema and sync-registry snapshots, and the export template contract and render tests (`templateContract`, `renderTemplates`). 4A replaces them with its own.
+- The shared export fixtures (`src/features/export/mappers/fixtures.ts`) and the tests that use them (`mappers/common.test.ts`, `mappers/index.test.ts`, `exportReports.test.ts`) still carry 4B sample data, because the shared export block they test is itself shaped to 4B's forms (next item). They move or change together with that block.
 - Some foundation pieces are shaped to 4B's printed forms and need to become pluggable for 4A: `src/constants/denrPermits.ts` (omits LLDA clearances) and `src/features/export/mappers/common.ts` (`VERIFY_ITEMS`, `PERMIT_ROWS`/`PERMIT_MATCHERS`, the hwms documents row).

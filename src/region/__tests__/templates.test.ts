@@ -1,4 +1,4 @@
-import { defaultApproversFor, hasTemplate, templateFor } from './index';
+import { defaultApproversFor, hasTemplate, templateFor } from '../../features/export/templates/index';
 
 describe('defaultApproversFor', () => {
   it('resolves Water, Air, EIA and Survey to the same shared approvers', () => {

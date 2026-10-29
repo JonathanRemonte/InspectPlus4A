@@ -7,7 +7,18 @@ import {
   SURVEY_COMPLIANCE_TAG,
 } from '..';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const fs = require('fs');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const path = require('path');
+
 describe('EMB4B report-type catalog', () => {
+  // The single source of ENABLED_TYPES that SpeedDial.test.tsx's guard relies on.
+  it('declares ENABLED_TYPES exactly once, in catalog.ts', () => {
+    const catalogSource: string = fs.readFileSync(path.join(__dirname, '../catalog.ts'), 'utf8');
+    expect(catalogSource.match(/\bconst\s+ENABLED_TYPES\s*[:=]/g)?.length ?? 0).toBe(1);
+  });
+
   it('lists the six create entries in speed-dial order with only water enabled', () => {
     expect(REPORT_TYPES.map(t => t.key)).toEqual(['air', 'water', 'hazwaste_generator', 'hazwaste_tsd', 'eia', 'survey']);
     expect(ENABLED_TYPES).toEqual(['water']);

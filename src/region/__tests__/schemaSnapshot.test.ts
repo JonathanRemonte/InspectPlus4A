@@ -1,4 +1,4 @@
-import { schema } from '../schema';
+import { schema } from '../../db/schema';
 
 // Pins the assembled local schema across the region split: same version,
 // same tables, same columns. Regenerate only for an intended schema change.
