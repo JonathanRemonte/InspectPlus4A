@@ -28,11 +28,13 @@ Foundation code reaches region code only through three entry points:
 | `src/region/db` | leaf | tables, models, migrations, sync entities/DTOs/parent dependencies, `regionCollectionsFor` |
 | `src/region/modules` | heavy | `reportDataModules` (`loadCompliance`, `ComplianceView`, `detailTabs`, `renderDetailTab`, `permitsInDetailTabs`, `mapExport`), `reportForms`, `mapSurveyBundle` |
 
-The shape each entry point must have is `src/core/region/contract.ts`. `src/core/region/assertRegion.ts` checks the region against it at compile time, so contract drift makes `tsc` fail. `src/core/region/` is foundation and may be imported anywhere.
+The shape each entry point must have is `src/core/region/contract.ts`. `src/core/region/assertRegion.ts` checks the region against it at compile time, so contract drift makes `tsc` fail. `src/core/region/` is foundation, but `lookup.ts` there is heavy (it imports `src/region/modules`, so it pulls in forms, screens and the DB) despite its location; the rest of `src/core/region/` is light.
 
 The ESLint boundary rule forbids importing anything under `**/region/**` except `region/db`, `region/modules` and `core/region/**`. It checks only `import` and `export ... from`; `require()` and `jest.mock()` paths are not checked, so keep those honest by hand.
 
-`src/region/modules` is heavy (it pulls in forms and screens), so only these foundation hosts import it: `src/app/(app)/inspection/new.tsx`, `AddReportSplitPanel`, `InspectionReportDetailScreen`, `ComplianceStatusView`, `loadInspectionReportDetail`, and `src/features/export/mappers/index.ts`. A test that imports one of these hosts needs `jest.mock`s for `src/db/database` and the Supabase client (see `src/region/__tests__/modules.test.ts`).
+`src/region/modules` is heavy (it pulls in forms and screens), so only two foundation files import it: `src/core/region/lookup.ts` (`reportDataModuleFor`, `reportFormFor`) and `src/features/export/mappers/index.ts` (which imports `mapSurveyBundle` directly). The host screens reach the modules through `lookup.ts`: `src/app/(app)/inspection/new.tsx`, `AddReportSplitPanel`, `InspectionReportDetailScreen`, `ComplianceStatusView` and `loadInspectionReportDetail` (plus `mappers/index.ts` for `reportDataModuleFor`). Importing any of these pulls in `lookup.ts`, so the same test mocks apply. A test that imports `lookup.ts` or one of these hosts needs `jest.mock`s for `src/db/database` and the Supabase client (see `src/region/__tests__/modules.test.ts`).
+
+Keep 4A's `never`-keyed catalog typechecking: foundation looks up region registries by the stored string through `reportDataModuleFor` / `reportFormFor` and the widened maps (`REPORT_TYPE_DISPLAY`, `COMPLIANCE_COLLECTIONS`), never by indexing into a region-typed record with `x as ReportDataKey`. With an empty catalog `ReportDataKey` is `never`, and such an index stops compiling.
 
 ## 4. Merging upstream into 4A
 
