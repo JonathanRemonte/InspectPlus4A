@@ -1,0 +1,40 @@
+{
+  "regionName": "MIMAROPA",
+  "envelope": { "w": 114.0, "s": 7.0, "e": 123.5, "n": 14.5 },
+  "locations": {
+    "regionCode": "17",
+    "provinceOrder": ["Occidental Mindoro", "Oriental Mindoro", "Marinduque", "Romblon", "Palawan"],
+    "extraBarangays": [
+      { "province": "Occidental Mindoro", "city": "San Jose", "barangay": "Naibuan", "note": "Created after the 2021 address dataset; present in PSGC 2023 boundaries" }
+    ]
+  },
+  "boundaries": {
+    "provinceCodes": [1704000000, 1705100000, 1705200000, 1705300000, 1705900000],
+    "extraMunicipalityCodes": [1731500000],
+    "provinceByAdm2": {
+      "1704000000": "Marinduque",
+      "1705100000": "Occidental Mindoro",
+      "1705200000": "Oriental Mindoro",
+      "1705300000": "Palawan",
+      "1705900000": "Romblon",
+      "1731500000": "Palawan"
+    },
+    "municipalityAliases": { "1731500000": "Puerto Princesa City (Capital)" },
+    "barangayAliases": {
+      "1704003020": { "name": "Pingan", "note": "PSGC \"Pinggan\", Gasan" },
+      "1704005026": { "name": "Kiñaman", "note": "PSGC \"Kinyaman\", Santa Cruz" },
+      "1705104009": { "name": "Surville (Pob.)", "note": "PSGC \"Sorville\", Lubang" },
+      "1705104012": { "name": "Banaag At Pag-Asa (Pob.)", "note": "PSGC \"Banaag ng Pag-asa\", Lubang" },
+      "1705209010": { "name": "Lumangbayan", "note": "PSGC \"Lumambayan\", Pinamalayan" },
+      "1705901004": { "name": "Camod-Om", "note": "PSGC \"Comod-om\", Alcantara" },
+      "1705907004": { "name": "Camandao", "note": "PSGC \"Camandag\", Looc (Romblon)" },
+      "1705911002": { "name": "Binongahan", "note": "PSGC \"Binonga-an\", San Agustin" },
+      "1705911006": { "name": "Cagbuaya", "note": "PSGC \"Cagbo-aya\", San Agustin" },
+      "1705911013": { "name": "Binugusan", "note": "PSGC \"Hinugusan\", San Agustin" }
+    }
+  },
+  "outputs": {
+    "locations": "src/region/data/mimaropaLocations.ts",
+    "boundaries": "src/region/data/mimaropaBoundaries.json"
+  }
+}
