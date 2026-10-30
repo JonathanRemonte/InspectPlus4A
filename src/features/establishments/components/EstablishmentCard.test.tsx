@@ -10,6 +10,7 @@ import { Radius } from '../../../design/radius';
 import { Elevation } from '../../../design/elevation';
 import { Type } from '../../../design/typography';
 import { REPORT_TYPES } from '../../../constants/reportTypes';
+import { COMPLIANCE_TAGS } from '../../../region';
 import type { EstablishmentDTO } from '../types';
 
 // EstablishmentCard pulls in confirmResolveConflict -> the WatermelonDB sync
@@ -133,6 +134,12 @@ const allFontSizes = (r: Renderer): number[] =>
   proseTexts(r)
     .map((n) => flattenStyle(n.props.style).fontSize)
     .filter((size): size is number => typeof size === 'number');
+
+// A compliance tag the region defines, with its report type; a region with no
+// report types has none, so the cases that need one skip.
+const TAGGED = COMPLIANCE_TAGS.find((c) => REPORT_TYPES.some((t) => t.key === c.createKey));
+const TAGGED_TYPE = TAGGED ? REPORT_TYPES.find((t) => t.key === TAGGED.createKey) : undefined;
+const itWhenTagged = TAGGED ? it : it.skip;
 
 const baseItem: EstablishmentDTO = {
   id: 'row-1',
@@ -222,10 +229,10 @@ describe('EstablishmentCard token resolution', () => {
     expect(flattenStyle(locationText?.props.style).lineHeight).toBe(Type.label.lineHeight);
   });
 
-  it('resolves a compliance tag chip color from REPORT_TYPES, not a hardcoded value', () => {
-    const item: EstablishmentDTO = { ...baseItem, complianceTags: ['Hazwaste'] };
+  itWhenTagged('resolves a compliance tag chip color from REPORT_TYPES, not a hardcoded value', () => {
+    const item: EstablishmentDTO = { ...baseItem, complianceTags: [TAGGED!.tag] };
     const r = render(<EstablishmentCard item={item} onPress={noop} />);
-    const hazwaste = REPORT_TYPES.find((t) => t.key === 'hazwaste_generator')!;
+    const hazwaste = TAGGED_TYPE!;
 
     const chip = r.root.findAll((n) => (n.type as any)?.name === 'View' || n.type === View).find((n) => {
       const flattened = flattenStyle(n.props.style);
@@ -233,11 +240,12 @@ describe('EstablishmentCard token resolution', () => {
     });
     expect(chip).toBeDefined();
 
-    // Restricted to prose Text (excluding icon glyphs): the location pin
-    // icon also resolves to Colors.conflict, which is the same literal hex
-    // as this hazwaste palette's textColor, so an unfiltered search would
-    // grab the pin's internal glyph Text instead of the tag label.
-    const label = proseTexts(r).find((n) => flattenStyle(n.props.style).color === hazwaste.textColor);
+    // Restricted to prose Text (excluding icon glyphs) carrying the type's law
+    // citation: other text on the card (the location line, the pin) can share
+    // a type's textColor literal, so colour alone would find the wrong Text.
+    const label = proseTexts(r).find(
+      (n) => n.props.children === hazwaste.law && flattenStyle(n.props.style).color === hazwaste.textColor,
+    );
     expect(label?.props.children).toBe(hazwaste.law);
   });
 
@@ -329,8 +337,8 @@ describe('EstablishmentCard sync flag placement', () => {
   // The bug this task fixes: the sync flag used to sit between locationRow
   // and tagRow, mid-card. This asserts actual render ORDER — not just that
   // the row exists — so it would fail against the old position.
-  it('renders the pending-sync row after every other element in the card body, below the tags', () => {
-    const item: EstablishmentDTO = { ...baseItem, syncStatus: 'pending', complianceTags: ['Air Monitoring'] };
+  itWhenTagged('renders the pending-sync row after every other element in the card body, below the tags', () => {
+    const item: EstablishmentDTO = { ...baseItem, syncStatus: 'pending', complianceTags: [TAGGED!.tag] };
     const r = render(<EstablishmentCard item={item} onPress={noop} />);
     const children = findContentChildren(r);
     // name, locationRow, tagRow, syncRow — at least 4 elements now that the
@@ -342,7 +350,7 @@ describe('EstablishmentCard sync flag placement', () => {
 
     // The tag row — previously followed immediately by the sync row,
     // mid-card — must now sit strictly earlier than the sync row.
-    const airLaw = REPORT_TYPES.find((t) => t.key === 'air')!.law;
+    const airLaw = TAGGED_TYPE!.law;
     const tagLabel = proseTexts(r).find((n) => n.props.children === airLaw);
     expect(tagLabel).toBeDefined();
     expect(children.slice(0, -1).some((c) => c.findAllByType(Text).some((n) => n.props.children === airLaw))).toBe(true);

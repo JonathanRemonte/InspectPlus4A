@@ -5,6 +5,7 @@ import TestRenderer from 'react-test-renderer';
 import { InspectionReportHeader } from './InspectionReportHeader';
 import { Colors } from '../../../design/colors';
 import type { TwoRowMainTabDef } from './TwoRowTabs';
+import { REPORT_TYPE_DISPLAY, type ReportTypeDisplay } from '../../../constants/reportTypeDisplay';
 
 // The header reaches the WatermelonDB adapter chain three ways — the sync
 // conflict pill, the delete gate's role lookup, and the inspector-name
@@ -53,13 +54,20 @@ const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 10
 
 const noop = () => {};
 
+// The report type comes from the region's catalog; a region with no report
+// types has no type colours to pin, so the type-coloured cases skip.
+const TYPE_ENTRY = Object.entries(REPORT_TYPE_DISPLAY)[0];
+const itWhenTyped = TYPE_ENTRY ? it : it.skip;
+const TYPE_KEY = TYPE_ENTRY ? TYPE_ENTRY[0] : '';
+const TYPE = TYPE_ENTRY ? TYPE_ENTRY[1] : ({} as ReportTypeDisplay);
+
 const renderHeader = (overrides: { inspectionDate?: string; reportStatus?: string } = {}) =>
   render(
     <InspectionReportHeader
       reportId="report-1"
       establishmentName="NELTEX Philippine Hardwarehouse Co., Inc."
       establishmentLocation="Aborlan, Palawan"
-      reportType="water_monitoring"
+      reportType={TYPE_KEY}
       reportControlNo="CTRL-1"
       inspectionDate={overrides.inspectionDate ?? daysAgo(2)}
       reportStatus={overrides.reportStatus ?? 'draft'}
@@ -162,12 +170,12 @@ describe('InspectionReportHeader due indicator', () => {
   // Hazwaste's own red is the overdue red, which is exactly why the type
   // never tints: an overdue hazwaste report has to look different from a
   // hazwaste report.
-  it('gives an unflagged card its type’s border and edge on a white ground', () => {
+  itWhenTyped('gives an unflagged card its type’s border and edge on a white ground', () => {
     const card = flattenStyle(findCard(renderHeader({ inspectionDate: daysAgo(2) })).props.style);
     expect(card.backgroundColor).toBe(Colors.white);
-    expect(card.borderColor).toBe(Colors.water.border);
+    expect(card.borderColor).toBe(TYPE.borderColor);
     expect(card.borderLeftWidth).toBe(5);
-    expect(card.borderLeftColor).toBe(Colors.water.text);
+    expect(card.borderLeftColor).toBe(TYPE.textColor);
   });
 
   // The three meta chips (date, control number, inspector) follow the card:
@@ -181,12 +189,12 @@ describe('InspectionReportHeader due indicator', () => {
         flattenStyle(n.props.style).paddingHorizontal === 9,
     );
 
-  it('tints the meta chips with the report type on an unflagged card', () => {
+  itWhenTyped('tints the meta chips with the report type on an unflagged card', () => {
     const chips = findMetaChips(renderHeader({ inspectionDate: daysAgo(2) }));
     expect(chips).toHaveLength(3);
     chips.forEach((chip) => {
-      expect(flattenStyle(chip.props.style).backgroundColor).toBe(Colors.water.bg);
-      expect(flattenStyle(chip.props.style).borderColor).toBe(Colors.water.border);
+      expect(flattenStyle(chip.props.style).backgroundColor).toBe(TYPE.bgColor);
+      expect(flattenStyle(chip.props.style).borderColor).toBe(TYPE.borderColor);
     });
   });
 
@@ -194,14 +202,14 @@ describe('InspectionReportHeader due indicator', () => {
   // colour, as the R.A. pill beside them does — a chip that went grey all
   // over read as a generic chip, not as a water chip that happens to be
   // sitting on an alarm.
-  it('turns the meta chips white on a flagged card but keeps their type border and icon', () => {
+  itWhenTyped('turns the meta chips white on a flagged card but keeps their type border and icon', () => {
     const r = renderHeader({ inspectionDate: daysAgo(15) });
     const chips = findMetaChips(r);
     expect(chips).toHaveLength(3);
     chips.forEach((chip) => {
       expect(flattenStyle(chip.props.style).backgroundColor).toBe(Colors.white);
-      expect(flattenStyle(chip.props.style).borderColor).toBe(Colors.water.border);
-      expect(chip.findByType(Ionicons).props.color).toBe(Colors.water.text);
+      expect(flattenStyle(chip.props.style).borderColor).toBe(TYPE.borderColor);
+      expect(chip.findByType(Ionicons).props.color).toBe(TYPE.textColor);
     });
   });
 
@@ -210,26 +218,26 @@ describe('InspectionReportHeader due indicator', () => {
   // glyph. A brand-green document glyph here made the same report look like
   // two different kinds of thing on the list and on its own screen.
   const findTile = (r: Renderer) =>
-    r.root.findAll((n) => n.type === Ionicons && n.props.name === 'water-outline')[0];
+    r.root.findAll((n) => n.type === Ionicons && n.props.name === TYPE.icon)[0];
 
-  it("paints the type tile with the type's glyph and colours, like the list card", () => {
+  itWhenTyped("paints the type tile with the type's glyph and colours, like the list card", () => {
     const glyph = findTile(renderHeader({ inspectionDate: daysAgo(2) }));
     expect(glyph).toBeDefined();
-    expect(glyph.props.color).toBe(Colors.water.text);
+    expect(glyph.props.color).toBe(TYPE.textColor);
     // Walk up to the tile box: the nearest ancestor carrying a backgroundColor.
     let box = glyph.parent;
     while (box && flattenStyle(box.props.style).backgroundColor === undefined) box = box.parent;
-    expect(flattenStyle(box!.props.style).backgroundColor).toBe(Colors.water.bg);
+    expect(flattenStyle(box!.props.style).backgroundColor).toBe(TYPE.bgColor);
   });
 
-  it('keeps the type tile in type colours even on a flagged card', () => {
-    expect(findTile(renderHeader({ inspectionDate: daysAgo(15) })).props.color).toBe(Colors.water.text);
+  itWhenTyped('keeps the type tile in type colours even on a flagged card', () => {
+    expect(findTile(renderHeader({ inspectionDate: daysAgo(15) })).props.color).toBe(TYPE.textColor);
   });
 
-  it('paints the location pin in the type colour', () => {
+  itWhenTyped('paints the location pin in the type colour', () => {
     const r = renderHeader({ inspectionDate: daysAgo(2) });
     const pin = r.root.findAll((n) => n.type === Ionicons && n.props.name === 'location')[0];
-    expect(pin.props.color).toBe(Colors.water.text);
+    expect(pin.props.color).toBe(TYPE.textColor);
   });
 
   // The Draft pill is pale amber; the due-soon tint is pale amber. On a

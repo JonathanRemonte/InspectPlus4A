@@ -9,7 +9,7 @@ import { ReportListCard } from './ReportListCard';
 import { Colors } from '../../../design/colors';
 import { Spacing } from '../../../design/spacing';
 import { FONT_SCALING } from '../../../design/typography';
-import { REPORT_TYPE_DISPLAY, ReportDataKey } from '../../../constants/reportTypeDisplay';
+import { REPORT_TYPE_DISPLAY } from '../../../constants/reportTypeDisplay';
 import type { AllReportItem } from '../hooks/useEstablishment';
 
 // ReportListCard pulls in confirmResolveConflict -> the WatermelonDB sync
@@ -287,11 +287,20 @@ const baseItem: AllReportItem = {
 
 const noop = () => {};
 
-const ALL_DATA_KEYS = Object.keys(REPORT_TYPE_DISPLAY) as ReportDataKey[];
+// Report types come from the region's catalog; a region with no report types
+// has no rows to colour, so the per-type cases skip. (it.each throws on an
+// empty table, hence eachKey.)
+const TYPE_ENTRIES = Object.entries(REPORT_TYPE_DISPLAY);
+const itWhenTwoTypes = TYPE_ENTRIES.length > 1 ? it : it.skip;
+const [FIRST_KEY, FIRST] = TYPE_ENTRIES[0] ?? ['', undefined];
+const [SECOND_KEY, SECOND] = TYPE_ENTRIES[1] ?? ['', undefined];
+const eachKey = (keys: string[]) => (keys.length ? it.each(keys) : it.skip.each(['(none)']));
+
+const ALL_DATA_KEYS = Object.keys(REPORT_TYPE_DISPLAY);
 
 describe('ReportListCard report-type icon', () => {
-  it.each(ALL_DATA_KEYS)(
-    'resolves %s icon and background/color from REPORT_TYPE_DISPLAY, not a hardcoded water treatment',
+  eachKey(ALL_DATA_KEYS)(
+    'resolves %s icon and background/color from REPORT_TYPE_DISPLAY, not a hardcoded treatment',
     (reportType) => {
       const item: AllReportItem = { ...baseItem, reportType };
       const r = render(
@@ -317,51 +326,35 @@ describe('ReportListCard report-type icon', () => {
     },
   );
 
-  // The bug this task fixes: every card previously rendered with a
-  // hardcoded backgroundColor: Colors.water.bg / color: Colors.water.text
-  // regardless of the report's actual type. Assert an air report resolves
-  // to the air palette specifically, not water's.
-  it('an air_monitoring report does not render with the water palette', () => {
-    const item: AllReportItem = { ...baseItem, reportType: 'air_monitoring' };
+  // The bug this task fixes: every row previously rendered with one
+  // hardcoded type's background and glyph colour regardless of the report's
+  // actual type. A report resolves its own type's palette, not another's.
+  itWhenTwoTypes("a report resolves its own type's palette, not another type's", () => {
     const r = render(
-      <ReportListCard
-        item={item}
-        currentUid="uid-1"
-        canManageAll={false}
-        onPress={noop}
-        onEdit={noop}
-        onDelete={noop}
-      />,
+      <ReportListCard item={{ ...baseItem, reportType: SECOND_KEY }} currentUid="uid-1" canManageAll={false} onPress={noop} onEdit={noop} onDelete={noop} />,
     );
 
     const wrapStyle = flattenStyle(findIconWrap(r).props.style);
-    expect(wrapStyle.backgroundColor).not.toBe(Colors.water.bg);
-    expect(wrapStyle.backgroundColor).toBe(Colors.air.bg);
-
+    expect(wrapStyle.backgroundColor).toBe(SECOND?.bgColor);
     const icon = findReportIcon(r);
-    expect(icon.props.color).not.toBe(Colors.water.text);
-    expect(icon.props.color).toBe(Colors.air.text);
+    expect(icon?.props.color).toBe(SECOND?.textColor);
+    if (FIRST?.bgColor !== SECOND?.bgColor) expect(wrapStyle.backgroundColor).not.toBe(FIRST?.bgColor);
+    if (FIRST?.textColor !== SECOND?.textColor) expect(icon?.props.color).not.toBe(FIRST?.textColor);
   });
 
-  // Regression coverage for the specific swapped-icon bug: eia and survey
-  // must each resolve their OWN icon, not each other's.
-  it('eia and survey resolve distinct, non-swapped icons', () => {
-    const eiaItem: AllReportItem = { ...baseItem, reportType: 'eia' };
-    const surveyItem: AllReportItem = { ...baseItem, reportType: 'survey' };
+  // Regression coverage for the swapped-icon bug: two types must each resolve
+  // their OWN icon, not each other's (the region pins which icons).
+  itWhenTwoTypes('two types resolve their own, non-swapped icons', () => {
+    const firstIcon = findReportIcon(render(
+      <ReportListCard item={{ ...baseItem, reportType: FIRST_KEY }} currentUid="uid-1" canManageAll={false} onPress={noop} onEdit={noop} onDelete={noop} />,
+    ));
+    const secondIcon = findReportIcon(render(
+      <ReportListCard item={{ ...baseItem, reportType: SECOND_KEY }} currentUid="uid-1" canManageAll={false} onPress={noop} onEdit={noop} onDelete={noop} />,
+    ));
 
-    const eiaR = render(
-      <ReportListCard item={eiaItem} currentUid="uid-1" canManageAll={false} onPress={noop} onEdit={noop} onDelete={noop} />,
-    );
-    const surveyR = render(
-      <ReportListCard item={surveyItem} currentUid="uid-1" canManageAll={false} onPress={noop} onEdit={noop} onDelete={noop} />,
-    );
-
-    const eiaIcon = findReportIcon(eiaR);
-    const surveyIcon = findReportIcon(surveyR);
-
-    expect(eiaIcon.props.name).toBe('document-text-outline');
-    expect(surveyIcon.props.name).toBe('globe-outline');
-    expect(eiaIcon.props.name).not.toBe(surveyIcon.props.name);
+    expect(firstIcon?.props.name).toBe(FIRST?.icon);
+    expect(secondIcon?.props.name).toBe(SECOND?.icon);
+    if (FIRST?.icon !== SECOND?.icon) expect(firstIcon?.props.name).not.toBe(secondIcon?.props.name);
   });
 
   it('falls back to a neutral treatment for an unrecognized report type', () => {

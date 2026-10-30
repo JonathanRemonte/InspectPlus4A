@@ -113,7 +113,13 @@ const openDial = (r: Renderer) => {
   act(() => { byLabel(r, 'Create new report').props.onPress(); });
 };
 
-describe('SpeedDial', () => {
+// These cases exercise the region's report types; a region with no report
+// types has no rows to render, so they skip. (it.each throws on an empty
+// table even inside a skipped describe, hence eachType.)
+const describeWhenTypes = REPORT_TYPES.length > 0 ? describe : describe.skip;
+const eachType = (list: ReportType[]) => (list.length ? it.each(list) : it.skip.each([null as unknown as ReportType]));
+
+describeWhenTypes('SpeedDial', () => {
   let backSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -143,9 +149,10 @@ describe('SpeedDial', () => {
   it('labels each row with the full legal title, not the short one', () => {
     const r = render();
     openDial(r);
-    const hazwasteTsd = REPORT_TYPES.find(t => t.key === 'hazwaste_tsd')!;
-    expect(byLabel(r, hazwasteTsd.title)).toBeDefined();
-    expect(hazwasteTsd.title).not.toBe(hazwasteTsd.shortTitle);
+    // A type whose legal title differs from its short one (every EMB4B type's does).
+    const longTitled = REPORT_TYPES.find(t => t.title !== t.shortTitle)!;
+    expect(byLabel(r, longTitled.title)).toBeDefined();
+    expect(longTitled.title).not.toBe(longTitled.shortTitle);
   });
 
   it('navigates to the selected report type route and closes', () => {
@@ -162,7 +169,7 @@ describe('SpeedDial', () => {
   // below, which asserts the opposite (no navigation, disabled state, a
   // "Soon" badge). REPORT_TYPES[0] ('air') used to be part of this sweep
   // before problem 3's fix; it's excluded here because it isn't enabled.
-  it.each(REPORT_TYPES.filter(t => ENABLED_TYPES.includes(t.key)))(
+  eachType(REPORT_TYPES.filter(t => ENABLED_TYPES.includes(t.key)))(
     'presses row for $title and navigates to its own route',
     (type) => {
       const r = render();
@@ -373,7 +380,7 @@ describe('SpeedDial', () => {
       expect(UNAVAILABLE_TYPES.length).toBeGreaterThan(0);
     });
 
-    it.each(UNAVAILABLE_TYPES)(
+    eachType(UNAVAILABLE_TYPES)(
       'renders $title as disabled, with a Soon badge, and ignores a press',
       (type) => {
         const r = render();
@@ -393,7 +400,7 @@ describe('SpeedDial', () => {
       },
     );
 
-    it.each(REPORT_TYPES.filter(t => ENABLED_TYPES.includes(t.key)))(
+    eachType(REPORT_TYPES.filter(t => ENABLED_TYPES.includes(t.key)))(
       'renders $title as available: not disabled, no Soon badge',
       (type) => {
         const r = render();
@@ -419,38 +426,38 @@ describe('SpeedDial', () => {
       });
     });
   });
+});
 
-  // Guards the hoist in problem 3: ENABLED_TYPES must live in exactly one
-  // place so that enabling a report type for one surface (the dial,
-  // AddReportSplitPanel) can't be done without the other — a stale duplicate
-  // would silently disagree with this file's own ENABLED_TYPE/UNAVAILABLE_TYPES
-  // constants above. The region declares it (src/region/__tests__/catalog.test.ts
-  // pins that); the foundation only re-exports it through constants/reportTypes.ts.
-  describe('ENABLED_TYPES has exactly one definition, shared by both surfaces', () => {
-    const declarationPattern = /\bconst\s+ENABLED_TYPES\s*[:=]/g;
-    const importPattern = (source: string) =>
-      /import\s*\{[^}]*\bENABLED_TYPES\b[^}]*\}\s*from\s*['"][^'"]*constants\/reportTypes['"]/.test(source);
+// Guards the hoist in problem 3: ENABLED_TYPES must live in exactly one
+// place so that enabling a report type for one surface (the dial,
+// AddReportSplitPanel) can't be done without the other — a stale duplicate
+// would silently disagree with this file's own ENABLED_TYPE/UNAVAILABLE_TYPES
+// constants above. The region declares it (src/region/__tests__/catalog.test.ts
+// pins that); the foundation only re-exports it through constants/reportTypes.ts.
+describe('ENABLED_TYPES has exactly one definition, shared by both surfaces', () => {
+  const declarationPattern = /\bconst\s+ENABLED_TYPES\s*[:=]/g;
+  const importPattern = (source: string) =>
+    /import\s*\{[^}]*\bENABLED_TYPES\b[^}]*\}\s*from\s*['"][^'"]*constants\/reportTypes['"]/.test(source);
 
-    const facadeSource = fs.readFileSync(path.join(__dirname, '../../../constants/reportTypes.ts'), 'utf8');
-    const speedDialSource = fs.readFileSync(path.join(__dirname, 'SpeedDial.tsx'), 'utf8');
-    const splitPanelSource = fs.readFileSync(
-      path.join(__dirname, '../../inspections/components/AddReportSplitPanel.tsx'),
-      'utf8',
-    );
+  const facadeSource = fs.readFileSync(path.join(__dirname, '../../../constants/reportTypes.ts'), 'utf8');
+  const speedDialSource = fs.readFileSync(path.join(__dirname, 'SpeedDial.tsx'), 'utf8');
+  const splitPanelSource = fs.readFileSync(
+    path.join(__dirname, '../../inspections/components/AddReportSplitPanel.tsx'),
+    'utf8',
+  );
 
-    it('is re-exported from the region by constants/reportTypes.ts, never declared in the foundation', () => {
-      expect(facadeSource.match(declarationPattern)).toBeNull();
-      expect(/export\s*\{[^}]*\bENABLED_TYPES\b[^}]*\}\s*from\s*['"]\.\.\/region['"]/.test(facadeSource)).toBe(true);
-      expect(speedDialSource.match(declarationPattern)).toBeNull();
-      expect(splitPanelSource.match(declarationPattern)).toBeNull();
-    });
+  it('is re-exported from the region by constants/reportTypes.ts, never declared in the foundation', () => {
+    expect(facadeSource.match(declarationPattern)).toBeNull();
+    expect(/export\s*\{[^}]*\bENABLED_TYPES\b[^}]*\}\s*from\s*['"]\.\.\/region['"]/.test(facadeSource)).toBe(true);
+    expect(speedDialSource.match(declarationPattern)).toBeNull();
+    expect(splitPanelSource.match(declarationPattern)).toBeNull();
+  });
 
-    it('SpeedDial.tsx imports it rather than redeclaring it', () => {
-      expect(importPattern(speedDialSource)).toBe(true);
-    });
+  it('SpeedDial.tsx imports it rather than redeclaring it', () => {
+    expect(importPattern(speedDialSource)).toBe(true);
+  });
 
-    it('AddReportSplitPanel.tsx imports it rather than redeclaring it', () => {
-      expect(importPattern(splitPanelSource)).toBe(true);
-    });
+  it('AddReportSplitPanel.tsx imports it rather than redeclaring it', () => {
+    expect(importPattern(splitPanelSource)).toBe(true);
   });
 });

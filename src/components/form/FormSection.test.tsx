@@ -7,6 +7,7 @@ import { Colors } from '../../design/colors';
 import { Spacing } from '../../design/spacing';
 import { Type } from '../../design/typography';
 import { ReportThemeProvider } from '../../core/providers/ReportThemeProvider';
+import { REPORT_TYPE_DISPLAY } from '../../constants/reportTypeDisplay';
 
 type Renderer = TestRenderer.ReactTestRenderer;
 
@@ -118,6 +119,12 @@ describe('FormSection behavior (unchanged by this task)', () => {
 // the only thing that changes: the title stays navy and the rule stays grey,
 // because the icon is identity and those are structure. Off a report screen
 // there is no accent and the icon keeps its navy.
+// The report type comes from the region's catalog; a region with no report
+// types has no accent to pin, so the accented cases skip.
+const ACCENTED = Object.entries(REPORT_TYPE_DISPLAY)[0];
+const itWhenAccented = ACCENTED ? it : it.skip;
+const [ACCENT_KEY, ACCENT_DISPLAY] = ACCENTED ?? ['', undefined];
+
 describe('FormSection report accent', () => {
   const iconColor = (element: React.ReactElement) => {
     let r!: TestRenderer.ReactTestRenderer;
@@ -131,21 +138,21 @@ describe('FormSection report accent', () => {
     );
   });
 
-  it("paints the icon in the report type's accent inside one", () => {
+  itWhenAccented("paints the icon in the report type's accent inside one", () => {
     expect(
       iconColor(
-        <ReportThemeProvider reportType="water_monitoring">
+        <ReportThemeProvider reportType={ACCENT_KEY}>
           <FormSection icon="water-outline" title="Water Sources"><Text>x</Text></FormSection>
         </ReportThemeProvider>,
       ),
-    ).toBe(Colors.water.text);
+    ).toBe(ACCENT_DISPLAY?.textColor);
   });
 
-  it('leaves the title navy even when the icon is accented', () => {
+  itWhenAccented('leaves the title navy even when the icon is accented', () => {
     let r!: TestRenderer.ReactTestRenderer;
     TestRenderer.act(() => {
       r = TestRenderer.create(
-        <ReportThemeProvider reportType="water_monitoring">
+        <ReportThemeProvider reportType={ACCENT_KEY}>
           <FormSection icon="water-outline" title="Water Sources"><Text>x</Text></FormSection>
         </ReportThemeProvider>,
       );
