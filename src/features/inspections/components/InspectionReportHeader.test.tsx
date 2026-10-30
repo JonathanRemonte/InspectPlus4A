@@ -56,7 +56,7 @@ const noop = () => {};
 
 // The report type comes from the region's catalog; a region with no report
 // types has no type colours to pin, so the type-coloured cases skip.
-const TYPE_ENTRY = Object.entries(REPORT_TYPE_DISPLAY)[0];
+const TYPE_ENTRY = Object.entries(REPORT_TYPE_DISPLAY).find(([, d]) => d.textColor !== Colors.textMuted && d.textColor !== Colors.navy);
 const itWhenTyped = TYPE_ENTRY ? it : it.skip;
 const TYPE_KEY = TYPE_ENTRY ? TYPE_ENTRY[0] : '';
 const TYPE = TYPE_ENTRY ? TYPE_ENTRY[1] : ({} as ReportTypeDisplay);

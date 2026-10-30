@@ -134,7 +134,7 @@ const allFontSizes = (r: Renderer): number[] =>
   proseTexts(r)
     .map((n) => flattenStyle(n.props.style).fontSize)
     .filter((size): size is number => typeof size === 'number');
-
+
 // A compliance tag the region defines, with its report type; a region with no
 // report types has none, so the cases that need one skip.
 const TAGGED = COMPLIANCE_TAGS.find((c) => REPORT_TYPES.some((t) => t.key === c.createKey));

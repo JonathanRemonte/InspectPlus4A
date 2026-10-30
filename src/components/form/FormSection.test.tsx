@@ -119,9 +119,10 @@ describe('FormSection behavior (unchanged by this task)', () => {
 // the only thing that changes: the title stays navy and the rule stays grey,
 // because the icon is identity and those are structure. Off a report screen
 // there is no accent and the icon keeps its navy.
+// The first report type with a non-neutral accent (not the muted/navy defaults)
 // The report type comes from the region's catalog; a region with no report
 // types has no accent to pin, so the accented cases skip.
-const ACCENTED = Object.entries(REPORT_TYPE_DISPLAY)[0];
+const ACCENTED = Object.entries(REPORT_TYPE_DISPLAY).find(([, d]) => d.textColor !== Colors.textMuted && d.textColor !== Colors.navy);
 const itWhenAccented = ACCENTED ? it : it.skip;
 const [ACCENT_KEY, ACCENT_DISPLAY] = ACCENTED ?? ['', undefined];
 

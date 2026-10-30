@@ -29,9 +29,10 @@ const activeTab = (r: TestRenderer.ReactTestRenderer) =>
 const activeLabel = (r: TestRenderer.ReactTestRenderer) =>
   r.root.findAll((n) => n.type === Text && n.props.children === 'General Information')[0];
 
+// The first report type with a non-neutral accent (not the muted/navy defaults)
 // The report type comes from the region's catalog; with no report types there
 // is no accent to pin, so the accented cases skip.
-const ACCENTED = Object.entries(REPORT_TYPE_DISPLAY)[0];
+const ACCENTED = Object.entries(REPORT_TYPE_DISPLAY).find(([, d]) => d.textColor !== Colors.textMuted && d.textColor !== Colors.navy);
 const itWhenAccented = ACCENTED ? it : it.skip;
 const [ACCENT_KEY, ACCENT_DISPLAY] = ACCENTED ?? ['', undefined];
 
