@@ -140,6 +140,9 @@ const allFontSizes = (r: Renderer): number[] =>
 const TAGGED = COMPLIANCE_TAGS.find((c) => REPORT_TYPES.some((t) => t.key === c.createKey));
 const TAGGED_TYPE = TAGGED ? REPORT_TYPES.find((t) => t.key === TAGGED.createKey) : undefined;
 const itWhenTagged = TAGGED ? it : it.skip;
+// Up to four of the region's tags; the card shows three, so a fourth overflows.
+const ALL_TAGS = COMPLIANCE_TAGS.map((c) => c.tag).slice(0, 4);
+const itWhenOverflowing = ALL_TAGS.length > 3 ? it : it.skip;
 
 const baseItem: EstablishmentDTO = {
   id: 'row-1',
@@ -249,10 +252,10 @@ describe('EstablishmentCard token resolution', () => {
     expect(label?.props.children).toBe(hazwaste.law);
   });
 
-  it('resolves the tag-overflow chip background from Colors.border', () => {
+  itWhenOverflowing('resolves the tag-overflow chip background from Colors.border', () => {
     const item: EstablishmentDTO = {
       ...baseItem,
-      complianceTags: ['Air Monitoring', 'Water Monitoring', 'Hazwaste', 'EIA'],
+      complianceTags: ALL_TAGS,
     };
     const r = render(<EstablishmentCard item={item} onPress={noop} />);
     const overflowChip = r.root
@@ -275,7 +278,7 @@ describe('EstablishmentCard legibility guarantee', () => {
   it('renders nothing below Type.caption.fontSize with tags, overflow, and no swipe actions', () => {
     const item: EstablishmentDTO = {
       ...baseItem,
-      complianceTags: ['Air Monitoring', 'Water Monitoring', 'Hazwaste', 'EIA'],
+      complianceTags: ALL_TAGS,
     };
     const r = render(<EstablishmentCard item={item} onPress={noop} />);
     const sizes = allFontSizes(r);

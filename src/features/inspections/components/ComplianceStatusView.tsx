@@ -25,5 +25,6 @@ const EmptyCompliance: React.FC = () => (
 export const ComplianceStatusView: React.FC<ComplianceStatusViewProps> = ({ compliance, reportType }) => {
   if (compliance.kind === 'none') return <EmptyCompliance />;
   const Section = reportDataModuleFor(reportType)?.ComplianceView;
-  return Section ? <Section compliance={compliance} /> : <EmptyCompliance />;
+  // The cast: with no report types the region's view union is only 'none'.
+  return Section ? <Section compliance={compliance as Exclude<ComplianceView, { kind: 'none' }>} /> : <EmptyCompliance />;
 };
