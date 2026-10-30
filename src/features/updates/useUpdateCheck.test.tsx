@@ -6,7 +6,8 @@ import { UPDATE_CHECK_INTERVAL_MS, UPDATE_CHECK_STORAGE_KEY, useUpdateCheck } fr
 
 jest.mock('./checkForUpdate', () => ({
   checkForUpdate: jest.fn(),
-  LATEST_APK_URL: 'https://github.com/emb4b/InspectPlus/releases/latest/download/inspectplus.apk',
+  // jest.mock factories are hoisted above imports, so read the region via requireActual here.
+  LATEST_APK_URL: `https://github.com/${(jest.requireActual('../../region') as typeof import('../../region')).region.identity.releaseRepo}/releases/latest/download/inspectplus.apk`,
 }));
 
 const mockCheck = checkForUpdate as jest.Mock;

@@ -4,7 +4,7 @@
 //
 // Source: faeldon/philippines-json-maps (MIT), 2023 PSGC. Medres
 // per-municipality barangay files for the region's municipalities;
-// the three barangays whose medres geometry is null are taken from hires.
+// barangays whose medres geometry is null are taken from hires.
 //
 // Usage:
 //   node scripts/build-barangay-boundaries.js            # downloads into node_modules/.cache/psgc-boundaries
@@ -134,8 +134,10 @@ async function main() {
   const locations = loadLocations();
   const index = buildLocationIndex(locations);
 
-  // Municipality names come from the province-level files; Puerto Princesa
-  // is not in any of them and is aliased in barangayNameMatch.js.
+  // Municipality names come from the province-level files; municipalities
+  // listed in the region definition's extraMunicipalityCodes are not in any
+  // province file, and their names come from municipalityAliases in
+  // src/region/data/psgcSources.json.
   const muniNameByPsgc = {};
   for (const code of def.boundaries.provinceCodes) {
     const fc = await fetchJson(`provdists/lowres/municities-provdist-${code}.0.001.json`, dir);

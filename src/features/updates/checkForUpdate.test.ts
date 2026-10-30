@@ -1,3 +1,4 @@
+import { region } from '../../region';
 import { checkForUpdate, LATEST_APK_URL, LATEST_RELEASE_API } from './checkForUpdate';
 
 jest.mock('expo-constants', () => ({
@@ -5,10 +6,12 @@ jest.mock('expo-constants', () => ({
   default: { expoConfig: { version: '1.0.4' }, nativeBuildVersion: '4' },
 }));
 
+const REPO = region.identity.releaseRepo;
+
 type Release = { tag_name: string; html_url: string; assets: { name: string; browser_download_url: string }[] };
 
-const release = (tag: string, assets: Release['assets'] = [{ name: 'inspectplus.apk', browser_download_url: `https://github.com/emb4b/InspectPlus/releases/download/${tag}/inspectplus.apk` }]): Release =>
-  ({ tag_name: tag, html_url: `https://github.com/emb4b/InspectPlus/releases/tag/${tag}`, assets });
+const release = (tag: string, assets: Release['assets'] = [{ name: 'inspectplus.apk', browser_download_url: `https://github.com/${REPO}/releases/download/${tag}/inspectplus.apk` }]): Release =>
+  ({ tag_name: tag, html_url: `https://github.com/${REPO}/releases/tag/${tag}`, assets });
 
 const okFetch = (body: unknown) =>
   jest.fn(async () => ({ ok: true, status: 200, json: async () => body })) as unknown as typeof fetch;
@@ -18,12 +21,12 @@ describe('checkForUpdate', () => {
     const fetchFn = okFetch(release('v1.0.4'));
     await checkForUpdate(fetchFn);
     expect(fetchFn).toHaveBeenCalledWith(LATEST_RELEASE_API, expect.objectContaining({ headers: expect.objectContaining({ Accept: 'application/vnd.github+json' }) }));
-    expect(LATEST_RELEASE_API).toBe('https://api.github.com/repos/emb4b/InspectPlus/releases/latest');
+    expect(LATEST_RELEASE_API).toBe(`https://api.github.com/repos/${REPO}/releases/latest`);
   });
 
   it('reports a newer release with its APK download link', async () => {
     const update = await checkForUpdate(okFetch(release('v1.1.0')));
-    expect(update).toEqual({ version: '1.1.0', url: 'https://github.com/emb4b/InspectPlus/releases/download/v1.1.0/inspectplus.apk' });
+    expect(update).toEqual({ version: '1.1.0', url: `https://github.com/${REPO}/releases/download/v1.1.0/inspectplus.apk` });
   });
 
   it('compares numerically, so 1.0.10 is newer than the running 1.0.4', async () => {
@@ -38,7 +41,7 @@ describe('checkForUpdate', () => {
   it('falls back to the stable latest-APK link when the release carries no .apk asset', async () => {
     const update = await checkForUpdate(okFetch(release('v1.2.0', [{ name: 'notes.txt', browser_download_url: 'x' }])));
     expect(update).toEqual({ version: '1.2.0', url: LATEST_APK_URL });
-    expect(LATEST_APK_URL).toBe('https://github.com/emb4b/InspectPlus/releases/latest/download/inspectplus.apk');
+    expect(LATEST_APK_URL).toBe(`https://github.com/${REPO}/releases/latest/download/inspectplus.apk`);
   });
 
   // Every failure mode is "no banner": the check is a convenience, and an
