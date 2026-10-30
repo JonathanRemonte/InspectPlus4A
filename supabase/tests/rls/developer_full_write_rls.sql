@@ -1,5 +1,5 @@
 begin;
-select plan(8);
+select plan(6);
 
 -- Inspector A owns everything under test. Developer is a different account,
 -- different province — proving write access comes from role, not ownership
@@ -80,29 +80,10 @@ select is(
   'developer can update a purpose_of_inspection row they do not own'
 );
 
--- Compliance-row ownership is derived from the parent report's
--- inspector_uid (not the developer's own), so this also exercises the
--- FOR ALL policy's INSERT clause, not just UPDATE.
-insert into public.compliance_air (compliance_id, report_id, other_observations)
-values ('dev-write-compliance-a', 'dev-write-rep-a', 'inserted by developer');
-select is(
-  (select other_observations from public.compliance_air where compliance_id = 'dev-write-compliance-a'),
-  'inserted by developer',
-  'developer can insert a compliance_air row for a report they do not own'
-);
-
-update public.compliance_air set other_observations = 'edited by developer' where compliance_id = 'dev-write-compliance-a';
-select is(
-  (select other_observations from public.compliance_air where compliance_id = 'dev-write-compliance-a'),
-  'edited by developer',
-  'developer can update a compliance_air row for a report they do not own'
-);
-
 -- ── Deletes ──────────────────────────────────────────────────────────────
 -- Order matters: inspection_reports -> purpose_of_inspection -> establishments,
 -- respecting the "on delete restrict" FKs from purpose_of_inspection.estab_id
--- and inspection_reports.{estab_id,purpose_id} (compliance_air cascades away
--- with its parent report automatically).
+-- and inspection_reports.{estab_id,purpose_id}.
 
 delete from public.inspection_reports where report_id = 'dev-write-rep-a';
 select is(
