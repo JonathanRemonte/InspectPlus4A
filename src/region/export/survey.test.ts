@@ -1,5 +1,5 @@
 import { mapSurvey } from './survey';
-import { fullSurveyBundle, emptySurveyBundle, signatories } from '../../features/export/mappers/fixtures';
+import { fullSurveyBundle, emptySurveyBundle, signatories } from './fixtures';
 import { TICKED, UNTICKED } from '../../features/export/mappers/primitives';
 
 const ctx = { signatories };

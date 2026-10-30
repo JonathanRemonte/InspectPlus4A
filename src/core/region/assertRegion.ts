@@ -18,6 +18,5 @@ export type RegionTypeExportsCheck = [
   R.ReportDataKey,
   R.ComplianceTag,
   R.RegionComplianceView,
-  R.WaterComplianceView,
 ];
 export type RegionDbTypeExportsCheck = [D.RegionSyncEntityName, D.RegionDtoMap, D.RegionCollections];

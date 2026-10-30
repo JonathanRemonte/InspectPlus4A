@@ -19,8 +19,8 @@ import { ComplianceStatusView } from './ComplianceStatusView';
 import { useHeaderScroll } from '../../home/context/HeaderScrollContext';
 import { ReportThemeProvider } from '../../../core/providers/ReportThemeProvider';
 import { AttachmentsSection } from '../../attachments/components/AttachmentsSection';
-import { reportDataModules } from '../../../region/modules';
-import type { ReportDataKey } from '../../../region';
+import { reportDataModuleFor } from '../../../core/region/lookup';
+
 
 interface InspectionReportDetailScreenProps {
   reportId: string;
@@ -124,7 +124,7 @@ try {
 
   // A report type may bring its own tab menu (EMB4B water's 1-6 sections);
   // everything else keeps DEFAULT_REPORT_DETAIL_TABS. See src/region/modules.
-  const dataModule = reportDataModules[report.reportType as ReportDataKey];
+  const dataModule = reportDataModuleFor(report.reportType);
   const tabs = dataModule?.detailTabs?.() ?? DEFAULT_REPORT_DETAIL_TABS;
   const activeMainTab = tabs.find(t => t.key === activeMain) ?? tabs[0];
 

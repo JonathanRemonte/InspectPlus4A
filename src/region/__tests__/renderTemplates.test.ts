@@ -3,7 +3,7 @@ import path from 'path';
 import PizZip from 'pizzip';
 import { renderDocx } from '../../features/export/render/renderDocx';
 import { mapBundle } from '../../features/export/mappers';
-import { emptyWaterBundle, fullSurveyBundle, fullWaterBundle, signatories } from '../../features/export/mappers/fixtures';
+import { emptyWaterBundle, fullSurveyBundle, fullWaterBundle, signatories } from '../export/fixtures';
 import { TICKED } from '../../features/export/mappers/primitives';
 
 // Hoisted above the imports by babel-plugin-jest-hoist; written after them

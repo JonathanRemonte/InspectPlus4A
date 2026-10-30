@@ -1,7 +1,7 @@
-import { mapCommon } from './common';
-import { fullWaterBundle, emptyWaterBundle, malformedWaterBundle, signatories } from './fixtures';
-import { TICKED, UNTICKED } from './primitives';
-import type { TemplateData } from '../types';
+import { mapCommon } from '../../../features/export/mappers/common';
+import { fullWaterBundle, emptyWaterBundle, malformedWaterBundle, signatories } from '../../export/fixtures';
+import { TICKED, UNTICKED } from '../../../features/export/mappers/primitives';
+import type { TemplateData } from '../../../features/export/types';
 
 const ctx = { signatories };
 

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Text } from 'react-native';
 import { FormSection } from '../../../components/form';
-import type { ReportDataKey } from '../../../region';
-import { reportDataModules } from '../../../region/modules';
+
+import { reportDataModuleFor } from '../../../core/region/lookup';
 import type { ComplianceView } from '../hooks/useInspectionReport';
 import { styles } from './ComplianceReadPrimitives';
 
@@ -24,6 +24,6 @@ const EmptyCompliance: React.FC = () => (
 // EMB4B water, never reach this component.
 export const ComplianceStatusView: React.FC<ComplianceStatusViewProps> = ({ compliance, reportType }) => {
   if (compliance.kind === 'none') return <EmptyCompliance />;
-  const Section = reportDataModules[reportType as ReportDataKey]?.ComplianceView;
+  const Section = reportDataModuleFor(reportType)?.ComplianceView;
   return Section ? <Section compliance={compliance} /> : <EmptyCompliance />;
 };

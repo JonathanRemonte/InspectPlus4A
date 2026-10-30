@@ -1,5 +1,5 @@
-import { mapBundle } from './index';
-import { fullWaterBundle, fullSurveyBundle, signatories } from './fixtures';
+import { mapBundle } from '../../../features/export/mappers/index';
+import { fullWaterBundle, fullSurveyBundle, signatories } from '../../export/fixtures';
 
 // Hoisted above the imports by babel-plugin-jest-hoist; written after them
 // to satisfy eslint's import/first rule. The region modules reach the DB.
