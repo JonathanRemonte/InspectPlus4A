@@ -10,7 +10,11 @@ EMB4B (`emb4b/InspectPlus`) is the upstream. The EMB4A repo has a remote named `
 
 **Foundation** (owned by 4B, merged into 4A as-is): everything outside `src/region/`, the `_core_` migrations in `supabase/migrations/`, `scripts/`, and the CI workflows in `.github/workflows/`.
 
-**Region** (owned by each region repo, never merged across): `src/region/**` (including the identity: system name, copyright line, `regionLabel` and `releaseRepo`), the `_region_` migrations, `assets/templates/**`, `assets/icons/**`, `app.json`, `eas.json`, `.env*`, and `supabase/seeds/**`.
+**Region** (owned by each region repo, never merged across): `src/region/**` (including the identity: system name, copyright line, `regionLabel` and `releaseRepo`), the `_region_` migrations, `assets/templates/**`, `assets/icons/**`, `app.json`, `eas.json`, `.env*`, and `supabase/seeds/**`. Also region-owned:
+
+- `src/region/data/psgcSources.json` (the region definition the location scripts read);
+- database tests named `supabase/tests/**/region_*.sql`;
+- in the native Android project, only these lines: `applicationId` in `android/app/build.gradle`, `app_name` in `android/app/src/main/res/values/strings.xml`, the app scheme (`<data android:scheme="..."/>` after the `VIEW` intent) in `android/app/src/main/AndroidManifest.xml`, and the launcher icons under `android/app/src/main/res/mipmap-*`.
 
 A region repo never edits foundation files. If it needs a foundation change, make it in 4B first and merge it down.
 
@@ -44,6 +48,8 @@ npx supabase db reset && npx supabase test db
 `supabase db reset` needs a running local stack (`npx supabase start`, which needs Docker).
 
 Contract drift shows up at `typecheck`: update 4A's `src/region` to the new contract. The region's own tests pin its exact schema and sync registry (`src/region/__tests__/schemaSnapshot.test.ts`, `syncRegistry.test.ts`); 4A keeps its own versions of those. The foundation's tests (`src/db/__tests__/schema.test.ts`, `src/services/sync/syncSchema.test.ts`) check only region-neutral rules and must pass unchanged in both repos.
+
+**Regenerating location data.** Run `node scripts/build-locations.js` then `node scripts/build-barangay-boundaries.js`; both read `src/region/data/psgcSources.json`. The boundary builder refuses to write until every polygon and every barangay match, so new aliases or extra barangays go in the region definition.
 
 ## 5. WatermelonDB versions
 
