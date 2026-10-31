@@ -51,7 +51,7 @@ npx supabase db reset && npx supabase test db
 
 Contract drift shows up at `typecheck`: update 4A's `src/region` to the new contract. The region's own tests pin its exact schema and sync registry (`src/region/__tests__/schemaSnapshot.test.ts`, `syncRegistry.test.ts`); 4A keeps its own versions of those. The foundation's tests (`src/db/__tests__/schema.test.ts`, `src/services/sync/syncSchema.test.ts`) check only region-neutral rules and must pass unchanged in both repos.
 
-**Regenerating location data.** Run `node scripts/build-locations.js` then `node scripts/build-barangay-boundaries.js`; both read `src/region/data/psgcSources.json`. The boundary builder refuses to write until every polygon and every barangay match, so new aliases or extra barangays go in the region definition.
+**Regenerating location data.** Run `node scripts/build-locations.js` then `node scripts/build-barangay-boundaries.js`; both read `src/region/data/psgcSources.json`. The boundary builder refuses to write until every polygon and every barangay match, so new aliases or extra barangays go in the region definition. `excludedBarangays` drops a 2021 address-dataset barangay that the PSGC 2023 boundaries no longer have (a merge or dissolution), each with a `note`; pair it with an `extraBarangays` entry when the barangay was renamed or merged into a new name.
 
 ## 5. WatermelonDB versions
 
