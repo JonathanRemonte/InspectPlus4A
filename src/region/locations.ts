@@ -1,14 +1,13 @@
 import type { BoundaryEntry, RegionLocations } from '../core/region/contract';
-import { LOCATIONS } from './data/mimaropaLocations';
+import { LOCATIONS } from './data/calabarzonLocations';
 
-// EMB Region 4-B (MIMAROPA): Occidental Mindoro, Oriental Mindoro,
-// Marinduque, Romblon and Palawan.
+// EMB Region 4-A (CALABARZON): Batangas, Cavite, Laguna, Quezon and Rizal.
 export const locations: RegionLocations = {
   locations: LOCATIONS,
-  // Wide enough to show all five MIMAROPA provinces.
-  overview: { center: [120.5, 12.0], zoom: 7 },
-  // ~866 KB of polygons from scripts/build-barangay-boundaries.js; required
-  // inside the function so app start never parses it.
-  loadBoundaries: () => require('./data/mimaropaBoundaries.json') as BoundaryEntry[],
-  outsideBoundariesLabel: 'Outside MIMAROPA barangay boundaries',
+  // Frames all five provinces, Quezon's eastern coast included.
+  overview: { center: [121.7, 14.0], zoom: 7 },
+  // Polygons from scripts/build-barangay-boundaries.js; required inside the
+  // function so app start never parses it.
+  loadBoundaries: () => require('./data/calabarzonBoundaries.json') as BoundaryEntry[],
+  outsideBoundariesLabel: 'Outside CALABARZON barangay boundaries',
 };

@@ -2,33 +2,21 @@
 // src/db/database.ts import it, so nothing here may import src/db/database.
 import type { Database } from '@nozbe/watermelondb';
 import { migrations } from './migrations';
-import { ComplianceAir } from './models/ComplianceAir';
-import { ComplianceEia } from './models/ComplianceEia';
-import { ComplianceHazwaste } from './models/ComplianceHazwaste';
-import { ComplianceWater } from './models/ComplianceWater';
 import { regionTables } from './tables';
 
-export { ComplianceAir, ComplianceEia, ComplianceHazwaste, ComplianceWater };
 export { regionParentDependencies, regionSyncEntities } from './sync';
 export type { RegionDtoMap, RegionSyncEntityName } from './sync';
-export type { ComplianceAirDTO, ComplianceEiaDTO, ComplianceHazwasteDTO, ComplianceWaterDTO } from './sync';
 
 export const regionDb = {
-  schemaVersion: 16,
+  schemaVersion: 1,
   tables: regionTables,
   migrations,
-  modelClasses: [ComplianceAir, ComplianceWater, ComplianceHazwaste, ComplianceEia],
+  modelClasses: [],
 };
 
-// Spread into src/db/database.ts's `collections`, so every existing
-// collections.complianceX call site (and test mock) keeps working.
-export function regionCollectionsFor(database: Database) {
-  return {
-    complianceAir: database.collections.get<ComplianceAir>('compliance_air'),
-    complianceWater: database.collections.get<ComplianceWater>('compliance_water'),
-    complianceHazwaste: database.collections.get<ComplianceHazwaste>('compliance_hazwaste'),
-    complianceEia: database.collections.get<ComplianceEia>('compliance_eia'),
-  };
+// Spread into src/db/database.ts's `collections`; EMB4A has no region tables.
+export function regionCollectionsFor(_database: Database) {
+  return {};
 }
 
 export type RegionCollections = ReturnType<typeof regionCollectionsFor>;

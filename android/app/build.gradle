@@ -89,11 +89,11 @@ android {
 
     namespace 'com.inspectplus'
     defaultConfig {
-        applicationId 'com.inspectplus'
+        applicationId 'com.inspectplus.emb4a'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5
-        versionName "1.0.4"
+        versionCode 1
+        versionName "1.0.0"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }

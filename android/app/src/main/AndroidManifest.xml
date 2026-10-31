@@ -31,7 +31,7 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="inspectplus"/>
+        <data android:scheme="inspectplus4a"/>
       </intent-filter>
     </activity>
   </application>

@@ -1,29 +1,23 @@
 import { region } from '..';
 
-describe('EMB4B region', () => {
-  it('identifies itself', () => {
+describe('EMB4A region', () => {
+  it('identifies itself as EMB4A', () => {
     expect(region.identity).toEqual({
-      id: 'emb4b',
-      systemName: 'EMB4B INSPECTION & MONITORING SYSTEM',
-      copyrightLine: '© 2026 EMB - Environmental Management Bureau, Region 4-B',
-      regionLabel: 'EMB Region 4-B',
-      releaseRepo: 'emb4b/InspectPlus',
+      id: 'emb4a',
+      systemName: 'EMB4A INSPECTION & MONITORING SYSTEM',
+      regionLabel: 'EMB Region 4-A',
+      copyrightLine: '© 2026 EMB - Environmental Management Bureau, Region 4-A',
+      releaseRepo: 'JonathanRemonte/InspectPlus4A',
     });
   });
 
-  it('offers the five MIMAROPA provinces', () => {
-    const provinces = Object.keys(region.locations.locations);
-    expect(provinces).toHaveLength(5);
-    expect(provinces).toEqual(expect.arrayContaining(['Occidental Mindoro', 'Palawan']));
-  });
-
-  it('opens the map on the MIMAROPA overview', () => {
-    expect(region.locations.overview).toEqual({ center: [120.5, 12.0], zoom: 7 });
+  it('offers the five CALABARZON provinces', () => {
+    expect(Object.keys(region.locations.locations)).toEqual(['Batangas', 'Cavite', 'Laguna', 'Quezon', 'Rizal']);
   });
 
   it('loads barangay boundaries lazily', () => {
     const entries = region.locations.loadBoundaries();
-    expect(entries.length).toBeGreaterThan(1000);
-    expect(entries[0]).toEqual(expect.objectContaining({ p: expect.any(String), c: expect.any(String), b: expect.any(String) }));
+    expect(entries.length).toBeGreaterThan(4000);
+    expect(new Set(entries.map(e => e.p))).toEqual(new Set(['Batangas', 'Cavite', 'Laguna', 'Quezon', 'Rizal']));
   });
 });

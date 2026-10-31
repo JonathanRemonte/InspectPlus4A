@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "InspectPlus",
-    "slug": "inspectplus",
-    "scheme": "inspectplus",
-    "version": "1.0.4",
+    "name": "InspectPlus EMB4A",
+    "slug": "inspectplus-emb4a",
+    "scheme": "inspectplus4a",
+    "version": "1.0.0",
     "icon": "./assets/icons/app_icon_night_mode.png",
     "router": {
       "root": "src/app"
     },
     "ios": {
-      "bundleIdentifier": "com.inspectplus"
+      "bundleIdentifier": "com.inspectplus.emb4a"
     },
     "android": {
-      "package": "com.inspectplus",
+      "package": "com.inspectplus.emb4a",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icons/app_icon_night_mode.png",
         "backgroundColor": "#0d2137"
@@ -34,22 +34,22 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "InspectPlus uses the camera to attach inspection photos.",
-          "photosPermission": "InspectPlus needs access to your photo library to attach existing photos.",
+          "cameraPermission": "InspectPlus EMB4A uses the camera to attach inspection photos.",
+          "photosPermission": "InspectPlus EMB4A needs access to your photo library to attach existing photos.",
           "microphonePermission": false
         }
       ],
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "InspectPlus uses your location to geotag photos taken during an inspection."
+          "locationWhenInUsePermission": "InspectPlus EMB4A uses your location to geotag photos taken during an inspection."
         }
       ],
       [
         "expo-media-library",
         {
-          "photosPermission": "InspectPlus needs access to your photos to save downloaded attachments.",
-          "savePhotosPermission": "InspectPlus saves downloaded attachments to your photo library.",
+          "photosPermission": "InspectPlus EMB4A needs access to your photos to save downloaded attachments.",
+          "savePhotosPermission": "InspectPlus EMB4A saves downloaded attachments to your photo library.",
           "isAccessMediaLocationEnabled": false
         }
       ],
@@ -57,11 +57,6 @@
       "expo-asset",
       "@maplibre/maplibre-react-native"
     ],
-    "extra": {
-      "eas": {
-        "projectId": "96f2b410-a311-439d-be28-88c0d23a5201"
-      }
-    },
     "owner": "jonathanremonte"
   }
 }

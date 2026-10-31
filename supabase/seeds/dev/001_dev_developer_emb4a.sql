@@ -1,12 +1,12 @@
 -- Local dev login account, seeded on every `supabase db reset`.
--- Not a real account — only ever runs against the local Supabase stack.
+-- Test-only — never runs against a hosted or production database.
 --
--- Email:    jsavenido.emb4b@outlook.com
+-- Email:    developer@emb4a.test
 -- Password: Test@1234
 
 do $$
 declare
-  v_uid uuid := '00079a4f-b624-435f-8e7a-185fdc9677ef';
+  v_uid uuid := '5a1f0c2e-4a00-4a4a-8a01-000000000001';
 begin
   -- GoTrue scans confirmation_token/recovery_token/email_change* as Go
   -- strings, not nullable strings — NULL here breaks login with a 500
@@ -21,7 +21,7 @@ begin
   ) values (
     '00000000-0000-0000-0000-000000000000',
     v_uid, 'authenticated', 'authenticated',
-    'jsavenido.emb4b@outlook.com', crypt('Test@1234', gen_salt('bf')),
+    'developer@emb4a.test', crypt('Test@1234', gen_salt('bf')),
     now(), now(), now(),
     '{"provider":"email","providers":["email"]}', '{}',
     '', '', '', '', '', '', '', ''
@@ -33,7 +33,7 @@ begin
     last_sign_in_at, created_at, updated_at
   ) values (
     gen_random_uuid(), v_uid,
-    jsonb_build_object('sub', v_uid::text, 'email', 'jsavenido.emb4b@outlook.com'),
+    jsonb_build_object('sub', v_uid::text, 'email', 'developer@emb4a.test'),
     'email', v_uid::text, now(), now(), now()
   )
   on conflict (provider_id, provider) do nothing;
@@ -42,15 +42,9 @@ begin
     uid, first_name, middle_name, last_name, username, role, region,
     province, email, is_active, sync_status, device_id
   ) values (
-    v_uid::text, 'Jervin Clyde', 'Sarona', 'Avenido', 'jsavenido', 'Inspector',
-    'Region 4B MIMAROPA', 'Oriental Mindoro', 'jsavenido.emb4b@outlook.com',
+    v_uid::text, 'Dev', 'Test', 'Developer', 'developer', 'Developer',
+    'Region 4A CALABARZON', 'Laguna', 'developer@emb4a.test',
     true, 'synced', 'seed'
   )
   on conflict (uid) do nothing;
-
-  insert into public.inspector_municipalities (inspector_uid, municipality) values
-    (v_uid::text, 'Calapan City'),
-    (v_uid::text, 'Puerto Galera'),
-    (v_uid::text, 'Pinamalayan')
-  on conflict (inspector_uid, municipality) do nothing;
 end $$;

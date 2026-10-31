@@ -1,10 +1,12 @@
 import { schema } from '../../db/schema';
 
-// Pins the assembled local schema across the region split: same version,
-// same tables, same columns. Regenerate only for an intended schema change.
-describe('local schema', () => {
-  it('is version 16', () => {
-    expect(schema.version).toBe(16);
+// Pins EMB4A's assembled local schema. Regenerate only for an intended change.
+describe('EMB4A local schema', () => {
+  it('is version 1 with only the foundation tables', () => {
+    expect(schema.version).toBe(1);
+    expect(Object.keys(schema.tables).sort()).toEqual(
+      ['attachments', 'establishments', 'inspection_reports', 'purpose_of_inspection', 'survey_reports'],
+    );
   });
 
   it('keeps every table and column', () => {
