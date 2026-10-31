@@ -1,11 +1,17 @@
 begin;
 
-select plan(1);
+select plan(2);
 
 select is(
-  (select array_agg(table_name order by sync_order) from public.sync_tables where owner = 'region'),
-  array['compliance_air', 'compliance_water', 'compliance_hazwaste', 'compliance_eia'],
-  'EMB4B registers its four compliance tables, in push order'
+  (select count(*)::int from public.sync_tables where owner = 'region'),
+  0,
+  'EMB4A registers no region tables yet'
+);
+
+select is(
+  (select count(*)::int from information_schema.tables where table_schema = 'public' and table_name like 'compliance\_%'),
+  0,
+  'EMB4B''s compliance tables are gone'
 );
 
 select * from finish();
