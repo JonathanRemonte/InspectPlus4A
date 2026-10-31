@@ -19,7 +19,7 @@ const DATA = {
   ],
 };
 
-const DEF = { regionCode: '99', provinceOrder: ['Beta', 'Alpha'], extraBarangays: [] };
+const DEF = { regionCode: '99', provinceOrder: ['Beta', 'Alpha'], extraBarangays: [], excludedBarangays: [] };
 
 describe('buildLocations', () => {
   it('keeps the definition’s province order and sorts cities and barangays', () => {
@@ -42,6 +42,37 @@ describe('buildLocations', () => {
     expect(() =>
       buildLocations(DATA, { ...DEF, extraBarangays: [{ province: 'Alpha', city: 'Moro', barangay: 'San Roque', note: '' }] }),
     ).toThrow(/already in the dataset/);
+  });
+
+  it('removes an excluded barangay', () => {
+    const out = buildLocations(DATA, { ...DEF, excludedBarangays: [{ province: 'Beta', city: 'Zeta City', barangay: 'Poblacion', note: 'merged' }] });
+    expect(out.Beta['Zeta City']).toEqual(['Bagong Silang']);
+  });
+
+  it('treats a missing excludedBarangays key as empty', () => {
+    const { excludedBarangays, ...def } = DEF;
+    expect(buildLocations(DATA, def).Beta['Zeta City']).toEqual(['Bagong Silang', 'Poblacion']);
+  });
+
+  it('rejects excluding a barangay the dataset does not have', () => {
+    expect(() =>
+      buildLocations(DATA, { ...DEF, excludedBarangays: [{ province: 'Beta', city: 'Zeta City', barangay: 'Nowhere', note: '' }] }),
+    ).toThrow(/excludedBarangays: Nowhere is not in Zeta City, Beta/);
+  });
+
+  it('rejects excluding from an unknown city', () => {
+    expect(() =>
+      buildLocations(DATA, { ...DEF, excludedBarangays: [{ province: 'Beta', city: 'Nope', barangay: 'Poblacion', note: '' }] }),
+    ).toThrow(/excludedBarangays: no Nope, Beta/);
+  });
+
+  it('allows excluding and adding the same name (a rename keeps one copy)', () => {
+    const out = buildLocations(DATA, {
+      ...DEF,
+      excludedBarangays: [{ province: 'Alpha', city: 'Moro', barangay: 'San Roque', note: 'old' }],
+      extraBarangays: [{ province: 'Alpha', city: 'Moro', barangay: 'San Roque', note: 'new' }],
+    });
+    expect(out.Alpha.Moro).toEqual(['San Roque']);
   });
 
   it('renders a TypeScript module exporting LOCATIONS', () => {
