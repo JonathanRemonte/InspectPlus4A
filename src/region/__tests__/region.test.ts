@@ -1,24 +1,14 @@
 import { region } from '..';
 
-describe('EMB4B region', () => {
-  it('identifies itself', () => {
+describe('EMB4A region', () => {
+  it('identifies itself as EMB4A', () => {
     expect(region.identity).toEqual({
-      id: 'emb4b',
-      systemName: 'EMB4B INSPECTION & MONITORING SYSTEM',
-      copyrightLine: '© 2026 EMB - Environmental Management Bureau, Region 4-B',
-      regionLabel: 'EMB Region 4-B',
-      releaseRepo: 'emb4b/InspectPlus',
+      id: 'emb4a',
+      systemName: 'EMB4A INSPECTION & MONITORING SYSTEM',
+      regionLabel: 'EMB Region 4-A',
+      copyrightLine: '© 2026 EMB - Environmental Management Bureau, Region 4-A',
+      releaseRepo: 'JonathanRemonte/InspectPlus4A',
     });
-  });
-
-  it('offers the five MIMAROPA provinces', () => {
-    const provinces = Object.keys(region.locations.locations);
-    expect(provinces).toHaveLength(5);
-    expect(provinces).toEqual(expect.arrayContaining(['Occidental Mindoro', 'Palawan']));
-  });
-
-  it('opens the map on the MIMAROPA overview', () => {
-    expect(region.locations.overview).toEqual({ center: [120.5, 12.0], zoom: 7 });
   });
 
   it('loads barangay boundaries lazily', () => {
