@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import PizZip from 'pizzip';
 import { mapBundle } from '../../features/export/mappers';
-import { fullSurveyBundle, fullWaterBundle, signatories } from '../../features/export/mappers/fixtures';
+import { fullSurveyBundle, fullWaterBundle, signatories } from '../export/fixtures';
 import type { TemplateData } from '../../features/export/types';
 
 // Hoisted above the imports by babel-plugin-jest-hoist; written after them

@@ -3,6 +3,15 @@ import { Text } from 'react-native';
 import TestRenderer from 'react-test-renderer';
 import { ReportThemeProvider, useReportAccent } from './ReportThemeProvider';
 import { Colors } from '../../design/colors';
+import { REPORT_TYPE_DISPLAY } from '../../constants/reportTypeDisplay';
+
+// Report types come from the region's catalog; a region with no types has
+// nothing to theme, so the per-type cases skip.
+const DISPLAYS = Object.entries(REPORT_TYPE_DISPLAY);
+const itWhenTypes = DISPLAYS.length > 0 ? it : it.skip;
+const itWhenTwoTypes = DISPLAYS.length > 1 ? it : it.skip;
+const [FIRST_KEY, FIRST] = DISPLAYS[0] ?? ['', undefined];
+const [SECOND_KEY, SECOND] = DISPLAYS[1] ?? ['', undefined];
 
 // A probe that renders whatever accent the hook hands it, so a test can read
 // the resolved colour straight off the tree.
@@ -23,26 +32,26 @@ describe('useReportAccent', () => {
     expect(accentOf(<Probe fallback={Colors.navy} />)).toBe(Colors.navy);
   });
 
-  it("hands back the report type's text colour inside a provider", () => {
+  itWhenTypes("hands back the report type's text colour inside a provider", () => {
     expect(
       accentOf(
-        <ReportThemeProvider reportType="water_monitoring">
+        <ReportThemeProvider reportType={FIRST_KEY}>
           <Probe fallback={Colors.navy} />
         </ReportThemeProvider>,
       ),
-    ).toBe(Colors.water.text);
+    ).toBe(FIRST?.textColor);
   });
 
-  it('themes each type with its own colour, not a shared one', () => {
-    const water = accentOf(
-      <ReportThemeProvider reportType="water_monitoring"><Probe fallback={Colors.navy} /></ReportThemeProvider>,
+  itWhenTwoTypes('themes each type with its own colour, not a shared one', () => {
+    const first = accentOf(
+      <ReportThemeProvider reportType={FIRST_KEY}><Probe fallback={Colors.navy} /></ReportThemeProvider>,
     );
-    const eia = accentOf(
-      <ReportThemeProvider reportType="eia"><Probe fallback={Colors.navy} /></ReportThemeProvider>,
+    const second = accentOf(
+      <ReportThemeProvider reportType={SECOND_KEY}><Probe fallback={Colors.navy} /></ReportThemeProvider>,
     );
-    expect(water).toBe(Colors.water.text);
-    expect(eia).toBe(Colors.eia.text);
-    expect(water).not.toBe(eia);
+    expect(first).toBe(FIRST?.textColor);
+    expect(second).toBe(SECOND?.textColor);
+    expect(first).not.toBe(second);
   });
 
   // A report written by a newer build with a type this one doesn't know

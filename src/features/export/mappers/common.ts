@@ -3,6 +3,7 @@ import { formatEstablishmentLocation } from '../../../utils/establishmentLocatio
 import { DOCUMENTS_REVIEWED_OPTIONS } from '../../../region';
 import type { PermitSnapshotItem } from '../../../services/sync/syncTypes';
 import { ROW_MINIMUMS } from '../rowMinimums';
+import type { ClosingFields } from '../../inspections/hooks/useInspectionReport';
 import type { ExportPhoto, InspectionBundle, MapContext, TemplateData } from '../types';
 import { asArray, cb, joinNonEmpty, normalizeLabel, numberText, padRows, text } from './primitives';
 
@@ -147,6 +148,9 @@ export function mapSignatures(ctx: MapContext): TemplateData {
 
 export function mapCommon(bundle: InspectionBundle, ctx: MapContext): TemplateData {
   const { report, purpose, compliance } = bundle;
+  // Every region compliance view carries the closing fields (see
+  // ClosingFields); with no report types the union is just { kind: 'none' }.
+  const closing = (compliance.kind === 'none' ? null : compliance) as ClosingFields | null;
   const s = report.establishmentSnapshot ?? ({} as InspectionBundle['report']['establishmentSnapshot']);
   const lines = asArray(s.product_lines);
 
@@ -189,9 +193,9 @@ export function mapCommon(bundle: InspectionBundle, ctx: MapContext): TemplateDa
     purpose_cb_commitment_others: cb(!!purpose?.commitmentRows?.find(r => r.itemKey === 'others')?.checked),
 
     ...mapPermits(report.permitsSnapshot ?? []),
-    ...mapDocuments(compliance.kind === 'none' ? [] : compliance.documentsReviewed),
-    other_observations: compliance.kind === 'none' ? '' : text(compliance.otherObservations),
-    remarks_recommendations: compliance.kind === 'none' ? '' : text(compliance.remarksRecommendations),
+    ...mapDocuments(closing?.documentsReviewed ?? []),
+    other_observations: text(closing?.otherObservations),
+    remarks_recommendations: text(closing?.remarksRecommendations),
     ...mapSignatures(ctx),
     photo_rows: mapPhotos(bundle.photos),
   };

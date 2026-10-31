@@ -50,7 +50,7 @@ export interface RegionIndex {
 
 // Type exports foundation also imports by name from `src/region` (checked in
 // assertRegion.ts, since interfaces can't express them): ReportTypeKey,
-// ReportDataKey, ComplianceTag, RegionComplianceView, WaterComplianceView.
+// ReportDataKey, ComplianceTag, RegionComplianceView.
 // From `src/region/db`: RegionSyncEntityName, RegionDtoMap, RegionCollections.
 
 /** One simplified barangay polygon, as scripts/build-barangay-boundaries.js emits it. */

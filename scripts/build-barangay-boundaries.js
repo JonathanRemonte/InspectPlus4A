@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// Builds src/data/mimaropaBoundaries.json — the barangay polygons the map
+// Builds the region's barangay boundary bundle (path from src/region/data/psgcSources.json) — the barangay polygons the map
 // picker uses to turn a pin into Province / City / Barangay offline.
 //
 // Source: faeldon/philippines-json-maps (MIT), 2023 PSGC. Medres
-// per-municipality barangay files for the 73 MIMAROPA municipalities;
-// the three barangays whose medres geometry is null are taken from hires.
+// per-municipality barangay files for the region's municipalities;
+// barangays whose medres geometry is null are taken from hires.
 //
 // Usage:
 //   node scripts/build-barangay-boundaries.js            # downloads into node_modules/.cache/psgc-boundaries
@@ -15,27 +15,21 @@
 
 const fs = require('fs');
 const path = require('path');
-const {
-  PROVINCE_BY_ADM2,
-  buildLocationIndex,
-  matchFeature,
-} = require('./barangayNameMatch');
+const { buildLocationIndex, matchFeature } = require('./barangayNameMatch');
+const { loadRegionDefinition } = require('./regionDefinition');
 
 // Pinned to the commit `master` pointed at on 2026-09-22 (via
 // `gh api repos/faeldon/philippines-json-maps/commits/master --jq .sha`),
 // not `master` itself, so a future regeneration can't silently pull
 // different upstream geometry than the bundle currently committed.
 const BASE = 'https://raw.githubusercontent.com/faeldon/philippines-json-maps/8eeead560246863c8c820c31ca6fbca81a279477/2023/geojson';
-const PROVINCE_CODES = [1704000000, 1705100000, 1705200000, 1705300000, 1705900000];
-const PUERTO_PRINCESA = 1731500000;
-const OUT = path.join(__dirname, '..', 'src', 'data', 'mimaropaBoundaries.json');
-const LOCATIONS_TS = path.join(__dirname, '..', 'src', 'data', 'mimaropaLocations.ts');
+const def = loadRegionDefinition();
 const DECIMALS = 5;
 
 function loadLocations() {
   // The TS file is a JSON object literal after `= {` — the same slice the
   // waterbodies generator relies on.
-  const src = fs.readFileSync(LOCATIONS_TS, 'utf8');
+  const src = fs.readFileSync(def.outputs.locations, 'utf8');
   const start = src.indexOf('= {') + 2;
   return JSON.parse(src.slice(start).trim().replace(/;$/, ''));
 }
@@ -120,11 +114,9 @@ function resolveBySmallestBbox(allEntries, lat, lng) {
   return best;
 }
 
-// MIMAROPA's envelope, generously padded — anything outside this is not a
+// The region's envelope, generously padded — anything outside this is not a
 // simplification artifact, it's a bad coordinate (wrong axis order, wrong
 // units, a stray feature from another region).
-const MIMAROPA_ENVELOPE = { w: 114.0, s: 7.0, e: 123.5, n: 14.5 };
-
 function polygonEntry(base, polygonCoords) {
   const rings = polygonCoords.map(flattenRing);
   let w = Infinity, s = Infinity, e = -Infinity, n = -Infinity;
@@ -142,14 +134,16 @@ async function main() {
   const locations = loadLocations();
   const index = buildLocationIndex(locations);
 
-  // Municipality names come from the province-level files; Puerto Princesa
-  // is not in any of them and is aliased in barangayNameMatch.js.
+  // Municipality names come from the province-level files; municipalities
+  // listed in the region definition's extraMunicipalityCodes are not in any
+  // province file, and their names come from municipalityAliases in
+  // src/region/data/psgcSources.json.
   const muniNameByPsgc = {};
-  for (const code of PROVINCE_CODES) {
+  for (const code of def.boundaries.provinceCodes) {
     const fc = await fetchJson(`provdists/lowres/municities-provdist-${code}.0.001.json`, dir);
     for (const f of fc.features) muniNameByPsgc[f.properties.adm3_psgc] = f.properties.adm3_en;
   }
-  const muniCodes = [...Object.keys(muniNameByPsgc).map(Number), PUERTO_PRINCESA].sort();
+  const muniCodes = [...Object.keys(muniNameByPsgc).map(Number), ...def.boundaries.extraMunicipalityCodes].sort();
 
   const entries = [];
   const errors = [];
@@ -158,10 +152,10 @@ async function main() {
     let hires = null;
     for (const feature of medres.features) {
       const props = feature.properties;
-      if (!PROVINCE_BY_ADM2[props.adm2_psgc]) { errors.push(`unknown adm2 ${props.adm2_psgc}`); continue; }
+      if (!def.boundaries.provinceByAdm2[props.adm2_psgc]) { errors.push(`unknown adm2 ${props.adm2_psgc}`); continue; }
       let match;
       try {
-        match = matchFeature(props, muniNameByPsgc, index);
+        match = matchFeature(props, muniNameByPsgc, index, def.boundaries);
       } catch (err) {
         errors.push(err.message);
         continue;
@@ -186,7 +180,7 @@ async function main() {
     const medres = JSON.parse(fs.readFileSync(path.join(dir, `bgysubmuns-municity-${code}.0.01.json`), 'utf8'));
     for (const f of medres.features) {
       try {
-        const m = matchFeature(f.properties, muniNameByPsgc, index);
+        const m = matchFeature(f.properties, muniNameByPsgc, index, def.boundaries);
         const key = `${m.province}|${m.city}|${m.barangay}`;
         psgcPerKey.set(key, [...(psgcPerKey.get(key) ?? []), f.properties.adm4_psgc]);
       } catch { /* already reported above */ }
@@ -209,8 +203,8 @@ async function main() {
   // polygon) — neither of the checks above would catch that.
   for (const e of entries) {
     const [w, s, east, n] = e.bbox;
-    if (w < MIMAROPA_ENVELOPE.w || s < MIMAROPA_ENVELOPE.s || east > MIMAROPA_ENVELOPE.e || n > MIMAROPA_ENVELOPE.n) {
-      errors.push(`BBOX OUTSIDE MIMAROPA: ${e.b}, ${e.c}, ${e.p} bbox=[${e.bbox.join(', ')}]`);
+    if (w < def.envelope.w || s < def.envelope.s || east > def.envelope.e || n > def.envelope.n) {
+      errors.push(`BBOX OUTSIDE ${def.regionName}: ${e.b}, ${e.c}, ${e.p} bbox=[${e.bbox.join(', ')}]`);
     }
   }
   for (const e of entries) {
@@ -239,9 +233,9 @@ async function main() {
   }
 
   entries.sort((a, b) => a.p.localeCompare(b.p) || a.c.localeCompare(b.c) || a.b.localeCompare(b.b));
-  fs.writeFileSync(OUT, JSON.stringify(entries));
-  const kb = Math.round(fs.statSync(OUT).size / 1024);
-  console.log(`Wrote ${entries.length} polygons for ${seenByKey.size} barangays to ${path.relative(process.cwd(), OUT)} (${kb} KB).`);
+  fs.writeFileSync(def.outputs.boundaries, JSON.stringify(entries));
+  const kb = Math.round(fs.statSync(def.outputs.boundaries).size / 1024);
+  console.log(`Wrote ${entries.length} polygons for ${seenByKey.size} barangays to ${path.relative(process.cwd(), def.outputs.boundaries)} (${kb} KB).`);
 }
 
 main().catch(err => {

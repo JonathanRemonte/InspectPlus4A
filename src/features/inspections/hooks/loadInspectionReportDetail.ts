@@ -4,8 +4,8 @@ import type { Attachment } from '../../../db/models/Attachment';
 import { isEstablishmentVisible, isPrivilegedRole, reportSyncStatusWithAttachments } from '../../establishments/hooks/useEstablishment';
 import { buildPurposeFormFromModel, PurposeFormState } from '../types';
 import type { ComplianceView, InspectionReportSummary } from './useInspectionReport';
-import { reportDataModules } from '../../../region/modules';
-import type { ReportDataKey } from '../../../region';
+import { reportDataModuleFor } from '../../../core/region/lookup';
+
 
 export interface Viewer {
   uid: string;
@@ -84,7 +84,7 @@ export async function loadInspectionReportDetail(
 
   // The compliance row is type-specific; the region module for this report
   // type knows its table and shape (src/region/modules).
-  const dataModule = reportDataModules[reportModel.reportType as ReportDataKey];
+  const dataModule = reportDataModuleFor(reportModel.reportType);
   const complianceView: ComplianceView = (await dataModule?.loadCompliance(reportModel.reportId)) ?? { kind: 'none' };
 
   return {

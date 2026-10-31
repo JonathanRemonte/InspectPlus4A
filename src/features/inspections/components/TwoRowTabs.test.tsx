@@ -4,6 +4,7 @@ import TestRenderer from 'react-test-renderer';
 import { TwoRowTabs, TwoRowMainTabDef } from './TwoRowTabs';
 import { ReportThemeProvider } from '../../../core/providers/ReportThemeProvider';
 import { Colors } from '../../../constants/colors';
+import { REPORT_TYPE_DISPLAY } from '../../../constants/reportTypeDisplay';
 
 const flattenStyle = (style: unknown): Record<string, unknown> =>
   Object.assign({}, ...([style].flat(Infinity).filter(Boolean) as Record<string, unknown>[]));
@@ -28,6 +29,13 @@ const activeTab = (r: TestRenderer.ReactTestRenderer) =>
 const activeLabel = (r: TestRenderer.ReactTestRenderer) =>
   r.root.findAll((n) => n.type === Text && n.props.children === 'General Information')[0];
 
+// The first report type with a non-neutral accent (not the muted/navy defaults)
+// The report type comes from the region's catalog; with no report types there
+// is no accent to pin, so the accented cases skip.
+const ACCENTED = Object.entries(REPORT_TYPE_DISPLAY).find(([, d]) => d.textColor !== Colors.textMuted && d.textColor !== Colors.navy);
+const itWhenAccented = ACCENTED ? it : it.skip;
+const [ACCENT_KEY, ACCENT_DISPLAY] = ACCENTED ?? ['', undefined];
+
 describe('TwoRowTabs report accent', () => {
   it('keeps the active tab brand green outside a report screen', () => {
     const r = render(<TwoRowTabs tabs={tabs} activeMain="geninfo" onMainChange={() => {}} />);
@@ -35,19 +43,19 @@ describe('TwoRowTabs report accent', () => {
     expect(flattenStyle(activeLabel(r).props.style).color).toBe(Colors.green);
   });
 
-  it("paints the active tab in the report type's accent inside one", () => {
+  itWhenAccented("paints the active tab in the report type's accent inside one", () => {
     const r = render(
-      <ReportThemeProvider reportType="water_monitoring">
+      <ReportThemeProvider reportType={ACCENT_KEY}>
         <TwoRowTabs tabs={tabs} activeMain="geninfo" onMainChange={() => {}} />
       </ReportThemeProvider>,
     );
-    expect(flattenStyle(activeTab(r).props.style).borderTopColor).toBe(Colors.water.text);
-    expect(flattenStyle(activeLabel(r).props.style).color).toBe(Colors.water.text);
+    expect(flattenStyle(activeTab(r).props.style).borderTopColor).toBe(ACCENT_DISPLAY?.textColor);
+    expect(flattenStyle(activeLabel(r).props.style).color).toBe(ACCENT_DISPLAY?.textColor);
   });
 
-  it('leaves a resting tab’s label muted whatever the accent', () => {
+  itWhenAccented('leaves a resting tab’s label muted whatever the accent', () => {
     const r = render(
-      <ReportThemeProvider reportType="water_monitoring">
+      <ReportThemeProvider reportType={ACCENT_KEY}>
         <TwoRowTabs tabs={tabs} activeMain="geninfo" onMainChange={() => {}} />
       </ReportThemeProvider>,
     );

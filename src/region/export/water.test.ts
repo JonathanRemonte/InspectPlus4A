@@ -1,5 +1,5 @@
 import { mapWater } from './water';
-import { fullWaterBundle, emptyWaterBundle, malformedWaterBundle, fullWaterCompliance, signatories } from '../../features/export/mappers/fixtures';
+import { fullWaterBundle, emptyWaterBundle, malformedWaterBundle, fullWaterCompliance, signatories } from './fixtures';
 import { TICKED, UNTICKED } from '../../features/export/mappers/primitives';
 import { WATER_FINDINGS_CHECKLIST } from '../inspections/water/waterChecklistData';
 import { ROW_MINIMUMS } from '../../features/export/rowMinimums';

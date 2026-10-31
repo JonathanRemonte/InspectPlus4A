@@ -1,5 +1,5 @@
-import type { InspectionBundle, SurveyBundle, Signatories, ExportPhoto } from '../types';
-import type { WaterComplianceView } from '../../../region';
+import type { InspectionBundle, SurveyBundle, Signatories, ExportPhoto } from '../../features/export/types';
+import type { WaterComplianceView } from '..';
 
 export const signatories: Signatories = {
   inspectorName: 'Juan Dela Cruz',

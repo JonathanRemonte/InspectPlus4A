@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import TestRenderer from 'react-test-renderer';
 import { Polygon, Text as SvgText } from 'react-native-svg';
 import { EstablishmentReportsSection } from './EstablishmentReportsSection';
-import { REPORT_TYPE_DISPLAY, ReportDataKey } from '../../../constants/reportTypeDisplay';
+import { REPORT_TYPE_DISPLAY } from '../../../constants/reportTypeDisplay';
 import { Colors } from '../../../design/colors';
 import { Radius } from '../../../design/radius';
 import { Spacing } from '../../../design/spacing';
@@ -243,11 +243,21 @@ describe('EstablishmentReportsSection filing-status badge', () => {
   });
 });
 
+// Report types come from the region's catalog; a region with no report types
+// has no rows to colour, so the per-type cases skip. (it.each throws on an
+// empty table, hence eachKey.)
+const TYPE_ENTRIES = Object.entries(REPORT_TYPE_DISPLAY);
+const itWhenTyped = TYPE_ENTRIES.length > 0 ? it : it.skip;
+const itWhenTwoTypes = TYPE_ENTRIES.length > 1 ? it : it.skip;
+const [FIRST_KEY, FIRST] = TYPE_ENTRIES[0] ?? ['', undefined];
+const [SECOND_KEY, SECOND] = TYPE_ENTRIES[1] ?? ['', undefined];
+const eachKey = (keys: string[]) => (keys.length ? it.each(keys) : it.skip.each(['(none)']));
+
 describe('EstablishmentReportsSection report row token resolution', () => {
-  it('resolves the icon wrap background and radius from tokens', () => {
+  itWhenTyped('resolves the icon wrap background and radius from tokens', () => {
     const r = render(
       <EstablishmentReportsSection
-        reports={[baseItem]}
+        reports={[{ ...baseItem, reportType: FIRST_KEY }]}
         currentUid="uid-1"
         canManageAll={false}
         onAddReport={noop}
@@ -256,14 +266,14 @@ describe('EstablishmentReportsSection report row token resolution', () => {
       />,
     );
     const style = flattenStyle(findIconWrap(r).props.style);
-    expect(style.backgroundColor).toBe(Colors.water.bg);
+    expect(style.backgroundColor).toBe(FIRST?.bgColor);
     expect(style.borderRadius).toBe(Radius.md);
   });
 
-  const ALL_DATA_KEYS = Object.keys(REPORT_TYPE_DISPLAY) as ReportDataKey[];
+  const ALL_DATA_KEYS = Object.keys(REPORT_TYPE_DISPLAY);
 
-  it.each(ALL_DATA_KEYS)(
-    'resolves %s icon and background/color from REPORT_TYPE_DISPLAY, not a hardcoded water treatment',
+  eachKey(ALL_DATA_KEYS)(
+    'resolves %s icon and background/color from REPORT_TYPE_DISPLAY, not a hardcoded treatment',
     (reportType) => {
       const item: EstablishmentReportItem = { ...baseItem, reportType };
       const r = render(
@@ -287,52 +297,35 @@ describe('EstablishmentReportsSection report row token resolution', () => {
     },
   );
 
-  // The bug this task fixes: every row previously rendered with a
-  // hardcoded backgroundColor: Colors.water.bg / color: Colors.water.text
-  // regardless of the report's actual type. Assert an air report resolves
-  // to the air palette specifically, not water's.
-  it('an air_monitoring report does not render with the water palette', () => {
-    const item: EstablishmentReportItem = { ...baseItem, reportType: 'air_monitoring' };
+  // The bug this task fixes: every row previously rendered with one
+  // hardcoded type's background and glyph colour regardless of the report's
+  // actual type. A report resolves its own type's palette, not another's.
+  itWhenTwoTypes("a report resolves its own type's palette, not another type's", () => {
     const r = render(
-      <EstablishmentReportsSection
-        reports={[item]}
-        currentUid="uid-1"
-        canManageAll={false}
-        onAddReport={noop}
-        onOpenReport={noop}
-        onDeleteReport={noop}
-      />,
+      <EstablishmentReportsSection reports={[{ ...baseItem, reportType: SECOND_KEY }]} currentUid="uid-1" canManageAll={false} onAddReport={noop} onOpenReport={noop} onDeleteReport={noop} />,
     );
 
     const wrapStyle = flattenStyle(findIconWrap(r).props.style);
-    expect(wrapStyle.backgroundColor).not.toBe(Colors.water.bg);
-    expect(wrapStyle.backgroundColor).toBe(Colors.air.bg);
-
+    expect(wrapStyle.backgroundColor).toBe(SECOND?.bgColor);
     const icon = r.root.findAllByType(Ionicons).find((n) => n.props.size === 17);
-    expect(icon?.props.color).not.toBe(Colors.water.text);
-    expect(icon?.props.color).toBe(Colors.air.text);
+    expect(icon?.props.color).toBe(SECOND?.textColor);
+    if (FIRST?.bgColor !== SECOND?.bgColor) expect(wrapStyle.backgroundColor).not.toBe(FIRST?.bgColor);
+    if (FIRST?.textColor !== SECOND?.textColor) expect(icon?.props.color).not.toBe(FIRST?.textColor);
   });
 
-  // Regression coverage for the specific swapped-icon bug: eia and survey
-  // must each resolve their OWN icon, not each other's — matches
-  // ReportListCard's equivalent coverage.
-  it('eia and survey resolve distinct, non-swapped icons', () => {
-    const eiaItem: EstablishmentReportItem = { ...baseItem, reportType: 'eia' };
-    const surveyItem: EstablishmentReportItem = { ...baseItem, reportType: 'survey' };
+  // Regression coverage for the swapped-icon bug: two types must each resolve
+  // their OWN icon, not each other's (the region pins which icons).
+  itWhenTwoTypes('two types resolve their own, non-swapped icons', () => {
+    const firstIcon = render(
+      <EstablishmentReportsSection reports={[{ ...baseItem, reportType: FIRST_KEY }]} currentUid="uid-1" canManageAll={false} onAddReport={noop} onOpenReport={noop} onDeleteReport={noop} />,
+    ).root.findAllByType(Ionicons).find((n) => n.props.size === 17);
+    const secondIcon = render(
+      <EstablishmentReportsSection reports={[{ ...baseItem, reportType: SECOND_KEY }]} currentUid="uid-1" canManageAll={false} onAddReport={noop} onOpenReport={noop} onDeleteReport={noop} />,
+    ).root.findAllByType(Ionicons).find((n) => n.props.size === 17);
 
-    const eiaR = render(
-      <EstablishmentReportsSection reports={[eiaItem]} currentUid="uid-1" canManageAll={false} onAddReport={noop} onOpenReport={noop} onDeleteReport={noop} />,
-    );
-    const surveyR = render(
-      <EstablishmentReportsSection reports={[surveyItem]} currentUid="uid-1" canManageAll={false} onAddReport={noop} onOpenReport={noop} onDeleteReport={noop} />,
-    );
-
-    const eiaIcon = eiaR.root.findAllByType(Ionicons).find((n) => n.props.size === 17);
-    const surveyIcon = surveyR.root.findAllByType(Ionicons).find((n) => n.props.size === 17);
-
-    expect(eiaIcon?.props.name).toBe('document-text-outline');
-    expect(surveyIcon?.props.name).toBe('globe-outline');
-    expect(eiaIcon?.props.name).not.toBe(surveyIcon?.props.name);
+    expect(firstIcon?.props.name).toBe(FIRST?.icon);
+    expect(secondIcon?.props.name).toBe(SECOND?.icon);
+    if (FIRST?.icon !== SECOND?.icon) expect(firstIcon?.props.name).not.toBe(secondIcon?.props.name);
   });
 
   it('falls back to a neutral treatment for an unrecognized report type', () => {

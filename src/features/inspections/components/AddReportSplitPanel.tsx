@@ -32,7 +32,7 @@ import {
   buildPurposeFormFromModel,
   emptyPurposeForm,
 } from '../types';
-import { reportForms } from '../../../region/modules';
+import { reportFormFor } from '../../../core/region/lookup';
 import type { ShellStart } from '../../../core/region/contract';
 import { useHeaderScroll } from '../../home/context/HeaderScrollContext';
 
@@ -144,7 +144,7 @@ export const AddReportSplitPanel: React.FC<AddReportSplitPanelProps> = ({ estabI
   const handleBack = useCallback(() => router.back(), []);
   const handleOpenForm = useCallback(() => setStarted(true), []);
 
-  const FormShell = selectedType ? reportForms[selectedType]?.FormShell : undefined;
+  const FormShell = selectedType ? reportFormFor(selectedType)?.FormShell : undefined;
   if (started && FormShell && generalInfo) {
     const start: ShellStart = {
       estabId,

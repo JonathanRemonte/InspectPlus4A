@@ -5,6 +5,7 @@ import * as regionDbIndex from '../../region/db';
 import * as regionModulesIndex from '../../region/modules';
 import type * as R from '../../region';
 import type * as D from '../../region/db';
+import type { ClosingFields } from '../../features/inspections/hooks/useInspectionReport';
 import type { RegionDbIndex, RegionIndex, RegionModulesIndex } from './contract';
 
 export const regionIndexCheck: RegionIndex = regionIndex;
@@ -18,6 +19,9 @@ export type RegionTypeExportsCheck = [
   R.ReportDataKey,
   R.ComplianceTag,
   R.RegionComplianceView,
-  R.WaterComplianceView,
 ];
 export type RegionDbTypeExportsCheck = [D.RegionSyncEntityName, D.RegionDtoMap, D.RegionCollections];
+
+// mapCommon casts the compliance view to ClosingFields, so every region view
+// must carry the closing fields. Holds for a union and for `never` (no types).
+export const closingFieldsCheck: [R.RegionComplianceView] extends [ClosingFields] ? true : false = true;

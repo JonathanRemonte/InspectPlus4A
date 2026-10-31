@@ -61,6 +61,14 @@ export interface ChecklistGroup {
 // region's per-type views (src/region/complianceViews.ts), or none yet.
 export type ComplianceView = RegionComplianceView | { kind: 'none' };
 
+// The closing section every region compliance view carries, which the shared
+// export block reads without knowing the report type.
+export interface ClosingFields {
+  otherObservations: string | null;
+  remarksRecommendations: string | null;
+  documentsReviewed: string[];
+}
+
 interface UseInspectionReportReturn {
   report: InspectionReportSummary | null;
   purpose: PurposeFormState | null;

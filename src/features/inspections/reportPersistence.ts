@@ -1,7 +1,14 @@
 import { Q } from '@nozbe/watermelondb';
 import { database, collections } from '../../db/database';
 import { notifySyncDataChanged } from '../../services/sync/syncEvents';
-import { COMPLIANCE_COLLECTIONS, type ReportDataKey } from '../../region';
+import type { Collection, Model } from '@nozbe/watermelondb';
+import { COMPLIANCE_COLLECTIONS } from '../../region';
+import type { RegionIndex } from '../../core/region/contract';
+
+// The region's maps are keyed by its own unions, which are `never` for a region
+// with no report types; widen to the contract's string-keyed shape once.
+const complianceCollectionNames: RegionIndex['COMPLIANCE_COLLECTIONS'] = COMPLIANCE_COLLECTIONS;
+const allCollections = collections as unknown as Record<string, Collection<Model> | undefined>;
 
 // Marks a local inspection report as pending_delete. The sync pipeline
 // already treats inspection_reports as a soft-delete entity end-to-end
@@ -27,9 +34,10 @@ export async function deleteInspectionReportRecord(reportId: string): Promise<vo
     const reportRecord = await collections.inspectionReports.find(reportId);
 
     if (reportRecord.syncState === 'pending_create') {
-      const complianceCollectionKey = COMPLIANCE_COLLECTIONS[reportRecord.reportType as ReportDataKey];
-      if (complianceCollectionKey) {
-        const complianceRows = await collections[complianceCollectionKey]
+      const complianceCollectionKey = complianceCollectionNames[reportRecord.reportType];
+      const complianceCollection = complianceCollectionKey ? allCollections[complianceCollectionKey] : undefined;
+      if (complianceCollection) {
+        const complianceRows = await complianceCollection
           .query(Q.where('reportId', reportId))
           .fetch();
         await Promise.all(complianceRows.map(row => row.destroyPermanently()));

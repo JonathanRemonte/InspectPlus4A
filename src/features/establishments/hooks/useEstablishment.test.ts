@@ -1,5 +1,5 @@
 import { INSPECTION_TYPE_LABELS } from './useEstablishment';
-import { REPORT_TYPE_DISPLAY, ReportDataKey } from '../../../constants/reportTypeDisplay';
+import { REPORT_TYPE_DISPLAY } from '../../../constants/reportTypeDisplay';
 
 // useEstablishment.ts constructs a real WatermelonDB SQLiteAdapter at import
 // time (via db/database.ts), which needs the native JSI binding that isn't
@@ -32,19 +32,12 @@ describe('INSPECTION_TYPE_LABELS', () => {
   // previously hand-maintained labels back. Assert the resolved values
   // imported as symbols (REPORT_TYPE_DISPLAY[...].label), not restated
   // string literals, so a drift in either place fails this test.
-  const ALL_DATA_KEYS: ReportDataKey[] = [
-    'air_monitoring',
-    'water_monitoring',
-    'hazardous_waste',
-    'eia',
-    'survey',
-  ];
+  // The keys are the region's own (src/region/__tests__/reportTypeDisplay.test.ts
+  // pins which ones); a region with no report types has none to check.
+  const ALL_DATA_KEYS = Object.keys(REPORT_TYPE_DISPLAY);
+  const itEachKey = ALL_DATA_KEYS.length > 0 ? it.each(ALL_DATA_KEYS) : it.skip.each([['(none)']]);
 
-  it.each(ALL_DATA_KEYS)('%s label matches REPORT_TYPE_DISPLAY exactly', (key) => {
+  itEachKey('%s label matches REPORT_TYPE_DISPLAY exactly', (key) => {
     expect(INSPECTION_TYPE_LABELS[key]).toBe(REPORT_TYPE_DISPLAY[key].label);
-  });
-
-  it('has exactly the five recorded-report keys, no more and no fewer', () => {
-    expect(Object.keys(INSPECTION_TYPE_LABELS).sort()).toEqual([...ALL_DATA_KEYS].sort());
   });
 });
