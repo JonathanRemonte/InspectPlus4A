@@ -2,7 +2,10 @@
 // Builds the region's province -> city/municipality -> barangay table (the
 // LOCATIONS the address dropdowns cascade through, bundled for offline use)
 // from the PSGC-derived isaacdarcilla/philippine-addresses dataset, using the
-// region definition in src/region/data/psgcSources.json.
+// region definition in src/region/data/psgcSources.json. The definition can
+// add barangays the dataset lacks (extraBarangays) and drop ones it still has
+// but the PSGC 2023 boundaries no longer do (excludedBarangays); exclusions are
+// applied before extras, so a rename is one exclusion plus one extra.
 //
 // Usage:
 //   node scripts/build-locations.js            # downloads into node_modules/.cache/psgc-addresses
@@ -42,6 +45,13 @@ function buildLocations({ provinces, cities, barangays }, def) {
     for (const city of cities.filter(c => c.province_code === province.province_code)) {
       out[name][city.city_name] = barangays.filter(b => b.city_code === city.city_code).map(b => b.brgy_name);
     }
+  }
+  for (const excluded of def.excludedBarangays ?? []) {
+    const list = out[excluded.province]?.[excluded.city];
+    if (!list) throw new Error(`excludedBarangays: no ${excluded.city}, ${excluded.province}`);
+    const idx = list.indexOf(excluded.barangay);
+    if (idx < 0) throw new Error(`excludedBarangays: ${excluded.barangay} is not in ${excluded.city}, ${excluded.province} — remove the exclusion`);
+    list.splice(idx, 1);
   }
   for (const extra of def.extraBarangays) {
     const list = out[extra.province]?.[extra.city];

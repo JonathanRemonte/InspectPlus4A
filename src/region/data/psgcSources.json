@@ -6,7 +6,8 @@
     "provinceOrder": ["Occidental Mindoro", "Oriental Mindoro", "Marinduque", "Romblon", "Palawan"],
     "extraBarangays": [
       { "province": "Occidental Mindoro", "city": "San Jose", "barangay": "Naibuan", "note": "Created after the 2021 address dataset; present in PSGC 2023 boundaries" }
-    ]
+    ],
+    "excludedBarangays": []
   },
   "boundaries": {
     "provinceCodes": [1704000000, 1705100000, 1705200000, 1705300000, 1705900000],
