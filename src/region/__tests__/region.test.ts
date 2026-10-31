@@ -11,9 +11,13 @@ describe('EMB4A region', () => {
     });
   });
 
+  it('offers the five CALABARZON provinces', () => {
+    expect(Object.keys(region.locations.locations)).toEqual(['Batangas', 'Cavite', 'Laguna', 'Quezon', 'Rizal']);
+  });
+
   it('loads barangay boundaries lazily', () => {
     const entries = region.locations.loadBoundaries();
-    expect(entries.length).toBeGreaterThan(1000);
-    expect(entries[0]).toEqual(expect.objectContaining({ p: expect.any(String), c: expect.any(String), b: expect.any(String) }));
+    expect(entries.length).toBeGreaterThan(4000);
+    expect(new Set(entries.map(e => e.p))).toEqual(new Set(['Batangas', 'Cavite', 'Laguna', 'Quezon', 'Rizal']));
   });
 });

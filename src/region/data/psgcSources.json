@@ -1,41 +1,380 @@
 {
-  "regionName": "MIMAROPA",
-  "envelope": { "w": 114.0, "s": 7.0, "e": 123.5, "n": 14.5 },
+  "regionName": "CALABARZON",
+  "envelope": {
+    "w": 120.4,
+    "s": 12.9,
+    "e": 123,
+    "n": 15.3
+  },
   "locations": {
-    "regionCode": "17",
-    "provinceOrder": ["Occidental Mindoro", "Oriental Mindoro", "Marinduque", "Romblon", "Palawan"],
-    "extraBarangays": [
-      { "province": "Occidental Mindoro", "city": "San Jose", "barangay": "Naibuan", "note": "Created after the 2021 address dataset; present in PSGC 2023 boundaries" }
+    "regionCode": "04",
+    "provinceOrder": [
+      "Batangas",
+      "Cavite",
+      "Laguna",
+      "Quezon",
+      "Rizal"
     ],
-    "excludedBarangays": []
+    "extraBarangays": [
+      {
+        "province": "Laguna",
+        "city": "City Of San Pedro",
+        "barangay": "Chrysanthemum",
+        "note": "Created after the 2021 address dataset; present in PSGC 2023 boundaries"
+      },
+      {
+        "province": "Laguna",
+        "city": "City Of San Pedro",
+        "barangay": "Fatima",
+        "note": "Created after the 2021 address dataset; present in PSGC 2023 boundaries"
+      },
+      {
+        "province": "Laguna",
+        "city": "City Of San Pedro",
+        "barangay": "Maharlika",
+        "note": "Created after the 2021 address dataset; present in PSGC 2023 boundaries"
+      },
+      {
+        "province": "Laguna",
+        "city": "City Of San Pedro",
+        "barangay": "Pacita 1",
+        "note": "Created after the 2021 address dataset; present in PSGC 2023 boundaries"
+      },
+      {
+        "province": "Laguna",
+        "city": "City Of San Pedro",
+        "barangay": "Pacita 2",
+        "note": "Created after the 2021 address dataset; present in PSGC 2023 boundaries"
+      },
+      {
+        "province": "Laguna",
+        "city": "City Of San Pedro",
+        "barangay": "Rosario",
+        "note": "Created after the 2021 address dataset; present in PSGC 2023 boundaries"
+      },
+      {
+        "province": "Laguna",
+        "city": "City Of San Pedro",
+        "barangay": "San Lorenzo Ruiz",
+        "note": "Created after the 2021 address dataset; present in PSGC 2023 boundaries"
+      },
+      {
+        "province": "Quezon",
+        "city": "Panukulan",
+        "barangay": "Rizal",
+        "note": "Created after the 2021 address dataset; present in PSGC 2023 boundaries"
+      },
+      {
+        "province": "Rizal",
+        "city": "Tanay",
+        "barangay": "Madilay-Dilay",
+        "note": "Created after the 2021 address dataset; present in PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Kaingin Digman",
+        "note": "PSGC 2023 barangay after the 2023 Bacoor consolidation"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Mabolo",
+        "note": "PSGC 2023 barangay after the 2023 Bacoor consolidation"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Niog",
+        "note": "PSGC 2023 barangay after the 2023 Bacoor consolidation"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Poblacion",
+        "note": "PSGC 2023 barangay after the 2023 Bacoor consolidation"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Real",
+        "note": "PSGC 2023 barangay after the 2023 Bacoor consolidation"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Sinbanali",
+        "note": "PSGC 2023 barangay after the 2023 Bacoor consolidation"
+      }
+    ],
+    "excludedBarangays": [
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Alima",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Aniban III",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Aniban IV",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Aniban V",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Banalo",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Campo Santo",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Daang Bukid",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Digman",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Kaingin (Pob.)",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Ligas III",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Mabolo I",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Mabolo II",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Mabolo III",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Maliksi III",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Mambog V",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Niog I",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Niog II",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Niog III",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "P.F. Espiritu VII",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "P.F. Espiritu VIII",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Real I",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Real II",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Salinas III",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Salinas IV",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Sineguelasan",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Tabing Dagat",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Talaba IV",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Talaba V",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Talaba VI",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Talaba VII",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Zapote IV",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Cavite",
+        "city": "Bacoor City",
+        "barangay": "Zapote V",
+        "note": "Merged in the 2023 Bacoor barangay consolidation; absent from PSGC 2023 boundaries"
+      },
+      {
+        "province": "Quezon",
+        "city": "Burdeos",
+        "barangay": "Rizal",
+        "note": "No PSGC 2023 polygon in the boundary source; the Panukulan \"Rizal\" polygon is kept as a Panukulan extra"
+      }
+    ]
   },
   "boundaries": {
-    "provinceCodes": [1704000000, 1705100000, 1705200000, 1705300000, 1705900000],
-    "extraMunicipalityCodes": [1731500000],
+    "provinceCodes": [
+      401000000,
+      402100000,
+      403400000,
+      405600000,
+      405800000
+    ],
+    "extraMunicipalityCodes": [
+      431200000
+    ],
     "provinceByAdm2": {
-      "1704000000": "Marinduque",
-      "1705100000": "Occidental Mindoro",
-      "1705200000": "Oriental Mindoro",
-      "1705300000": "Palawan",
-      "1705900000": "Romblon",
-      "1731500000": "Palawan"
+      "401000000": "Batangas",
+      "402100000": "Cavite",
+      "403400000": "Laguna",
+      "405600000": "Quezon",
+      "405800000": "Rizal",
+      "431200000": "Quezon"
     },
-    "municipalityAliases": { "1731500000": "Puerto Princesa City (Capital)" },
+    "municipalityAliases": {
+      "401007000": "Calaca",
+      "401014000": "Lipa City",
+      "401028000": "Santo Tomas",
+      "402103000": "Bacoor City",
+      "402104000": "Carmona",
+      "402105000": "Cavite City",
+      "402108000": "General Trias",
+      "402109000": "Imus City",
+      "402119000": "Tagaytay City",
+      "402122000": "Trece Martires City (Capital)",
+      "403404000": "Cabuyao City",
+      "403424000": "San Pablo City",
+      "431200000": "Lucena City (Capital)"
+    },
     "barangayAliases": {
-      "1704003020": { "name": "Pingan", "note": "PSGC \"Pinggan\", Gasan" },
-      "1704005026": { "name": "Kiñaman", "note": "PSGC \"Kinyaman\", Santa Cruz" },
-      "1705104009": { "name": "Surville (Pob.)", "note": "PSGC \"Sorville\", Lubang" },
-      "1705104012": { "name": "Banaag At Pag-Asa (Pob.)", "note": "PSGC \"Banaag ng Pag-asa\", Lubang" },
-      "1705209010": { "name": "Lumangbayan", "note": "PSGC \"Lumambayan\", Pinamalayan" },
-      "1705901004": { "name": "Camod-Om", "note": "PSGC \"Comod-om\", Alcantara" },
-      "1705907004": { "name": "Camandao", "note": "PSGC \"Camandag\", Looc (Romblon)" },
-      "1705911002": { "name": "Binongahan", "note": "PSGC \"Binonga-an\", San Agustin" },
-      "1705911006": { "name": "Cagbuaya", "note": "PSGC \"Cagbo-aya\", San Agustin" },
-      "1705911013": { "name": "Binugusan", "note": "PSGC \"Hinugusan\", San Agustin" }
+      "402123012": {
+        "name": "Fiorello Carimag (Area C)",
+        "note": "PSGC \"Fiorello Calimag\", Gen. Mariano Alvarez"
+      },
+      "403410007": {
+        "name": "Cabuyao",
+        "note": "PSGC \"Cabuyew\", Liliw"
+      },
+      "403428016": {
+        "name": "Pook",
+        "note": "PSGC \"Pooc\", City Of Santa Rosa"
+      },
+      "405619041": {
+        "name": "San Diego Poblacion",
+        "note": "PSGC \"San Diego Poblacion\", Gumaca; explicit because name normalisation also collides with \"San Diego\""
+      },
+      "405619058": {
+        "name": "San Diego",
+        "note": "PSGC \"San Diego\", Gumaca; explicit because name normalisation also collides with \"San Diego Poblacion\""
+      },
+      "405622058": {
+        "name": "Rizal (Rural)",
+        "note": "PSGC \"Rizal\", Lopez; address dataset code 045622058 is \"Rizal (Rural)\""
+      },
+      "405622095": {
+        "name": "Rizal (Poblacion)",
+        "note": "PSGC \"Rizal\", Lopez; address dataset code 045622095 is \"Rizal (Poblacion)\""
+      }
     }
   },
   "outputs": {
-    "locations": "src/region/data/mimaropaLocations.ts",
-    "boundaries": "src/region/data/mimaropaBoundaries.json"
+    "locations": "src/region/data/calabarzonLocations.ts",
+    "boundaries": "src/region/data/calabarzonBoundaries.json"
   }
 }
